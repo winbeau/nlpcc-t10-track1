@@ -3,20 +3,27 @@
 # then infer testp1 -> aggregate -> validate -> zip. 2-GPU DDP (0,1). Inference resolution is kept
 # IDENTICAL to training (same MAX_PIXELS) to avoid a train/test mismatch.
 #
-#   bash scripts/retrain_fullres.sh                       # full res (model default, no cap)
-#   MAX_PIXELS=1605632 bash scripts/retrain_fullres.sh    # cap to 2048 tok/img if worst-case OOMs
+#   bash scripts/retrain_fullres.sh                       # default 1024 tok/img (2x grid; worst
+#                                                         #   paragraph 17x3img peaks ~125 GiB, fits)
+#   MAX_PIXELS=602112 bash scripts/retrain_fullres.sh     # 768 tok/img if more headroom is wanted
 #
-# Env (overridable): GPUS(0,1), MAX_PIXELS(empty=full res), MAX_LENGTH(10240),
+# NOTE: the model's natural image resolution is <2048 tok/img, so caps >=2048 (and "no cap") do
+# NOT bind and the worst paragraph OOMs (>140 GiB). 1024 tok/img is the validated-safe ceiling.
+#
+# Env (overridable): GPUS(0,1), MAX_PIXELS(802816=1024 tok/img), MAX_LENGTH(10240),
 #                    BETA(5), LAMBDA(0.5), EPOCHS(1), MODEL_ID, DATA_ROOT.
 set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$REPO_ROOT"
 DATA_ROOT="${DATA_ROOT:-$(dirname "$REPO_ROOT")/NLPCC-2026-Task10-Science}"
 export MODELSCOPE_CACHE="${MODELSCOPE_CACHE:-$(dirname "$REPO_ROOT")/ms_cache}"
+# Anti-fragmentation: the worst paragraph (B=17 x 3 imgs) peaks ~125 GiB at 1024 tok/img; give
+# the allocator expandable segments so the ~14 GiB headroom + DDP buffers don't fragment into OOM.
+export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 MODEL="${MODEL_ID:-Qwen/Qwen3-VL-8B-Instruct}"
 GPUS="${GPUS:-0,1}"; NPROC=$(echo "$GPUS" | awk -F, '{print NF}')
 MAXLEN="${MAX_LENGTH:-10240}"
 BETA="${BETA:-5}"; LAMBDA="${LAMBDA:-0.5}"; EPOCHS="${EPOCHS:-1}"
-MP="${MAX_PIXELS:-}"; MP_ARG=(); [ -n "$MP" ] && MP_ARG=(--max_pixels "$MP")
+MP="${MAX_PIXELS:-802816}"; MP_ARG=(); [ -n "$MP" ] && MP_ARG=(--max_pixels "$MP")  # 802816=1024 tok/img
 TAG="fullres_b${BETA}_l${LAMBDA}"
 OUTDIR="outputs/p0_${TAG}"
 
