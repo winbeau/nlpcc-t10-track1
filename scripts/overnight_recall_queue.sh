@@ -1,17 +1,23 @@
 #!/usr/bin/env bash
-# Overnight recall-max queue (runs UNATTENDED on H200 GPU 0,1, grid resolution 401408).
+# Overnight recall-max queue (UNATTENDED, H200 GPU 0,1, grid resolution 401408).
 #
-# testp1 is RECALL-critical (trivial all-Supported ~19; oversample 1.5x=40.9 < 3.0x=47.8 => push
-# oversampling UP). This queues the next recall-max retrains AFTER the already-running os4
-# (oversample 4.0). Each step waits for GPU 0 to free (previous run's train+infer done), then
-# build_dataset -> retrain_fullres.sh (train + testp1 infer + aggregate + validated zip).
+# v2 workflow (ground-truthed from the 7 on-disk submissions) found testp1 RECALL-critical and the
+# under-fired classes are SO (29 preds) and Contradiction (23), whose TRAINING TARGETS are starved
+# (Contra 101, SO 188 vs UE 544). So the top lever is PER-CLASS oversample targeting SO/Contra,
+# NOT uniform oversample (which inflates UE, already adequate at 92). Supersedes the old os5/ep2.
 #
-# Produces submissions/testp1_<TAG>_submission.zip per step. Does NOT git-commit (the /loop or the
-# morning review commits + pushes the finished zips). Log: /tmp/overnight_queue.log
+# os4 (uniform 4.0x) is already running separately (sunk cost — will be submitted). This queue runs,
+# after os4 frees the GPU:
+#   perclass     : Contra 6x, SO 5x, UCM 3x, UE 2x, ds 0.6, 1 epoch
+#   perclass_ep2 : same per-class, 2 epochs (more fit on the calibrated data)
+# Each = build_dataset (per-class) -> retrain_fullres.sh (train + testp1 infer + aggregate + zip).
+# Does NOT git-commit (the /loop commits finished zips). Log: /tmp/overnight_queue.log
 set -uo pipefail
 cd /data/chenjiayu/wenbiao_zhao/nlpcc-t10-track1
 export DATA_ROOT=/data/chenjiayu/wenbiao_zhao/NLPCC-2026-Task10-Science
 export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
+
+PC="Contradiction:6,Scope Overgeneralization:5,Unsupported Causal Mechanistic:3,Unsupported Entity:2"
 
 wait_for_gpu() {  # block until GPU 0 has <20 GiB used (previous run fully done, incl its inference)
   echo "[queue] waiting for GPU 0 to free ... $(date)"
@@ -23,15 +29,15 @@ wait_for_gpu() {  # block until GPU 0 has <20 GiB used (previous run fully done,
   echo "[queue] GPU 0 free ($u MiB) -> proceeding $(date)"
 }
 
-run() {  # $1=minority-oversample  $2=epochs  $3=TAG
-  echo "######## QUEUE STEP TAG=$3 oversample=$1 epochs=$2 $(date) ########"
+run_pc() {  # $1=per-class spec  $2=supported-downsample  $3=epochs  $4=TAG
+  echo "######## QUEUE STEP TAG=$4 per-class=[$1] ds=$2 epochs=$3 $(date) ########"
   PYTHONPATH=src uv run python -m nlpcc_t10.build_dataset --data-root "$DATA_ROOT" --out data \
-    --minority-oversample "$1" --supported-downsample 0.66 2>&1 | tail -4
-  TAG="$3" EPOCHS="$2" MAX_PIXELS=401408 GPUS=0,1 bash scripts/retrain_fullres.sh
-  echo "######## QUEUE STEP DONE TAG=$3 $(date) ########"
+    --minority-oversample 1.0 --supported-downsample "$2" \
+    --minority-oversample-per-class "$1" 2>&1 | tail -10
+  TAG="$4" EPOCHS="$3" MAX_PIXELS=401408 GPUS=0,1 bash scripts/retrain_fullres.sh
+  echo "######## QUEUE STEP DONE TAG=$4 $(date) ########"
 }
 
-# os4 (oversample 4.0) is already running separately; wait it out, then:
-wait_for_gpu; run 5.0 1 os5_b5_l0.5     # push oversampling higher
-wait_for_gpu; run 3.0 2 ep2_b5_l0.5     # more epochs on the best (3.0x) config (minority may be underfit at 1ep)
+wait_for_gpu; run_pc "$PC" 0.6 1 perclass_b5_l0.5     # per-class oversample, 1 epoch (TOP rec)
+wait_for_gpu; run_pc "$PC" 0.6 2 perclass_ep2_b5_l0.5 # same, 2 epochs
 echo "######## OVERNIGHT QUEUE COMPLETE $(date) ########"

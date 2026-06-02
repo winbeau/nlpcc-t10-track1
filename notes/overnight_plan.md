@@ -5,22 +5,32 @@
 > `memory/testp1-result-v1.md`: testp1 trivial≈19, recall-critical, oversample UP not down).
 > Best so far = grid b5_l0.5 = **47.80** (`submissions/testp1_b5_l0.5_submission.zip`). Beat it.
 
-## Running now
-- **os4 retrain** (oversample 4.0, ds 0.66, 1ep, grid res 401408, GPU 0,1) → `/tmp/p0_retrain_os4.log`
-  → `submissions/testp1_os4_b5_l0.5_submission.zip`.
-- **32B download** (`Qwen/Qwen3-VL-32B-Instruct` → ms_cache) detached → `/tmp/dl_32b.log` (no GPU).
-- **scripts/overnight_recall_queue.sh** detached → `/tmp/overnight_queue.log`: after os4 frees GPU,
-  runs **os5** (oversample 5.0, 1ep) then **ep2** (oversample 3.0, **2 epochs**). Each = build+train+infer+zip.
-- **Workflow v2** `w22wxhs3w` (recall re-analysis) — pending; act on its roadmap when it completes.
+## Workflow v2 RESULT (drove the plan below) — `w22wxhs3w` DONE
+Ground-truthed from the 7 on-disk submissions: testp1 per-class minority preds (grid 47.8) =
+UCM 109 / **UE 92** / **SO 29** / **Contra 23**. Training targets (primary types[0]) =
+UCM 276 / UE 544 / **SO 188** / **Contra 101**. ⇒ **SO + Contradiction are the under-fired,
+structurally-starved classes; UE is fine (do NOT raise).** Top rec = PER-CLASS oversample
+(Contra 6×, SO 5×, UCM 3×, UE 2×, ds 0.6), NOT uniform. Also: 32% image leakage inflates dev
+(don't trust dev=88); 32B only via paragraph-joint (per-sentence 32B OOMs). Full result:
+`/tmp/claude-1000/.../tasks/w22wxhs3w.output`.
 
-## Recall-max queue (oversample/epoch axis @ grid res, ds 0.66)
-| TAG | oversample | epochs | zip | status |
+## Running now
+- **os4 retrain** (uniform oversample 4.0, 1ep) → `/tmp/p0_retrain_os4.log` → `testp1_os4_b5_l0.5.zip`
+  (SUNK COST — uniform inflates UE; submit it but the real move is per-class below).
+- **32B download** (`Qwen/Qwen3-VL-32B-Instruct` → ms_cache) → `/tmp/dl_32b.log` (no GPU).
+- **scripts/overnight_recall_queue.sh** (REWRITTEN) → `/tmp/overnight_queue.log`: after os4 frees GPU,
+  runs **perclass** then **perclass_ep2** (per-class oversample, ds 0.6, 1ep & 2ep).
+
+## Recall-max queue (PER-CLASS, @ grid res 401408)
+| TAG | rates | epochs | zip | status |
 |---|---|---|---|---|
-| (grid) | 3.0 | 1 | testp1_b5_l0.5 | ✅ 47.80 (ref) |
-| (B) | 1.5 | 1 | testp1_gentle1.5_b5_l0.5 | ✅ 40.91 (worse → up) |
-| os4_b5_l0.5 | 4.0 | 1 | testp1_os4_b5_l0.5 | running |
-| os5_b5_l0.5 | 5.0 | 1 | testp1_os5_b5_l0.5 | queued |
-| ep2_b5_l0.5 | 3.0 | 2 | testp1_ep2_b5_l0.5 | queued |
+| (grid) | uniform 3.0× | 1 | testp1_b5_l0.5 | ✅ 47.80 (ref / fallback) |
+| (B) | uniform 1.5× | 1 | testp1_gentle1.5 | ✅ 40.91 (worse → up) |
+| os4_b5_l0.5 | uniform 4.0× | 1 | testp1_os4_b5_l0.5 | running (sunk) |
+| **perclass_b5_l0.5** | Contra6/SO5/UCM3/UE2, ds0.6 | 1 | testp1_perclass_b5_l0.5 | queued (TOP rec) |
+| **perclass_ep2_b5_l0.5** | same | 2 | testp1_perclass_ep2_b5_l0.5 | queued |
+Target after retrain: SO preds 29→60-90, Contra 23→45-70, UE stays ~85-100 (mine per-class counts
+of each new submission; if Contra/SO over-fire on clean paras it back-fires — watch the counts).
 
 ## /loop decision rules (every 30 min)
 1. Poll `/tmp/p0_retrain_os4.log`, `/tmp/overnight_queue.log`, `/tmp/dl_32b.log`, GPU 0/1.

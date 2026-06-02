@@ -314,6 +314,7 @@ def resample_train(
     sample_label_pairs: list[tuple[dict[str, Any], str]],
     minority_oversample: float,
     rng: random.Random,
+    per_class: dict[str, float] | None = None,
 ) -> list[dict[str, Any]]:
     """Apply MINORITY OVERSAMPLING to training samples.
 
@@ -343,8 +344,11 @@ def resample_train(
             continue
 
         # Augmented minority copies: each gets a unique singleton channel.
+        # Per-class rate overrides the global float when provided (target the MEASURED
+        # under-fired classes — testp1 SO/Contradiction starved — without inflating UE).
         orig_channel = sample["channel"]
-        n_extra_float = minority_oversample - 1.0
+        rate = per_class.get(label, minority_oversample) if per_class else minority_oversample
+        n_extra_float = rate - 1.0
         if n_extra_float > 0:
             n_extra_full = int(math.floor(n_extra_float))
             frac = n_extra_float - n_extra_full
@@ -420,6 +424,7 @@ def build_dataset(
     minority_oversample: float,
     supported_downsample: float,
     limit: int | None = None,
+    per_class_oversample: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     """Full pipeline: load, split, expand, resample, write. Returns summary dict."""
     data_path = data_root / "data" / "traindev-track-1.jsonl"
@@ -481,7 +486,10 @@ def build_dataset(
     # 5) Resample train (minority oversampling only; Supported already downsampled
     #    at the record level in step 3 to preserve paragraph channel integrity).
     rng = random.Random(seed)
-    train_samples = resample_train(train_pairs, minority_oversample, rng)
+    if per_class_oversample:
+        print(f"Per-class oversample rates: {per_class_oversample} "
+              f"(others default to {minority_oversample}x)")
+    train_samples = resample_train(train_pairs, minority_oversample, rng, per_class_oversample)
     print(f"After resampling: {len(train_samples)} train samples")
 
     # Label distribution after resampling
@@ -570,12 +578,44 @@ def build_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     p.add_argument(
+        "--minority-oversample-per-class",
+        default=None,
+        help=(
+            "Optional PER-CLASS oversample rates overriding --minority-oversample for the named "
+            "labels. Format: 'Label:rate,Label:rate' e.g. "
+            "'Contradiction:6,Scope Overgeneralization:5,Unsupported Causal Mechanistic:3,Unsupported Entity:2'. "
+            "Target the MEASURED under-fired classes (testp1 SO/Contradiction starved) without inflating UE. "
+            "Tune by Codabench leaderboard, not the leakage-inflated dev."
+        ),
+    )
+    p.add_argument(
         "--limit",
         type=int,
         default=None,
         help="Only use the first N records (for fast local smoke-testing).",
     )
     return p
+
+
+def _parse_per_class(spec: str | None) -> dict[str, float] | None:
+    """Parse 'Label:rate,Label:rate' -> {label: rate}. Labels may contain spaces (no colons),
+    so split each item on the LAST colon. Validates labels against TRACK1_LABELS."""
+    if not spec:
+        return None
+    valid = set(TRACK1_LABELS)
+    out: dict[str, float] = {}
+    for item in spec.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        key, _, val = item.rpartition(":")
+        key = key.strip()
+        if key not in valid:
+            raise ValueError(
+                f"--minority-oversample-per-class: unknown label {key!r}; must be one of {TRACK1_LABELS}"
+            )
+        out[key] = float(val)
+    return out
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -590,6 +630,7 @@ def main(argv: list[str] | None = None) -> int:
         minority_oversample=args.minority_oversample,
         supported_downsample=args.supported_downsample,
         limit=args.limit,
+        per_class_oversample=_parse_per_class(args.minority_oversample_per_class),
     )
     return 0
 
