@@ -208,8 +208,11 @@ def evidence_to_text_and_images(
         caption = " ".join(caption_raw).strip() if isinstance(caption_raw, list) else str(caption_raw)
         img_path_rel = item.get("img_path", "")
         if img_path_rel:
-            # Absolute path on server; relative path from data_root for portability.
-            abs_path = str(data_root / img_path_rel)
+            # Images live under <data_root>/data/ (same dir as the jsonl). The jsonl img_path is
+            # like "images/<sha>.jpg", so the absolute path is <data_root>/data/images/<sha>.jpg
+            # (matches the official `unzip data/images.zip -d data/images/` layout). The earlier
+            # data_root/img_path was missing the 'data/' segment -> images would not resolve.
+            abs_path = str(data_root / "data" / img_path_rel)
             image_paths.append(abs_path)
             text_parts.append(f"[{item_type.upper()} {idx}] <image>")
         else:
