@@ -36,7 +36,7 @@ CKPT=$(ls -d "$OUTDIR"/v*/checkpoint-* 2>/dev/null | sort | tail -1)
 echo "### trained -> $CKPT ; INFER testp1 (--joint, resolution-matched) ###"
 RAW="outputs/testp1_${TAG}_raw.jsonl"; SUB="submissions/testp1_${TAG}_submission.jsonl"
 env "CUDA_VISIBLE_DEVICES=${GPUS%%,*}" "MAX_PIXELS=$MP" PYTHONPATH=src uv run python -m nlpcc_t10.infer \
-  --split testp1 --joint --adapter "$CKPT" --engine pt --data-root "$DATA_ROOT" --out "$RAW"
+  --split testp1 --joint --model "$MODEL" --adapter "$CKPT" --engine pt --data-root "$DATA_ROOT" --out "$RAW"
 PYTHONPATH=src uv run python -m nlpcc_t10.aggregate \
   --pred "$RAW" --ref "$DATA_ROOT/data/testp1-track-1.jsonl" --out "$SUB"
 uv run python scripts/make_submission_zip.py --sub "$SUB" \
