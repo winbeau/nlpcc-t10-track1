@@ -113,3 +113,5 @@ uv run python scripts/lone_minority_veto.py --raw outputs/testp1_gridckpt_lp_raw
 - **ensU_grid_os4_perclass** (union ensemble of grid+os4+perclass, recall-additive) testp1 per-class: UCM=127 UE=142 SO=43 Contra=27 (minority 339, Supported 4757) | Score TBD (submit AM). 最激进召回点；并集新增 164 个少数类(分歧位)
 
 - **perclass_ep2_b5_l0.5** (per-class Contra6/SO5/UCM3/UE2, ds0.6, 2ep) testp1 per-class: UCM=80 UE=74 SO=17 Contra=22 (minority 193, Supported 4903) | Score TBD. (2 epoch 过拟合风险)
+
+- **joint8b** (8B paragraph-JOINT plain-CE, 1ep, ds-joint hard2x) testp1 per-class: UCM=90 UE=66 SO=31 Contra=22 (minority 209, Supported 4887) | parse_fallbacks=173/586 (30%, HIGH) | gate=OK-no-collapse | Score TBD
