@@ -22,7 +22,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BASE_DIR="$(dirname "$REPO_ROOT")"                       # the parent folder (e.g. .../wenbiao_zhao)
 DATA_ROOT="${DATA_ROOT:-$BASE_DIR/NLPCC-2026-Task10-Science}"
 export MODELSCOPE_CACHE="${MODELSCOPE_CACHE:-$BASE_DIR/ms_cache}"
-DATA_REPO="${DATA_REPO:-git@github.com:winbeau/NLPCC-2026-Task10-Science.git}"
+DATA_REPO="${DATA_REPO:-https://github.com/winbeau/NLPCC-2026-Task10-Science.git}"
 MODEL_ID="${MODEL_ID:-Qwen/Qwen3-VL-8B-Instruct}"
 TORCH_INDEX="${TORCH_INDEX:-https://download.pytorch.org/whl/cu130}"
 
@@ -49,7 +49,7 @@ uv run python -c "import torch,torchvision; print('  torch',torch.__version__,'|
 
 echo "[3/5] clone official data repo (sibling) -> $DATA_ROOT"
 if [ ! -d "$DATA_ROOT/.git" ]; then
-  GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new" git clone "$DATA_REPO" "$DATA_ROOT"
+  git clone "$DATA_REPO" "$DATA_ROOT"   # HTTPS -> uses the stored token credential
 else
   echo "  already cloned."
 fi
