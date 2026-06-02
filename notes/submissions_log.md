@@ -105,3 +105,5 @@ uv run python scripts/lone_minority_veto.py --raw outputs/testp1_gridckpt_lp_raw
 2. **数据构造命令务必记进本表**（grid 那次没记 `--supported-downsample`，吃了亏）。
 3. 新提交追加：表格一行 + 一节复现命令 + 该配置的"为什么试它"。
 4. 当前最优 = #1（47.80）。若平台按最新提交计分，传完实验变体后**记得把 `testp1_b5_l0.5_submission.zip` 顶回去**。
+
+- **os4_b5_l0.5** (uniform 4x, 1ep, grid res) testp1 per-class: UCM=102 UE=80 SO=28 Contra=25 (minority 235, Supported 4861) | Score TBD (submit AM)
