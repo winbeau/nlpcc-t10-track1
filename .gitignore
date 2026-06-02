@@ -1,0 +1,33 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# ---- uv / venv ----
+.venv/
+uv.lock          # keep out until env is pinned on the server; remove this line to commit a lockfile
+
+# ---- task data & derived artifacts (DO NOT COMMIT official data; usage policy) ----
+data/*
+!data/.gitkeep
+images/
+*.zip
+*.jsonl          # derived splits / preds; official data lives in ../NLPCC-2026-Task10-Science
+
+# ---- model / training outputs ----
+outputs/*
+!outputs/.gitkeep
+checkpoints/
+*.safetensors
+*.bin
+*.pt
+wandb/
+runs/
+
+# ---- misc ----
+.DS_Store
+.ipynb_checkpoints/
+*.log

@@ -1,0 +1,46 @@
+# ms-swift LoRA SFT 配置模板 —— Qwen3-VL-8B / Track 1（句子级）
+# 仅在远程 GPU 服务器使用。占位值用 <...> 标注，定稿前先按 9:1 dev 的 score 调参。
+# 用法示例: swift sft --config configs/qwen3vl_lora_sft.yaml
+# 注意: ms-swift 也支持纯 CLI 参数；YAML 字段名以服务器上 `swift sft -h` 为准，落地时核对。
+
+# ---- 模型 ----
+model: Qwen/Qwen3-VL-8B-Instruct      # 服务器上确认确切 repo id / 本地路径
+model_type: qwen3_vl                  # 以 ms-swift 版本支持的 type 为准
+torch_dtype: bfloat16
+
+# ---- 训练方式 ----
+train_type: lora
+lora_rank: 16                         # 待调: 8 / 16 / 32
+lora_alpha: 32
+lora_dropout: 0.05
+# 多模态: 默认冻结 vision encoder，只 LoRA 语言/投影层（先省显存，再实验解冻）
+freeze_vit: true
+target_modules: all-linear            # 或显式指定 q/k/v/o + mlp
+
+# ---- 数据（由 src/nlpcc_t10/build_dataset.py 生成）----
+dataset:
+  - data/train_sft.jsonl              # 句子级、已重采样（过采样少数类 + 下采样 Supported）
+val_dataset:
+  - data/dev_sft.jsonl                # 9:1 dev（句子级，未重采样，反映真实分布）
+max_length: 4096                      # claim 中位 671 字符 + caption + label 定义，留图片 token 余量
+
+# ---- 优化 ----
+num_train_epochs: 3                   # 待调
+learning_rate: 1.0e-4                 # LoRA 常用 1e-4 ~ 2e-4
+warmup_ratio: 0.05
+per_device_train_batch_size: 2        # 看显存
+gradient_accumulation_steps: 8
+gradient_checkpointing: true
+attn_impl: flash_attn                 # 服务器装了 flash-attn 才开
+
+# ---- 评估 / 保存 ----
+eval_strategy: steps
+eval_steps: 200
+save_steps: 200
+save_total_limit: 3
+logging_steps: 10
+output_dir: outputs/qwen3vl8b_lora
+
+# ---- 注意 ----
+# 内置 loss 是 token-level CE；类别不均衡主要靠数据重采样解决（见 CLAUDE.md §5）。
+# 选 checkpoint 时不要只看 eval_loss —— 用 src/nlpcc_t10/eval_local.py 跑官方 score。
