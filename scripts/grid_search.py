@@ -45,7 +45,7 @@ def _run(cmd: list[str], env_extra: dict, log_path: str) -> int:
 
 def train(beta, lam, outdir, logp) -> tuple[int, str | None]:
     cmd = [
-        "torchrun", f"--nproc_per_node={NPROC}", "--master_port=29531",
+        "uv", "run", "torchrun", f"--nproc_per_node={NPROC}", "--master_port=29531",
         "scripts/train_softmin.py",
         "--model", MODEL, "--tuner_type", "lora", "--torch_dtype", "bfloat16",
         "--dataset", "data/train_sft.jsonl", "--split_dataset_ratio", "0",
@@ -66,15 +66,15 @@ def train(beta, lam, outdir, logp) -> tuple[int, str | None]:
 
 def infer_eval(ckpt, tag) -> float | None:
     raw, sub = f"/tmp/{tag}_raw.jsonl", f"/tmp/{tag}_sub.jsonl"
-    if _run(["python", "-m", "nlpcc_t10.infer", "--split", "dev", "--adapter", ckpt,
+    if _run(["uv", "run", "python", "-m", "nlpcc_t10.infer", "--split", "dev", "--adapter", ckpt,
              "--engine", "pt", "--data-root", DATA_ROOT, "--out", raw],
             {"CUDA_VISIBLE_DEVICES": GPU_INFER}, f"/tmp/{tag}.infer.log"):
         print(f"  [{tag}] infer FAILED (see /tmp/{tag}.infer.log)", flush=True)
         return None
-    _run(["python", "-m", "nlpcc_t10.aggregate", "--pred", raw,
+    _run(["uv", "run", "python", "-m", "nlpcc_t10.aggregate", "--pred", raw,
           "--ref", "data/dev_gold.jsonl", "--out", sub], {}, f"/tmp/{tag}.agg.log")
     elog = f"/tmp/{tag}.eval.log"
-    _run(["python", "-m", "nlpcc_t10.eval_local", "--pred", sub, "--gold", "data/dev_gold.jsonl",
+    _run(["uv", "run", "python", "-m", "nlpcc_t10.eval_local", "--pred", sub, "--gold", "data/dev_gold.jsonl",
           "--data-root", DATA_ROOT, "--tag", tag, "--log", str(RESULTS)], {}, elog)
     txt = Path(elog).read_text(errors="ignore")
     m = re.search(r"SCORE=([0-9.]+)", txt) or re.search(r"score\s*[:=]\s*([0-9.]+)", txt)
