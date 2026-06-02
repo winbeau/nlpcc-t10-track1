@@ -107,3 +107,5 @@ uv run python scripts/lone_minority_veto.py --raw outputs/testp1_gridckpt_lp_raw
 4. 当前最优 = #1（47.80）。若平台按最新提交计分，传完实验变体后**记得把 `testp1_b5_l0.5_submission.zip` 顶回去**。
 
 - **os4_b5_l0.5** (uniform 4x, 1ep, grid res) testp1 per-class: UCM=102 UE=80 SO=28 Contra=25 (minority 235, Supported 4861) | Score TBD (submit AM)
+
+- **perclass_b5_l0.5** (Contra6/SO5/UCM3/UE2, ds0.6, 1ep, grid res) testp1 per-class: UCM=104 UE=112 SO=33 Contra=19 (minority 268, Supported 4828) | Score TBD (submit AM). vs grid UCM109/UE92/SO29/Contra23
