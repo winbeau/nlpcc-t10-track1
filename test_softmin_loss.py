@@ -65,8 +65,12 @@ def build_sample(target_token, conf, prefix_len=2, vocab=VOCAB, dtype=torch.floa
     T = prefix_len + 1
     logits = torch.zeros(T, vocab, dtype=dtype)
     labels = torch.full((T,), IGNORE, dtype=torch.long)
-    # only the LAST position is a response token contributing to CE
-    logits[-1, target_token] = float(conf)
+    # The response token is the LAST position (labels[-1]). Under the causal shift in
+    # _per_sentence_ce (logits[..., :-1] vs labels[..., 1:]) that token is PREDICTED by the
+    # logits at the PRECEDING position (-2), so `conf` must live on -2. Putting it on -1 would
+    # score a uniform (all-zero) position -> CE = log(VOCAB) regardless of conf (the original
+    # fixture bug, which silently turned every sample uniform and made T1/T2/T3 vacuous).
+    logits[-2, target_token] = float(conf)
     labels[-1] = target_token
     return logits, labels
 
