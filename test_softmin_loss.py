@@ -23,6 +23,11 @@ per sample):
   T4. SINGLETON IDENTITY: a singleton paragraph (every augmented/oversampled row) contributes
       exactly its own per-sentence CE -- it cannot pollute a real paragraph's bottleneck.
   T5. GRACEFUL DEGRADE: sample_channels=None (eval) and lambda<=0 both return plain mean CE.
+  T6. USE_LOGITS_TO_KEEP EQUIVALENCE: per-sentence CE on the FULL [B,T,V] logits == on the
+      trailing-K window ms-swift's prepare_logits_to_keep (mixin.py, batch>1 branch) produces
+      when use_logits_to_keep=True. Proves the loss stays CORRECT when only the last K=
+      T-earliest_response_start+1 positions are kept -> full-resolution training without the
+      full-vocab logits OOM.
 
 Exit code 0 and "ALL SOFTMIN TORCH TESTS PASSED" on success; raises AssertionError otherwise.
 """
@@ -211,6 +216,41 @@ def test_graceful_degrade():
           f"== mean CE {mean_ce:.5f}")
 
 
+def test_use_logits_to_keep_equivalence():
+    """T6. The GOLDEN gate for P0 (use_logits_to_keep -> full-resolution training).
+
+    When use_logits_to_keep=True, ms-swift's prepare_logits_to_keep (mixin.py:1122, batch>1
+    branch) replaces inputs['labels'] with its trailing K columns (K = T - earliest non--100
+    index + 1) and asks the model for logits over only those last K positions. So our loss
+    receives logits[B,K,V] + labels[B,K] instead of the full [B,T,*]. Because _per_sentence_ce
+    masks -100 and only the causal-shift pairs (logits[p-1], labels[p]) of RESPONSE tokens
+    contribute -- and K is chosen so every response token AND its predecessor sit inside the
+    window -- the per-sentence CE must be byte-for-byte identical. If this fails, enabling
+    use_logits_to_keep would silently change the loss; do NOT ship without this passing.
+
+    Batch mimics a real paragraph batch: responses start at DIFFERENT positions (varying prompt
+    lengths) with -100 prompt prefixes and trailing -100 padding."""
+    torch.manual_seed(7)
+    B, T, V = 4, 16, VOCAB
+    logits = torch.randn(B, T, V)
+    labels = torch.full((B, T), IGNORE, dtype=torch.long)
+    spans = [(9, 2), (5, 3), (11, 1), (7, 4)]  # (start, len); earliest start=5 -> K = 16-5+1 = 12
+    for b, (start, ln) in enumerate(spans):
+        for j in range(ln):
+            labels[b, start + j] = (b * 3 + j) % V
+    with torch.no_grad():
+        full = _per_sentence_ce(make_outputs(logits), labels)
+        # Replicate prepare_logits_to_keep's batch>1 slicing exactly:
+        first_resp = (labels != IGNORE).int().argmax(-1)          # first non--100 idx per row
+        K = T - int(first_resp.min().item()) + 1
+        trunc = _per_sentence_ce(make_outputs(logits[:, -K:, :].contiguous()),
+                                 labels[:, -K:].contiguous())
+    assert torch.allclose(full, trunc, atol=1e-5), (
+        f"per-sentence CE differs full vs truncated(K={K}):\n full={full}\n trunc={trunc}")
+    print(f"  [T6] use_logits_to_keep equivalence OK (T={T} -> K={K}): per-sentence CE identical "
+          f"(full == prepare_logits_to_keep trailing-K window)")
+
+
 def main():
     torch.manual_seed(0)
     print("Running SoftMin PEM loss torch tests...")
@@ -220,6 +260,7 @@ def main():
     test_beta_to_zero_recovers_mean_ce()
     test_singleton_identity()
     test_graceful_degrade()
+    test_use_logits_to_keep_equivalence()
     print("ALL SOFTMIN TORCH TESTS PASSED")
 
 
