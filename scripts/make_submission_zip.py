@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Validate a Track 1 submission and package it into a Codabench-ready .zip.
 
-Codabench's "result submission" wants a .zip; the platform unzips it and feeds the prediction
-file to the official scorer (offline_eval/evaluate.py, matched by `id`). The official repo does
-NOT state the exact filename expected INSIDE the zip, so it is configurable here.
+OFFICIAL Codabench spec (competition 16666): upload a FLAT .zip containing one or both
+prediction files AT THE TOP LEVEL of the archive (do NOT zip a folder):
+    track1_pred.jsonl   ->  {"id": ..., "labels": [...]}
+    track2_pred.jsonl   ->  {"id": ..., "label": ..., "evidence_para_ids": [...]}
+A missing track file is skipped (not scored as failed), so a Track-1-only zip is fine.
 
-  --inner-name  filename placed at the ROOT of the zip. Default 'testp1-track-1.jsonl'
-                (mirrors the released input file name — the most common convention). If
-                Codabench rejects it, check the competition's submission page / starting kit
-                for the expected name (e.g. 'track1.jsonl' or 'predictions.jsonl') and re-run.
+  --inner-name  filename placed at the ROOT of the zip. Default 'track1_pred.jsonl' (the
+                official Track 1 name). zipfile arcname keeps it flat (top level, no folder).
 
 Always validates first (scripts/validate_submission.py); refuses to zip an invalid file.
 Pure stdlib (uses zipfile — no `zip` binary needed).
@@ -32,8 +32,8 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Validate + zip a Track 1 submission for Codabench.")
     ap.add_argument("--sub", required=True, help="submission JSONL ({id, labels} per line)")
     ap.add_argument("--ref", required=True, help="reference JSONL (testp1-track-1.jsonl)")
-    ap.add_argument("--inner-name", default="testp1-track-1.jsonl",
-                    help="filename inside the zip (default mirrors the input file name)")
+    ap.add_argument("--inner-name", default="track1_pred.jsonl",
+                    help="filename inside the zip (official Track 1 name: track1_pred.jsonl)")
     ap.add_argument("--out", default=None, help="output .zip path (default: <sub>.zip)")
     args = ap.parse_args(argv)
 
@@ -64,8 +64,7 @@ def main(argv: list[str] | None = None) -> int:
         for info in z.infolist():
             print(f"  contains: {info.filename}  ({info.file_size} bytes)")
     print(f"\nUpload {out} to Codabench competition 16666 (Track 1).")
-    print(f"NOTE: inner filename = {args.inner_name!r}. The repo doesn't specify the exact name;")
-    print(f"      if Codabench rejects it, re-run with --inner-name <expected> (e.g. track1.jsonl).")
+    print(f"Official spec: FLAT zip, top-level 'track1_pred.jsonl' (this file is {args.inner_name!r}).")
     return 0
 
 
