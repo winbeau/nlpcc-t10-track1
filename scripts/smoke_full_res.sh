@@ -20,15 +20,17 @@ MODEL="${MODEL_ID:-Qwen/Qwen3-VL-8B-Instruct}"
 MAXLEN="${MAX_LENGTH:-10240}"          # full-res images need a longer window than the grid's 4096
 MP="${MAX_PIXELS_SMOKE:-}"             # empty => model default resolution (full res)
 MP_ARG=(); [ -n "$MP" ] && MP_ARG=(--max_pixels "$MP")
+DATASET="${DATASET:-data/train_sft.jsonl}"   # point at a worst-case subset to stress peak memory
+STEPS="${SMOKE_STEPS:-20}"
 
-echo "### P0 SMOKE | use_logits_to_keep=true | max_length=$MAXLEN | max_pixels=${MP:-<model default/full>} | GPU=$CUDA_VISIBLE_DEVICES ###"
+echo "### P0 SMOKE | use_logits_to_keep=true | max_length=$MAXLEN | max_pixels=${MP:-<model default/full>} | dataset=$DATASET | steps=$STEPS | GPU=$CUDA_VISIBLE_DEVICES ###"
 SOFTMIN_BETA=5 SOFTMIN_LAMBDA=0.5 \
 PYTHONPATH=src uv run torchrun --nproc_per_node=1 --master_port=29533 \
   scripts/train_softmin.py \
   --model "$MODEL" --tuner_type lora --torch_dtype bfloat16 \
-  --dataset data/train_sft.jsonl --split_dataset_ratio 0 \
+  --dataset "$DATASET" --split_dataset_ratio 0 \
   --loss_type softmin_pem \
-  --max_steps 20 --per_device_train_batch_size 1 \
+  --max_steps "$STEPS" --per_device_train_batch_size 1 \
   --gradient_accumulation_steps 1 --learning_rate 1e-4 \
   --lora_rank 16 --lora_alpha 32 --freeze_vit true \
   --max_length "$MAXLEN" "${MP_ARG[@]}" --attn_impl sdpa \
