@@ -38,8 +38,13 @@ SOFTMIN_LAMBDA=0) and compare dev SCORE via src/nlpcc_t10/eval_local.py.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
+
+# Set before torch/swift import so EVERY torchrun worker inherits it (env vars set only by the
+# launcher do NOT reliably reach torchrun-spawned workers). Reduces CUDA fragmentation.
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 # make `import nlpcc_t10...` work whether or not the package is pip-installed
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
