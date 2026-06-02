@@ -60,16 +60,20 @@ from typing import Any
 try:  # 作为包运行：python -m nlpcc_t10.infer
     from .build_dataset import (
         SYSTEM_PROMPT,
+        SYSTEM_PROMPT_JOINT,
         TRACK1_LABELS,
         build_user_content,
+        build_user_content_joint,
         load_jsonl,
     )
 except ImportError:  # 直接运行脚本时的回退
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from nlpcc_t10.build_dataset import (  # type: ignore
         SYSTEM_PROMPT,
+        SYSTEM_PROMPT_JOINT,
         TRACK1_LABELS,
         build_user_content,
+        build_user_content_joint,
         load_jsonl,
     )
 
@@ -407,6 +411,89 @@ def _extract_text_and_logprob(resp) -> tuple[str, dict[str, float | int | None]]
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# PARAGRAPH-JOINT inference: ONE request per record -> {"labels": [...N...]}
+# ──────────────────────────────────────────────────────────────────────────────
+
+def build_messages_for_record_joint(claim_text, sentences, evidence_bundle, data_root):
+    """Messages for a whole-paragraph joint request (system_joint + numbered sentences)."""
+    user_text, image_paths = build_user_content_joint(
+        claim_text, sentences, evidence_bundle, data_root
+    )
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT_JOINT},
+        {"role": "user", "content": user_text},
+    ]
+    return messages, image_paths
+
+
+def parse_labels_joint(text: str, n: int) -> tuple[list[str], bool]:
+    """Parse {"labels":[...]} into EXACTLY n normalized labels. JSON first, then a regex over quoted
+    strings that normalize to a valid label (in order). Pad/truncate to n with Supported (PEM-safe).
+    Returns (labels, ok) where ok = parsed a list of the right length with all-valid labels."""
+    raw_list = None
+    obj = _try_json_obj(text or "")
+    if isinstance(obj, dict) and isinstance(obj.get("labels"), list):
+        raw_list = obj["labels"]
+    if raw_list is None:
+        found = []
+        for m in re.finditer(r'"([^"]+)"', text or ""):
+            nl = _normalize_label(m.group(1))
+            if nl is not None:
+                found.append(nl)
+        raw_list = found if found else None
+    if raw_list is None:
+        return [FALLBACK_LABEL] * n, False
+    norm = [(_normalize_label(str(x)) or FALLBACK_LABEL) for x in raw_list]
+    all_valid = all(_normalize_label(str(x)) is not None for x in raw_list)
+    ok = (len(norm) == n) and all_valid
+    if len(norm) < n:
+        norm += [FALLBACK_LABEL] * (n - len(norm))
+    elif len(norm) > n:
+        norm = norm[:n]
+    return norm, ok
+
+
+def infer_record_joint(eng, adapter_request, engine_kind, request_config, record, data_root):
+    """One joint request per record; map the JSON-array response to per-sentence rows.
+    Length/parse failure -> all-Supported for the record (PEM-safe, mirrors per-sentence guard)."""
+    from swift import InferRequest  # noqa: WPS433
+
+    rid = record["id"]
+    sentences: list[str] = record["sentences"]
+    if not sentences:
+        return []
+    messages, image_paths = build_messages_for_record_joint(
+        record["claim_text"], sentences, record["evidence_bundle"], data_root
+    )
+    kw: dict[str, Any] = {"messages": messages}
+    if image_paths:
+        kw["images"] = image_paths
+    infer_kwargs: dict[str, Any] = {}
+    if engine_kind == "vllm" and adapter_request is not None:
+        infer_kwargs["adapter_request"] = adapter_request
+
+    responses = eng.infer([InferRequest(**kw)], request_config, use_tqdm=False, **infer_kwargs)
+    if len(responses) != 1:
+        return [{"id": rid, "sent_index": i, "label": "Supported", "raw": "", "logprob": None,
+                 "min_logprob": None, "sum_logprob": None, "n_tokens": None, "parsed_ok": False}
+                for i in range(len(sentences))]
+    text, conf = _extract_text_and_logprob(responses[0])
+    labels, ok = parse_labels_joint(text, len(sentences))
+    rows = []
+    for i, lab in enumerate(labels):
+        rows.append({
+            "id": rid, "sent_index": i, "label": lab,
+            "raw": text if i == 0 else "",  # store the full joint response once (sent_index 0)
+            "logprob": None,
+            "min_logprob": conf["min_logprob"] if i == 0 else None,
+            "sum_logprob": conf["sum_logprob"] if i == 0 else None,
+            "n_tokens": conf["n_tokens"] if i == 0 else None,
+            "parsed_ok": ok,
+        })
+    return rows
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # dry-run（本地、无 torch）：只构造请求并打印，验证 prompt/分组/输出契约
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -480,6 +567,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--max-new-tokens", type=int, default=DEFAULT_MAX_NEW_TOKENS)
     p.add_argument(
+        "--joint",
+        action="store_true",
+        help="PARAGRAPH-JOINT inference: one request per record -> JSON array of N labels "
+             "(must match a model trained with build_dataset --joint). max_tokens auto-bumped to 512.",
+    )
+    p.add_argument(
         "--no-logprob",
         action="store_true",
         help="关闭 logprob 解码（更快；段落级阈值收口将无置信度可用）。",
@@ -521,8 +614,10 @@ def main(argv: list[str] | None = None) -> int:
         lora_rank=args.lora_rank,
     )
 
+    # Joint mode emits up to N labels (testp1 max 31 sentences) -> bigger budget than the
+    # per-sentence 24-token default; 512 covers 31 labels + JSON structure.
     request_config = RequestConfig(
-        max_tokens=args.max_new_tokens,
+        max_tokens=(512 if args.joint else args.max_new_tokens),
         temperature=0.0,  # 贪心：分类任务要确定性
         logprobs=not args.no_logprob,
         top_logprobs=1 if not args.no_logprob else None,
@@ -535,8 +630,9 @@ def main(argv: list[str] | None = None) -> int:
     n_fallback = 0
     label_counter: dict[str, int] = {lbl: 0 for lbl in TRACK1_LABELS}
     with out_path.open("w", encoding="utf-8") as f:
+        _infer = infer_record_joint if args.joint else infer_record
         for ri, rec in enumerate(records):
-            rows = infer_record(
+            rows = _infer(
                 eng, adapter_request, engine_kind, request_config, rec, data_root
             )
             for row in rows:
