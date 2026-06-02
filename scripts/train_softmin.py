@@ -54,8 +54,12 @@ def main() -> None:
     #       subclass lazily (imports torch/swift here, on the server).
     reg.register()
 
-    # 3) Hand off to the swift sft entrypoint with the original argv.
-    from swift.cli.sft import sft_main
+    # 3) Hand off to the swift sft entrypoint with the original argv. In ms-swift 4.2.3
+    #    sft_main lives in swift.pipelines (swift/cli/sft.py itself does
+    #    `from swift.pipelines import sft_main`). For MULTI-GPU, launch this script under
+    #    torchrun so register() runs in EVERY worker process, e.g.:
+    #      NPROC_PER_NODE=2 torchrun --nproc_per_node=2 scripts/train_softmin.py --config ...
+    from swift.pipelines import sft_main
     sft_main()
 
 

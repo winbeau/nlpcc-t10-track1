@@ -30,10 +30,10 @@ from swift.loss import loss_map, BaseLoss  # noqa: E402
 
 print(f"swift {swift.__version__} | loss_map keys (before): {sorted(loss_map.keys())}")
 try:
-    from swift.cli.sft import sft_main  # noqa: F401,E402
-    check("swift.cli.sft.sft_main importable", True)
+    from swift.pipelines import sft_main  # noqa: F401,E402  (4.2.3 location)
+    check("swift.pipelines.sft_main importable", True)
 except Exception as e:  # noqa: BLE001
-    check("swift.cli.sft.sft_main importable", False, repr(e))
+    check("swift.pipelines.sft_main importable", False, repr(e))
 
 # 2 + 3. register + patch
 from nlpcc_t10.swift_softmin import register  # noqa: E402
