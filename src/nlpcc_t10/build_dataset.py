@@ -92,6 +92,29 @@ Allowed labels:
 Output format: {"label": "<one of the five labels above>"}\
 """
 
+# ── PARAGRAPH-JOINT mode (one forward per record, all N labels at once) ──────────────────
+# Rationale (roadmap v2 rank-2): per-sentence isolation cannot see cross-sentence context that
+# Scope Overgeneralization needs (a later sentence over-generalizes a scope set earlier); and one
+# forward/record collapses the per-sentence image-prefix re-encode (up to 57x) -> makes 32B fit.
+SYSTEM_PROMPT_JOINT = (
+    "You are a careful scientific claim verification system. "
+    "Given evidence (figures/tables with captions) and a claim paragraph, classify EACH numbered "
+    "sentence into exactly one of five categories. Return valid JSON only, with no explanation or "
+    "extra keys."
+)
+
+LABEL_DEFINITIONS_JOINT = """\
+Allowed labels:
+- Supported: the sentence is fully supported by the evidence.
+- Unsupported Causal Mechanistic: the sentence adds an unsupported causal or mechanistic explanation.
+- Unsupported Entity: the sentence mentions an unsupported dataset, metric, model variant, baseline, or other scientific entity.
+- Scope Overgeneralization: the sentence generalizes beyond the scope supported by the evidence.
+- Contradiction: the sentence directly contradicts the evidence.
+
+Output format: {"labels": ["<label for sentence 1>", "<label for sentence 2>", ...]} \
+— exactly one label per numbered sentence, in the same order, same count.\
+"""
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # I/O HELPERS
@@ -304,6 +327,140 @@ def expand_record(
         )
         samples.append((sample, target_label))
     return samples
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PARAGRAPH-JOINT SAMPLE CONSTRUCTION (one sample per RECORD; plain-CE training)
+# ──────────────────────────────────────────────────────────────────────────────
+
+def build_user_content_joint(
+    claim_text: str,
+    sentences: list[str],
+    evidence_bundle: list[dict[str, Any]],
+    data_root: Path,
+) -> tuple[str, list[str]]:
+    """User text + images for a paragraph-joint sample: evidence + claim + NUMBERED sentences."""
+    evidence_text, image_paths = evidence_to_text_and_images(evidence_bundle, data_root)
+    numbered = "\n".join(f"{i}. {s}" for i, s in enumerate(sentences, 1))
+    parts = [
+        LABEL_DEFINITIONS_JOINT,
+        "",
+        evidence_text,
+        "",
+        f"Claim paragraph:\n{claim_text}",
+        "",
+        f"Sentences to classify (output exactly one label per sentence, in order):\n{numbered}",
+    ]
+    return "\n".join(parts), image_paths
+
+
+def make_sample_joint(
+    record_id: str,
+    claim_text: str,
+    sentences: list[str],
+    labels: list[str],
+    evidence_bundle: list[dict[str, Any]],
+    data_root: Path,
+) -> dict[str, Any]:
+    """One ms-swift sample for a whole paragraph; assistant target = {"labels": [...N...]}."""
+    user_text, image_paths = build_user_content_joint(claim_text, sentences, evidence_bundle, data_root)
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT_JOINT},
+        {"role": "user", "content": user_text},
+        {"role": "assistant", "content": json.dumps({"labels": labels}, ensure_ascii=False)},
+    ]
+    sample: dict[str, Any] = {"messages": messages, "channel": record_id}
+    if image_paths:
+        sample["images"] = image_paths
+    return sample
+
+
+def expand_record_joint(
+    rec: dict[str, Any],
+    record_idx: int,
+    label_freq: Counter,
+    data_root: Path,
+) -> tuple[dict[str, Any], bool]:
+    """One record -> one joint sample. Returns (sample, has_minority)."""
+    pid = f"track1-{record_idx:06d}"
+    sent_items = rec.get("sentence_label", [])
+    sentences = [s.get("sentence", "") for s in sent_items]
+    labels = [pick_rarest_label(s.get("types", []), label_freq) for s in sent_items]
+    has_minority = any(l != "Supported" for l in labels)
+    sample = make_sample_joint(
+        pid, rec.get("claim_text", ""), sentences, labels, rec.get("evidence_bundle", []), data_root
+    )
+    return sample, has_minority
+
+
+def build_dataset_joint(
+    data_root: Path,
+    out_dir: Path,
+    dev_ratio: float,
+    seed: int,
+    hard_oversample: float = 2.0,
+    limit: int | None = None,
+) -> dict[str, Any]:
+    """Paragraph-JOINT pipeline: one sample per record (all N labels as a JSON array). Train-time
+    imbalance = duplicate WHOLE minority-containing records `hard_oversample`x (fresh channel id),
+    which lifts the minority fraction WITHOUT the per-sentence singleton trick (plain-CE, no softmin).
+    Reuses the same 9:1 stratified split + train-only label_freq as the per-sentence build."""
+    data_path = data_root / "data" / "traindev-track-1.jsonl"
+    records = load_jsonl(data_path)
+    if limit is not None:
+        records = records[:limit]
+    print(f"[JOINT] Loaded {len(records)} records")
+
+    train_idx, dev_idx = stratified_split(records, dev_ratio, seed)
+    print(f"[JOINT] Split: {len(train_idx)} train / {len(dev_idx)} dev records")
+    split_map: dict[str, str] = {}
+    for i in train_idx:
+        split_map[f"track1-{i:06d}"] = "train"
+    for i in dev_idx:
+        split_map[f"track1-{i:06d}"] = "dev"
+
+    label_freq = compute_global_label_freq([records[i] for i in train_idx])
+
+    rng = random.Random(seed)
+    train_samples: list[dict[str, Any]] = []
+    n_hard = 0
+    for i in train_idx:
+        sample, has_minority = expand_record_joint(records[i], i, label_freq, data_root)
+        train_samples.append(sample)
+        if has_minority:
+            n_hard += 1
+            n_extra_float = hard_oversample - 1.0
+            n_extra = int(math.floor(n_extra_float)) + (1 if rng.random() < (n_extra_float - math.floor(n_extra_float)) else 0)
+            for k in range(n_extra):
+                dup = dict(sample)
+                dup["messages"] = [dict(m) for m in sample["messages"]]
+                if "images" in sample:
+                    dup["images"] = list(sample["images"])
+                dup["channel"] = f"{sample['channel']}#dup{k}"
+                train_samples.append(dup)
+    rng.shuffle(train_samples)
+
+    dev_samples = [expand_record_joint(records[i], i, label_freq, data_root)[0] for i in dev_idx]
+    dev_gold = [make_dev_gold_record(records[i], i) for i in dev_idx]
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    write_jsonl(train_samples, out_dir / "train_sft.jsonl")
+    write_jsonl(dev_samples, out_dir / "dev_sft.jsonl")
+    write_jsonl(dev_gold, out_dir / "dev_gold.jsonl")
+    (out_dir / "split.json").write_text(json.dumps(split_map, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # label distribution across all sentence positions in train (informational)
+    lc: Counter = Counter()
+    for s in train_samples:
+        lc.update(json.loads(s["messages"][2]["content"])["labels"])
+    print(f"[JOINT] hard_oversample={hard_oversample}x on {n_hard} minority-containing train records")
+    print(f"[JOINT] train samples (records): {len(train_samples)} | dev: {len(dev_samples)}")
+    print("[JOINT] train per-sentence-position label distribution:")
+    for lbl in TRACK1_LABELS:
+        print(f"  {lbl}: {lc[lbl]}")
+    print(f"Wrote to {out_dir}: train_sft.jsonl({len(train_samples)}) dev_sft.jsonl({len(dev_samples)}) "
+          f"dev_gold.jsonl({len(dev_gold)}) split.json")
+    return {"n_train_samples": len(train_samples), "n_dev_samples": len(dev_samples)}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -589,6 +746,20 @@ def build_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     p.add_argument(
+        "--joint",
+        action="store_true",
+        help="PARAGRAPH-JOINT mode: one sample per record (all N labels as a JSON array), plain-CE. "
+             "Enables cross-sentence context (helps Scope Overgeneralization) and collapses the "
+             "per-sentence image re-encode (makes 32B feasible). Uses build_dataset_joint().",
+    )
+    p.add_argument(
+        "--joint-hard-oversample",
+        type=float,
+        default=2.0,
+        help="JOINT mode only: duplicate WHOLE minority-containing records this many times "
+             "(fresh channel id) to lift the minority fraction. 1.0 = no oversample.",
+    )
+    p.add_argument(
         "--limit",
         type=int,
         default=None,
@@ -622,6 +793,16 @@ def main(argv: list[str] | None = None) -> int:
     args = build_arg_parser().parse_args(argv)
     data_root = Path(args.data_root).resolve()
     out_dir = Path(args.out).resolve()
+    if args.joint:
+        build_dataset_joint(
+            data_root=data_root,
+            out_dir=out_dir,
+            dev_ratio=args.dev_ratio,
+            seed=args.seed,
+            hard_oversample=args.joint_hard_oversample,
+            limit=args.limit,
+        )
+        return 0
     build_dataset(
         data_root=data_root,
         out_dir=out_dir,
