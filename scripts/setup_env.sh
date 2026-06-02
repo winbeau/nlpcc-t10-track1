@@ -1,68 +1,73 @@
 #!/usr/bin/env bash
-# Remote GPU server ONLY — one-time environment setup.
-# Installs the training stack (ms-swift / transformers / peft / torch cu130),
-# pulls LFS images, and unpacks them. Do NOT run locally.
+# One-shot server bootstrap: run ONCE after `uv sync --extra train`, from anywhere.
 #
-# ENV: torch 2.12+cu130 (CUDA 13.0) on 2xL40. uv installs the matching torch wheel
-#      from the cu130 index automatically via pyproject.toml or an explicit step below.
+#   git clone git@github.com:winbeau/nlpcc-t10-track1.git
+#   cd nlpcc-t10-track1
+#   uv sync --extra train          # create the python env (torch/ms-swift/...)
+#   bash scripts/setup_env.sh      # THIS script: deps + dataset + model (progress shown)
+#   # then the pipeline (build_dataset -> train -> infer -> aggregate -> eval)
 #
-# Usage:
-#   DATA_ROOT=../NLPCC-2026-Task10-Science bash scripts/setup_env.sh
+# Installs git-lfs + torchvision (matched to torch cu130; needed by qwen_vl_utils), clones the
+# official data repo as a SIBLING, git-lfs-pulls the FULL dataset + unzips images, and downloads
+# the Qwen3-VL model into a sibling ms_cache. Idempotent (safe to re-run) and PATH-PORTABLE
+# (everything is relative to this repo, so it works on any host / any base folder).
+#
+# Progress bars are intentionally NOT silenced (git-lfs pull + modelscope download print live
+# progress). For long pulls, run inside tmux and watch the session.
+#
+# Overridable via env: DATA_REPO, MODEL_ID, MODELSCOPE_CACHE, DATA_ROOT, TORCH_INDEX.
 set -euo pipefail
 
-DATA_ROOT="${DATA_ROOT:-../NLPCC-2026-Task10-Science}"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BASE_DIR="$(dirname "$REPO_ROOT")"                       # the parent folder (e.g. .../wenbiao_zhao)
+DATA_ROOT="${DATA_ROOT:-$BASE_DIR/NLPCC-2026-Task10-Science}"
+export MODELSCOPE_CACHE="${MODELSCOPE_CACHE:-$BASE_DIR/ms_cache}"
+DATA_REPO="${DATA_REPO:-git@github.com:winbeau/NLPCC-2026-Task10-Science.git}"
+MODEL_ID="${MODEL_ID:-Qwen/Qwen3-VL-8B-Instruct}"
+TORCH_INDEX="${TORCH_INDEX:-https://download.pytorch.org/whl/cu130}"
 
-# ---------------------------------------------------------------------------
-# Step 1: Install the training stack (ms-swift, transformers 5.8.1, peft,
-#         accelerate, qwen-vl-utils, and torch cu130 from the PyTorch cu130 index).
-#         uv handles the torch wheel selection via the [train] optional-dependency
-#         group; the cu130 index is specified in pyproject.toml or via --index below.
-# ---------------------------------------------------------------------------
-echo "[1/4] uv sync --extra train (torch cu130 + ms-swift 4.2.3 + transformers 5.8.1 ...)"
-# uv resolves torch from the cu130 index. If pyproject.toml does not yet pin
-# the cu130 index, add it here explicitly:
-uv sync --extra train \
-  --index "https://download.pytorch.org/whl/cu130" \
-  || { echo "  [WARN] uv sync failed; retrying without extra index (torch may already be installed)"; \
-       uv sync --extra train; }
+cd "$REPO_ROOT"
+echo "=================================================================="
+echo " REPO_ROOT        = $REPO_ROOT"
+echo " DATA_ROOT        = $DATA_ROOT   (sibling, official data repo)"
+echo " MODELSCOPE_CACHE = $MODELSCOPE_CACHE"
+echo " MODEL_ID         = $MODEL_ID"
+echo "=================================================================="
 
-# Verify torch is importable and reports the right CUDA build.
-uv run python -c "import torch; print(f'  torch {torch.__version__}  CUDA available: {torch.cuda.is_available()}')" \
-  || echo "  [WARN] torch import check failed; continue and verify manually"
+echo "[1/5] git-lfs"
+if ! command -v git-lfs >/dev/null 2>&1; then
+  echo "  installing git-lfs via apt (needs root) ..."
+  apt-get update -qq && apt-get install -y git-lfs
+fi
+git lfs version
 
-# ---------------------------------------------------------------------------
-# Step 2: (Optional) Install flash-attn for faster attention on L40.
-#         Requires a pre-built wheel matching torch+CUDA; comment out if unavailable.
-# ---------------------------------------------------------------------------
-# echo "[1b/4] pip install flash-attn (optional; comment out if not available)"
-# uv run pip install flash-attn --no-build-isolation || echo "  [WARN] flash-attn install failed; using sdpa"
+echo "[2/5] torchvision (matched to torch cu130; required by qwen_vl_utils)"
+if ! uv run python -c "import torchvision" 2>/dev/null; then
+  uv pip install torchvision --index-url "$TORCH_INDEX"
+fi
+uv run python -c "import torch,torchvision; print('  torch',torch.__version__,'| torchvision',torchvision.__version__,'| cuda',torch.cuda.is_available(),'| n_gpu',torch.cuda.device_count())"
 
-# ---------------------------------------------------------------------------
-# Step 3: Pull LFS images from the official data repo.
-# ---------------------------------------------------------------------------
-echo "[2/4] git lfs pull — official dataset images (run inside the data repo)"
-( cd "$DATA_ROOT" && git lfs pull )
+echo "[3/5] clone official data repo (sibling) -> $DATA_ROOT"
+if [ ! -d "$DATA_ROOT/.git" ]; then
+  GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new" git clone "$DATA_REPO" "$DATA_ROOT"
+else
+  echo "  already cloned."
+fi
 
-# ---------------------------------------------------------------------------
-# Step 4: Unpack images.
-# ---------------------------------------------------------------------------
-echo "[3/4] Unzip images to $DATA_ROOT/data/images/"
+echo "[4/5] git lfs pull (FULL dataset; progress shown) + unzip images"
+( cd "$DATA_ROOT" && git lfs install && git lfs pull )
 mkdir -p "$DATA_ROOT/data/images"
-# -n: never overwrite existing files (safe to re-run); -q: quiet.
 unzip -nq "$DATA_ROOT/data/images.zip"        -d "$DATA_ROOT/data/images/"
 unzip -nq "$DATA_ROOT/data/images-testp1.zip" -d "$DATA_ROOT/data/images/"
+echo "  images extracted: $(ls "$DATA_ROOT/data/images" | wc -l) files"
 
-# ---------------------------------------------------------------------------
-# Step 5: Build the sentence-level dataset (optional; run separately to control params).
-# ---------------------------------------------------------------------------
-echo "[4/4] Environment ready."
-echo "      DATA_ROOT=$DATA_ROOT"
-echo ""
-echo "      Next step (sentence-level dataset):"
-echo "        uv run python -m nlpcc_t10.build_dataset \\"
-echo "            --data-root \"$DATA_ROOT\" --out data/ \\"
-echo "            --minority-oversample 1.0 --supported-downsample 1.0"
-echo ""
-echo "      Then train:"
-echo "        bash scripts/train.sh baseline    # plain CE"
-echo "        bash scripts/train.sh softmin     # SoftMin PEM loss"
+echo "[5/5] download model $MODEL_ID -> $MODELSCOPE_CACHE (progress shown)"
+uv run modelscope download --model "$MODEL_ID"
+
+echo "=================================================================="
+echo " BOOTSTRAP DONE."
+echo " For training/build, export:"
+echo "   export DATA_ROOT=$DATA_ROOT"
+echo "   export MODELSCOPE_CACHE=$MODELSCOPE_CACHE"
+echo " Next: uv run python -m nlpcc_t10.build_dataset --data-root \"\$DATA_ROOT\" --out data ..."
+echo "=================================================================="
