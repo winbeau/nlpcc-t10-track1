@@ -24,7 +24,7 @@ GPUS="${GPUS:-0,1}"; NPROC=$(echo "$GPUS" | awk -F, '{print NF}')
 MAXLEN="${MAX_LENGTH:-10240}"
 BETA="${BETA:-5}"; LAMBDA="${LAMBDA:-0.5}"; EPOCHS="${EPOCHS:-1}"
 MP="${MAX_PIXELS:-802816}"; MP_ARG=(); [ -n "$MP" ] && MP_ARG=(--max_pixels "$MP")  # 802816=1024 tok/img
-TAG="fullres_b${BETA}_l${LAMBDA}"
+TAG="${TAG:-fullres_b${BETA}_l${LAMBDA}}"   # override for other experiments (e.g. gentle-oversample @ grid res)
 OUTDIR="outputs/p0_${TAG}"
 
 echo "### P0 RETRAIN $TAG | use_logits_to_keep=true | max_pixels=${MP:-<full/model-default>} | max_length=$MAXLEN | GPUs=$GPUS | epochs=$EPOCHS ###"
