@@ -1,46 +1,130 @@
-# ms-swift LoRA SFT 配置模板 —— Qwen3-VL-8B / Track 1（句子级）
-# 仅在远程 GPU 服务器使用。占位值用 <...> 标注，定稿前先按 9:1 dev 的 score 调参。
-# 用法示例: swift sft --config configs/qwen3vl_lora_sft.yaml
-# 注意: ms-swift 也支持纯 CLI 参数；YAML 字段名以服务器上 `swift sft -h` 为准，落地时核对。
+# ms-swift LoRA SFT — Qwen3-VL-8B / Track 1 (sentence-level)
+#
+# Shared config for BOTH the plain-CE baseline run and the softmin PEM run.
+#   * Baseline (plain CE):    bash scripts/train.sh
+#   * SoftMin (PEM-bottleneck): launched via scripts/train_softmin.py
+#     (monkeypatches Seq2SeqTrainer -> SoftMinTrainer before swift builds it;
+#      passes --loss_type softmin_pem --custom_register_path ...register.py
+#      --per_device_train_batch_size 1 --packing false --padding_free false
+#      as CLI overrides that take precedence over this file)
+#
+# Cross-check all keys against `swift sft -h` on the server before the first run.
+# Env: ms-swift 4.2.3, transformers 5.8.1, torch 2.12+cu130, 2xL40 (48 GB each).
 
-# ---- 模型 ----
-model: Qwen/Qwen3-VL-8B-Instruct      # 服务器上确认确切 repo id / 本地路径
-model_type: qwen3_vl                  # 以 ms-swift 版本支持的 type 为准
+# ---------------------------------------------------------------------------
+# MODEL
+# ---------------------------------------------------------------------------
+model: Qwen/Qwen3-VL-8B-Instruct   # confirm exact Hub id or set to local path
+# model_type is auto-inferred from model name in recent ms-swift; uncomment if needed:
+# model_type: qwen3_vl
 torch_dtype: bfloat16
 
-# ---- 训练方式 ----
+# ---------------------------------------------------------------------------
+# LORA
+# ---------------------------------------------------------------------------
 train_type: lora
-lora_rank: 16                         # 待调: 8 / 16 / 32
-lora_alpha: 32
+lora_rank: 16          # grid: 8 / 16 / 32
+lora_alpha: 32         # usually 2x lora_rank
 lora_dropout: 0.05
-# 多模态: 默认冻结 vision encoder，只 LoRA 语言/投影层（先省显存，再实验解冻）
+# Keep ViT frozen (saves ~6 GB VRAM). Ablate freeze_vit: false only after score plateaus.
 freeze_vit: true
-target_modules: all-linear            # 或显式指定 q/k/v/o + mlp
+# all-linear covers q/k/v/o projections + MLP; list explicit module names if OOM.
+target_modules: all-linear
 
-# ---- 数据（由 src/nlpcc_t10/build_dataset.py 生成）----
+# ---------------------------------------------------------------------------
+# DATA  (built by src/nlpcc_t10/build_dataset.py)
+# ---------------------------------------------------------------------------
 dataset:
-  - data/train_sft.jsonl              # 句子级、已重采样（过采样少数类 + 下采样 Supported）
+  - data/train_sft.jsonl   # sentence-level; resampled; `channel` = paragraph_id (required
+                            # by the softmin loss to group sentences of the same paragraph)
 val_dataset:
-  - data/dev_sft.jsonl                # 9:1 dev（句子级，未重采样，反映真实分布）
-max_length: 4096                      # claim 中位 671 字符 + caption + label 定义，留图片 token 余量
+  - data/dev_sft.jsonl     # sentence-level; true distribution; NO resampling
 
-# ---- 优化 ----
-num_train_epochs: 3                   # 待调
-learning_rate: 1.0e-4                 # LoRA 常用 1e-4 ~ 2e-4
+# max_length budget (tokens):
+#   label definitions ~340 + image tokens (IMAGE_MAX_TOKEN_NUM=1024) ~1024
+#   + avg caption evidence ~250 + claim (median ~170) + response <10 = ~1794
+# 4096 gives comfortable headroom; lower to 3072 if 2xL40 OOM at bs=2.
+max_length: 4096
+
+# CRITICAL for softmin run — keep packing and padding_free OFF even for the baseline:
+#   packing=true: collator concatenates multiple samples into one row -> per-sentence l_i
+#     is unrecoverable, AND the `channel` field is dropped (template/base.py:1368-1373).
+#   padding_free=true: flattens rows, same problem.
+# Both are already false by ms-swift default; stated explicitly here for documentation.
+packing: false
+padding_free: false
+
+# ---------------------------------------------------------------------------
+# OPTIMIZATION
+# ---------------------------------------------------------------------------
+num_train_epochs: 3       # grid: 2 / 3 / 5 depending on resampled dataset size
+
+learning_rate: 1.0e-4     # LoRA range: 1e-4 to 2e-4; try 5e-5 if val loss diverges
 warmup_ratio: 0.05
-per_device_train_batch_size: 2        # 看显存
-gradient_accumulation_steps: 8
-gradient_checkpointing: true
-attn_impl: flash_attn                 # 服务器装了 flash-attn 才开
+lr_scheduler_type: cosine
 
-# ---- 评估 / 保存 ----
+# BATCH SIZE NOTE:
+# Baseline run (this value is used): bs=2 per device, 2 GPUs, accum=8
+#   -> effective = 2 * 2 * 8 = 32 sequences per optimizer step.
+# Softmin run: scripts/train_softmin.py overrides --per_device_train_batch_size 1
+#   (ParagraphGroupSampler controls the real batch = all sentences of one paragraph,
+#   typically 2-7 sentences; increase gradient_accumulation_steps accordingly on CLI).
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+
+gradient_checkpointing: true   # saves ~30% VRAM at ~20% throughput cost on L40
+# flash_attn: requires flash-attn installed on server (pip install flash-attn after uv sync).
+# Comment out or set attn_impl: sdpa if flash-attn is not available.
+attn_impl: flash_attn
+
+# ---------------------------------------------------------------------------
+# MULTIMODAL IMAGE TOKENS
+# ---------------------------------------------------------------------------
+# IMAGE_MAX_TOKEN_NUM=1024 controls Qwen3-VL visual token count per image.
+# Set via environment variable so it can be swept without editing this file.
+# The ms-swift key name to pass on CLI (if not auto-read from env) may be
+# --image_max_pixels or --max_pixels; verify with `swift sft -h | grep -i pixel`.
+# For this config we rely on the env variable (scripts/train.sh exports it).
+
+# ---------------------------------------------------------------------------
+# EVALUATION / CHECKPOINTING
+# ---------------------------------------------------------------------------
 eval_strategy: steps
-eval_steps: 200
+eval_steps: 200        # ~1 eval per epoch on the resampled train; adjust as needed
 save_steps: 200
-save_total_limit: 3
+save_total_limit: 3    # keep last 3 checkpoints (each ~16 GB for 8B LoRA adapter)
 logging_steps: 10
+# metric_for_best_model is used only by swift's internal checkpoint selector (eval_loss).
+# TRUE model selection uses bash scripts/eval.sh (official evaluate.py) on the 9:1 dev.
+metric_for_best_model: eval_loss
 output_dir: outputs/qwen3vl8b_lora
 
-# ---- 注意 ----
-# 内置 loss 是 token-level CE；类别不均衡主要靠数据重采样解决（见 CLAUDE.md §5）。
-# 选 checkpoint 时不要只看 eval_loss —— 用 src/nlpcc_t10/eval_local.py 跑官方 score。
+# ---------------------------------------------------------------------------
+# SOFTMIN PEM LOSS (overridden via CLI in the softmin run; not active here)
+# ---------------------------------------------------------------------------
+# The following CLI flags are passed by scripts/train_softmin.py and take precedence
+# over any values set here. Listed for reference:
+#
+#   --loss_type softmin_pem
+#   --custom_register_path src/nlpcc_t10/swift_softmin/register.py
+#   --per_device_train_batch_size 1
+#   --packing false --padding_free false
+#
+# SoftMin hyperparameters (read from env at runtime; no code edits needed for grid sweep):
+#   SOFTMIN_BETA=5.0          temperature (grid: 2 / 5 / 10)
+#   SOFTMIN_LAMBDA=0.5        mix weight  (grid: 0.3 / 0.5 / 0.7; keep <= 0.7 for CE floor)
+#   SOFTMIN_WARMUP_FRAC=0.0   fraction of training for beta warmup (0 = disabled)
+#   SOFTMIN_BETA_MIN=1.0      starting beta when warmup is active
+
+# ---------------------------------------------------------------------------
+# TUNING CHECKLIST
+# ---------------------------------------------------------------------------
+# 1. Model selection: ALWAYS use bash scripts/eval.sh (official evaluate.py) on the 9:1 dev.
+#    score = (Macro-F1 + PEM) / 2. Do NOT rely on eval_loss alone.
+# 2. Resampling ratios: tune --minority-oversample / --supported-downsample by dev SCORE
+#    (not minority recall). Rebuild data/ with build_dataset.py after each sweep point.
+# 3. MANDATORY ablation: SOFTMIN_LAMBDA=0 (plain CE) vs lambda>0 on dev PEM.
+#    If dev PEM does not improve, drop the lambda term and use plain CE.
+# 4. OOM on 2xL40: try max_length 3072, lora_rank 8, gradient_accumulation_steps 4,
+#    or freeze_vit true (already on), or reduce IMAGE_MAX_TOKEN_NUM to 512.
+# 5. Log every run in notes/ (config + dev score / Macro-F1 / PEM).
