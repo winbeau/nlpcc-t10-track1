@@ -53,7 +53,7 @@ def train(beta, lam, outdir, logp) -> tuple[int, str | None]:
         "--num_train_epochs", EPOCHS, "--per_device_train_batch_size", "1",
         "--gradient_accumulation_steps", "1", "--learning_rate", "1e-4",
         "--lora_rank", "16", "--lora_alpha", "32", "--freeze_vit", "true",
-        "--max_length", "4096", "--max_pixels", "802816", "--attn_impl", "sdpa",
+        "--max_length", "4096", "--max_pixels", "401408", "--attn_impl", "sdpa",
         "--packing", "false", "--padding_free", "false", "--use_logits_to_keep", "false",
         "--eval_strategy", "no", "--save_strategy", "epoch", "--save_total_limit", "1",
         "--logging_steps", "20", "--dataloader_num_workers", "0", "--output_dir", outdir,
@@ -68,7 +68,7 @@ def infer_eval(ckpt, tag) -> float | None:
     raw, sub = f"/tmp/{tag}_raw.jsonl", f"/tmp/{tag}_sub.jsonl"
     if _run(["uv", "run", "python", "-m", "nlpcc_t10.infer", "--split", "dev", "--adapter", ckpt,
              "--engine", "pt", "--data-root", DATA_ROOT, "--out", raw],
-            {"CUDA_VISIBLE_DEVICES": GPU_INFER, "MAX_PIXELS": "802816"}, f"/tmp/{tag}.infer.log"):
+            {"CUDA_VISIBLE_DEVICES": GPU_INFER, "MAX_PIXELS": "401408"}, f"/tmp/{tag}.infer.log"):
         print(f"  [{tag}] infer FAILED (see /tmp/{tag}.infer.log)", flush=True)
         return None
     _run(["uv", "run", "python", "-m", "nlpcc_t10.aggregate", "--pred", raw,
