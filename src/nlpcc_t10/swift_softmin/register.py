@@ -1,33 +1,24 @@
-"""ms-swift registration entrypoint for the SoftMin PEM loss.
+"""ms-swift 4.2.3 registration entrypoint for the SoftMin-PEM loss (Option B).
 
-Pass this file to ``swift sft`` via ``--custom_register_path`` so that ms-swift imports it
-and runs its top-level code, which registers the loss under the name ``softmin_pem`` in
-``swift.plugin.loss.LOSS_MAPPING``. Then select it with ``--loss_type softmin_pem``.
+Two things must happen before ms-swift builds the trainer:
+  1. register_loss(): put the loss CLASS into ``swift.loss.loss_map['softmin_pem']`` so that
+     ``--loss_type softmin_pem`` resolves to it (``mixin.py:996``:
+     ``res['compute_loss_func'] = loss_map[args.loss_type](args, self)``).
+  2. patch_trainer(): monkeypatch ``swift.trainers.Seq2SeqTrainer`` -> ``SoftMinTrainer`` so the
+     train dataloader yields one paragraph per batch. ``trainer_factory`` resolves
+     ``'causal_lm' -> 'swift.trainers.Seq2SeqTrainer'`` via ``importlib`` + ``getattr``, so
+     overwriting the module attribute BEFORE the factory runs takes effect.
 
-  swift sft ... \
-      --loss_type softmin_pem \
-      --custom_register_path src/nlpcc_t10/swift_softmin/register.py
+Use the dedicated launcher ``scripts/train_softmin.py`` (it calls ``register()`` then
+``swift.cli.sft.sft_main()``) so ordering relative to the CLI is guaranteed. Passing this file
+via ``--custom_register_path`` also works because its top-level code runs ``register()`` on
+import -- but the launcher is the recommended, order-safe path.
 
-The loss alone, however, is NOT enough: the SoftMin objective requires each optimizer batch
-to be ONE complete paragraph. ms-swift constructs a vanilla ``Seq2SeqTrainer``, so the
-paragraph-group sampler is installed by monkeypatching ``Seq2SeqTrainer`` with
-``SoftMinTrainer`` (from ``sampler.build_paragraph_trainer_cls``) BEFORE the CLI builds the
-trainer -- see ``scripts/train_softmin.py``. ``register()`` here also calls
-``patch_trainer()`` opportunistically so that, even when this file is imported standalone (as
-``--custom_register_path`` does), the trainer is patched as a side effect. The dedicated
-launcher remains the recommended path because it guarantees ordering relative to the CLI.
-
-Importable without torch/swift (local unit tests): both ``register_loss`` and
-``patch_trainer`` are wrapped in try/except, so importing this module locally is a no-op that
-does not raise.
+Importable WITHOUT torch/swift (local unit tests): both steps are wrapped in try/except, so
+importing this module locally is a no-op that does not raise.
 """
 
 from __future__ import annotations
-
-# Import the loss fn from the sibling module. ``loss`` is torch-free at import time
-# (torch is deferred inside its functions), so this import is safe locally.
-from .loss import softmin_pem_loss
-from .sampler import build_paragraph_trainer_cls
 
 LOSS_NAME = "softmin_pem"
 
@@ -36,37 +27,39 @@ _patched = False
 
 
 def register_loss():
-    """Register ``softmin_pem_loss`` in ms-swift's ``LOSS_MAPPING`` (idempotent)."""
+    """Put the SoftMin-PEM loss class into ``swift.loss.loss_map`` (idempotent)."""
     global _registered
     if _registered:
         return True
-    from swift.plugin.loss import register_loss_func
+    from swift.loss import loss_map
 
-    register_loss_func(LOSS_NAME)(softmin_pem_loss)
+    from .loss import make_softmin_loss_cls
+
+    loss_map[LOSS_NAME] = make_softmin_loss_cls()  # value is a BaseLoss subclass (a CLASS)
     _registered = True
     return True
 
 
 def patch_trainer():
-    """Monkeypatch ``swift.trainers.Seq2SeqTrainer`` (and its re-export) with
-    ``SoftMinTrainer`` so the paragraph-group sampler is used. Idempotent.
+    """Monkeypatch ``swift.trainers.Seq2SeqTrainer`` with ``SoftMinTrainer`` (idempotent).
 
-    NOTE: for reliable ordering relative to the swift CLI, prefer the dedicated launcher
-    ``scripts/train_softmin.py`` which patches BEFORE constructing the trainer. This function
-    exists so ``--custom_register_path`` alone also patches when imported early enough.
+    Builds the subclass FIRST (capturing the original Seq2SeqTrainer to subclass from), THEN
+    overwrites the module attribute(s) ms-swift resolves at trainer-build time.
     """
     global _patched
     if _patched:
         return True
-    SoftMinTrainer = build_paragraph_trainer_cls()
+    from .sampler import build_paragraph_trainer_cls
+
+    soft_min_trainer = build_paragraph_trainer_cls()  # imports + subclasses the ORIGINAL
     import swift.trainers as swift_trainers
 
-    swift_trainers.Seq2SeqTrainer = SoftMinTrainer
-    try:  # some versions re-export from swift.trainers.trainers
-        import swift.trainers.trainers as _t
+    swift_trainers.Seq2SeqTrainer = soft_min_trainer
+    try:  # also patch the defining submodule, in case it is referenced directly
+        import swift.trainers.seq2seq_trainer as _seq2seq
 
-        _t.Seq2SeqTrainer = SoftMinTrainer
-    except Exception:
+        _seq2seq.Seq2SeqTrainer = soft_min_trainer
+    except Exception:  # noqa: BLE001
         pass
     _patched = True
     return True
@@ -78,14 +71,9 @@ def register():
     patch_trainer()
 
 
-# ms-swift imports this file (via --custom_register_path) and runs module top-level code,
-# so register on import. Wrapped in try/except so the file is importable WITHOUT swift
-# (e.g. local unit tests of loss.group_indices), where it is a harmless no-op.
+# --custom_register_path imports this file and runs top-level code, so register on import.
+# Wrapped so the module is importable WITHOUT swift (local unit tests), where it is a no-op.
 try:  # pragma: no cover - exercised only on the server
-    register_loss()
-except Exception:
-    pass
-try:  # pragma: no cover - exercised only on the server
-    patch_trainer()
-except Exception:
+    register()
+except Exception:  # noqa: BLE001
     pass

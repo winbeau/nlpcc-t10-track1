@@ -54,6 +54,13 @@ max_length: 4096
 packing: false
 padding_free: false
 
+# CRITICAL for the softmin run: keep use_logits_to_keep OFF. When ON, ms-swift truncates the
+# model's logits to the response region (seq2seq_trainer.get_use_logits_to_keep /
+# prepare_logits_to_keep), so logits no longer align with the FULL labels and the causal shift
+# in loss._per_sentence_ce (logits[...,:-1] vs labels[...,1:]) misaligns. The plain-CE baseline
+# is unaffected (swift handles its own alignment), but our custom loss needs full logits.
+use_logits_to_keep: false
+
 # ---------------------------------------------------------------------------
 # OPTIMIZATION
 # ---------------------------------------------------------------------------

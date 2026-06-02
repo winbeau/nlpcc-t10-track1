@@ -50,22 +50,19 @@ WHY LSE, not the weighted ``sum_i softmax(beta*l_i)*l_i`` form:
   would actively push a GOOD sentence's loss UP. The LSE gradient = softmax(beta*l) is in
   [0,1] and sums to 1: always a safe non-negative convex combination. -> we use LSE.
 
-HOW group_id (paragraph_id) FLOWS TO THE LOSS -- PIGGYBACK THE ``channel`` FIELD:
-  Verified from ms-swift source (reference copy, lineage matches 4.2.3):
-    * Seq2SeqTrainer.compute_loss builds a LOCAL ``loss_kwargs`` and the ONLY non-tensor
-      metadata it forwards to a custom loss is ``loss_scale`` and ``channel``
-      (trainers.py:159-175): it pops ``channel`` -> sets ``loss_kwargs['sample_channels']``
-      AND ``loss_kwargs['trainer'] = self`` -> calls
-      ``compute_loss_func(outputs, labels, num_items_in_batch=..., **loss_kwargs)`` (:219).
-    * ``channel`` is in ``keep_columns`` (preprocessor/core.py:313) so it survives
-      ``Dataset.map()``, and the collator emits ``res['channel'] = [b['channel'] ...]`` as a
-      python list of length B in NON-packing mode (template/base.py:1377-1383). Packing mode
-      gathers only input_ids/labels/position_ids/loss_scale and DROPS channel -> packing and
-      padding_free MUST be OFF for the softmin run (also: packing concatenates sentences into
-      one row, making per-sentence l_i unrecoverable).
-  ``paragraph_id`` has no native slot, so build_dataset.py writes the paragraph_id into each
-  row's ``channel`` field. This loss reads the paragraph ids from ``sample_channels`` with
-  ZERO swift internal edits.
+HOW PARAGRAPH GROUPING WORKS (ms-swift 4.2.3, "Option B" -- verified against installed source):
+  Grouping is done by the SAMPLER, not by a metadata field riding the batch. The custom
+  ``ParagraphGroupSampler`` (sampler.py) makes each TRAIN batch == ALL sentence-samples of
+  ONE paragraph (it reads the per-row ``channel`` = paragraph_id from the dataset to group the
+  row INDICES). So inside the loss the WHOLE batch is exactly one soft-min group -- no
+  ``channel``/``sample_channels`` needs to survive the collator (the 3.5.x ``channel`` pipeline
+  the original draft relied on is NOT a usable custom-loss hook in 4.2.3). The
+  ``softmin_pem_loss`` function below still supports explicit ``sample_channels`` grouping (used
+  by the unit test); the PRODUCTION path is ``make_softmin_loss_cls`` -- a ``swift.loss.BaseLoss``
+  that groups the whole batch and gates the soft-min on ``model.training`` (eval -> plain mean-CE).
+  packing/padding_free MUST stay OFF (they concatenate sentences -> per-sentence l_i lost);
+  use_logits_to_keep MUST be OFF (else the model returns truncated logits and the causal shift
+  in ``_per_sentence_ce`` misaligns).
 
 GRACEFUL DEGRADATION (unit-tested):
   * sample_channels is None (eval / missing ids) -> plain CE_mean.
@@ -83,9 +80,11 @@ NUMERICAL STABILITY (mandatory):
   ``tok_counts.clamp(min=1)`` so an all-masked sample never divides by zero; the ``-log n_p``
   term is ``math.log(len(idxs))`` subtracted AFTER logsumexp, divided by beta.
 
-This module is registered with ms-swift's ``LOSS_MAPPING`` under the name ``softmin_pem``
-(see ``register.py``) and selected via ``swift sft ... --loss_type softmin_pem
---custom_register_path src/nlpcc_t10/swift_softmin/register.py``.
+The production loss class is registered into ms-swift 4.2.3's ``swift.loss.loss_map`` under the
+name ``softmin_pem`` (see ``register.py``) and selected via ``--loss_type softmin_pem``
+(``mixin.py:996`` does ``loss_map[loss_type](args, trainer)``). The paragraph batching is
+installed by monkeypatching ``swift.trainers.Seq2SeqTrainer`` -> ``SoftMinTrainer`` (sampler.py)
+BEFORE the CLI builds the trainer (see ``scripts/train_softmin.py``).
 """
 
 from __future__ import annotations
@@ -236,3 +235,46 @@ def softmin_pem_loss(
 
     mean_softmin = torch.stack(s_terms).mean()
     return (1.0 - lam) * mean_ce + lam * mean_softmin
+
+
+def make_softmin_loss_cls():
+    """Build the ms-swift 4.2.3 ``BaseLoss`` subclass for the softmin-PEM objective (Option B).
+
+    Deferred (imports swift/torch inside) so this module stays importable locally for the
+    pure-python ``group_indices`` unit test. ``register.py`` puts the returned CLASS into
+    ``swift.loss.loss_map['softmin_pem']``; ms-swift instantiates it as ``cls(args, trainer)``
+    (``mixin.py:996``) and calls the instance as
+    ``(outputs, labels, num_items_in_batch=..., loss_scale=..., trainer=self)``.
+
+    Grouping: with ``ParagraphGroupSampler`` (sampler.py) each TRAIN batch is exactly ONE
+    paragraph, so the whole batch is one soft-min group -- no per-row grouping metadata needed.
+    During EVAL (stock dataloader, arbitrary batch) we return plain mean-CE, gated on
+    ``model.training``, so a spurious cross-paragraph soft-min never fires.
+    """
+    import math
+
+    import torch
+    from swift.loss import BaseLoss
+
+    class SoftMinPEMLoss(BaseLoss):
+        def __call__(self, outputs, labels, *, num_items_in_batch=None, loss_scale=None, **kwargs):
+            per_sentence = _per_sentence_ce(outputs, labels).float()  # [B], float32 stable LSE
+            mean_ce = per_sentence.mean()
+
+            lam = float(os.environ.get("SOFTMIN_LAMBDA", str(_DEFAULT_LAMBDA)))
+            bet = float(os.environ.get("SOFTMIN_BETA", str(_DEFAULT_BETA)))
+            bet = _resolve_beta(bet, self.trainer)
+
+            model = getattr(self.trainer, "model", None)
+            training = bool(getattr(model, "training", True))
+            n = int(per_sentence.shape[0])
+            # Eval / lambda disabled / singleton batch -> plain mean-CE (no spurious soft-min).
+            if (not training) or lam <= 0.0 or n < 2:
+                return mean_ce
+            # TRAIN: ParagraphGroupSampler guarantees the whole batch == ONE paragraph.
+            # Normalized LSE soft-max-over-losses; -log n is constant in l so the gradient is
+            # softmax(beta*l), peaked on the worst sentence (see module docstring + unit test).
+            s_p = (torch.logsumexp(bet * per_sentence, dim=0) - math.log(n)) / bet
+            return (1.0 - lam) * mean_ce + lam * s_p
+
+    return SoftMinPEMLoss
