@@ -26,8 +26,9 @@
     （raw 便于排查解析失败；logprob = 解码出的标签首 token 的 logprob，便于段落级阈值收口，§5）。
   - aggregate.py 负责把句子级 -> record 级 {id, labels}。
 
-依赖（仅服务器，本地无 torch）：ms-swift 4.2.3 的 swift.llm.{PtEngine,VllmEngine,RequestConfig,
-InferRequest,AdapterRequest}。本文件 import torch/swift 全部延迟到 main()，纯 argparse 可本地 import。
+依赖（仅服务器，本地无 torch）：ms-swift 4.2.3 顶层导出 swift.{TransformersEngine,VllmEngine,
+RequestConfig,InferRequest,AdapterRequest}（注意 4.2.3 没有 swift.llm / PtEngine；pt 后端 =
+TransformersEngine）。本文件 import torch/swift 全部延迟到函数体，纯 argparse 可本地 import。
 
 CLI:
   # 默认 PtEngine（transformers）：
@@ -252,9 +253,12 @@ def load_engine(
           adapter 通过每次 infer 传 AdapterRequest 注入；前缀 KV 自动复用。
     """
     if engine == "pt":
-        from swift.llm import PtEngine  # noqa: WPS433
+        # ms-swift 4.2.3: the transformers backend is TransformersEngine (top-level export);
+        # there is no swift.llm.PtEngine. Constructor: model positional + keyword-only
+        # adapters/max_batch_size/attn_impl (verified against infer_engine/transformers_engine.py).
+        from swift import TransformersEngine  # noqa: WPS433
 
-        eng = PtEngine(
+        eng = TransformersEngine(
             model,
             adapters=[adapter] if adapter else None,
             max_batch_size=max_batch_size,
@@ -263,7 +267,7 @@ def load_engine(
         return eng, None, "pt"
 
     if engine == "vllm":
-        from swift.llm import AdapterRequest, VllmEngine  # noqa: WPS433
+        from swift import AdapterRequest, VllmEngine  # noqa: WPS433  (4.2.3 top-level exports)
 
         eng = VllmEngine(
             model,
@@ -299,7 +303,7 @@ def infer_record(
 
     句子数为 0 时返回空（aggregate.py 会按 ref 句数核对/补齐）。
     """
-    from swift.llm import InferRequest  # noqa: WPS433
+    from swift import InferRequest  # noqa: WPS433  (4.2.3 top-level export)
 
     rid = record["id"]
     sentences: list[str] = record["sentences"]
@@ -482,7 +486,7 @@ def main(argv: list[str] | None = None) -> int:
         return dry_run(records, data_root, args.dry_run_k)
 
     # ---- 以下仅服务器（需要 torch + ms-swift）----
-    from swift.llm import RequestConfig  # noqa: WPS433
+    from swift import RequestConfig  # noqa: WPS433  (4.2.3 top-level export)
 
     eng, adapter_request, engine_kind = load_engine(
         engine=args.engine,
