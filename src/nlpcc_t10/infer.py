@@ -22,8 +22,11 @@
         不做跨请求 prefix cache，但按 record 成批 + max_batch_size 摊薄；输出/解析/打分完全一致。
   - 解析输出 JSON {"label": ...}；非法/越界 -> FALLBACK_LABEL（"Supported"，保 PEM，§4/§8）。
   - 输出句子级原始预测 outputs/<split>_raw.jsonl，每行：
-      {"id": <record_id>, "sent_index": i, "label": "...", "raw": "<模型原文>", "logprob": <float|null>}
-    （raw 便于排查解析失败；logprob = 解码出的标签首 token 的 logprob，便于段落级阈值收口，§5）。
+      {"id": <record_id>, "sent_index": i, "label": "...", "raw": "<模型原文>",
+       "logprob": <float|null>, "min_logprob": <float|null>, "sum_logprob": <float|null>,
+       "n_tokens": <int|null>}
+    （raw 便于排查解析失败；min_logprob = 全响应最弱 token 的 logprob ≈ 标签置信度，长度无关，
+     段落级阈值收口的主信号；sum_logprob = log P(整条响应)；logprob 仅向后兼容，无判别力，§5）。
   - aggregate.py 负责把句子级 -> record 级 {id, labels}。
 
 依赖（仅服务器，本地无 torch）：ms-swift 4.2.3 顶层导出 swift.{TransformersEngine,VllmEngine,
@@ -341,13 +344,14 @@ def infer_record(
         )
         return [
             {"id": rid, "sent_index": i, "label": "Supported", "raw": "",
-             "logprob": None, "parsed_ok": False}
+             "logprob": None, "min_logprob": None, "sum_logprob": None,
+             "n_tokens": None, "parsed_ok": False}
             for i in range(len(sentences))
         ]
 
     rows = []
     for i, resp in enumerate(responses):
-        text, logprob = _extract_text_and_logprob(resp)
+        text, conf = _extract_text_and_logprob(resp)
         label, ok = parse_label(text)
         rows.append(
             {
@@ -355,32 +359,51 @@ def infer_record(
                 "sent_index": i,
                 "label": label,
                 "raw": text,
-                "logprob": logprob,
+                "logprob": conf["first_logprob"],   # backward-compat (first token; ~useless)
+                "min_logprob": conf["min_logprob"],  # primary threshold signal (weakest token)
+                "sum_logprob": conf["sum_logprob"],
+                "n_tokens": conf["n_tokens"],
                 "parsed_ok": ok,
             }
         )
     return rows
 
 
-def _extract_text_and_logprob(resp) -> tuple[str, float | None]:
-    """从 ChatCompletionResponse 取 choice0 的文本与首 token logprob（无则 None）。"""
+def _extract_text_and_logprob(resp) -> tuple[str, dict[str, float | int | None]]:
+    """从 ChatCompletionResponse 取 choice0 的文本 + 一组 token 级置信度统计。
+
+    模型输出形如 {"label": "X"}：结构 token（{ " label " : 空格 }）在贪心解码下几乎必然
+    （logprob≈0），唯一不确定的是 **标签值** 的 token。所以 review #14 里只取首 token（'{'）
+    的 logprob 毫无判别力。这里返回全 token 的统计，供段落级阈值收口（§5）按需选用：
+      first_logprob : 首 token（旧行为，向后兼容，基本无用）
+      min_logprob   : 全 token 最小 logprob —— 最弱的那个 token，通常就是标签 token；
+                      **长度无关**，作为"这条预测有多虚"的主信号最稳。
+      sum_logprob   : 全 token logprob 之和 = log P(整条响应) ≈ log P(标签短语)（有长度偏置）。
+      n_tokens      : 解码 token 数（便于做 mean = sum/n）。
+    """
+    conf: dict[str, float | int | None] = {
+        "first_logprob": None, "min_logprob": None, "sum_logprob": None, "n_tokens": None,
+    }
     try:
         choice = resp.choices[0]
     except Exception:
-        return "", None
+        return "", conf
     text = choice.message.content if choice.message is not None else ""
     if not isinstance(text, str):
         text = str(text)
-    logprob = None
     lp = getattr(choice, "logprobs", None)
     # ms-swift logprobs 结构：{"content": [{"token":..,"logprob":float,...}, ...]}
     if isinstance(lp, dict):
         content = lp.get("content")
         if content:
-            first = content[0]
-            if isinstance(first, dict) and isinstance(first.get("logprob"), (int, float)):
-                logprob = float(first["logprob"])
-    return text, logprob
+            lps = [float(c["logprob"]) for c in content
+                   if isinstance(c, dict) and isinstance(c.get("logprob"), (int, float))]
+            if lps:
+                conf["first_logprob"] = lps[0]
+                conf["min_logprob"] = min(lps)
+                conf["sum_logprob"] = float(sum(lps))
+                conf["n_tokens"] = len(lps)
+    return text, conf
 
 
 # ──────────────────────────────────────────────────────────────────────────────
