@@ -108,3 +108,15 @@ PYTHONPATH=src uv run python -m nlpcc_t10.build_dataset --data-root "$DATA_ROOT"
 **关键规律:union 成员越多样 → MacroF1 和 PEM 同时单调上涨**(47.8→48.2→50.0→50.3)。≥2票一致(s16)反而更差 → **纯并集(召回最大)是对的**。PEM 在这个少数类密集的集上是**召回受限**(catch 到 gold 少数类才能让长段 PEM=1),不是精度受限。→ 下一步:**把多样性堆到极致**。
 
 复现:scripts/ensemble_union.py --min-votes {1|2} --out <jsonl> <成员 jsonl...>(s14/s15 用 --min-votes 1,s16 用 2)。
+
+## fleet 异构成员推进(s17–,待提交;目标 50.26→53–56,靠架构多样性)
+> 方向:s15 的 5 成员全是 Qwen3-VL(高相关)。加入**规模/架构差异化**的新成员到并集,逼出不相关错误 → 更大并集收益。dev 泄漏不可信,每个新成员是近盲交。
+
+| 序号 | zip | 机制 | #少数类(UCM/UE/SO/Contra) | Score |
+|---|---|---|---|---|
+| s17 | testp1_q4b_submission.zip | **Qwen3-VL-4B** 单模型(规模多样性成员;非提交首选,主要作并集源) | 220 (91/78/27/24) | 待测 |
+| **s18** | testp1_s18_fleetU.zip | union(s01+s08+s09+s12+s13 **+ q4b**)=6 成员,测规模多样性 | 404 (139/164/58/43) | **待测(对比 50.26)** |
+
+- q4b 单模型偏好 UCM(91,高于多数 8B 成员)→ 有差异化价值。s18 比 ensU5 多 22 个少数类预测(382→404)。
+- 复现:`scripts/train_internvl.sh` 同类的 q4b 由 `MODEL_ID=Qwen/Qwen3-VL-4B-Instruct TAG=q4b ... bash scripts/retrain_fullres.sh`(infer 步已修 `--model`);union 同上 `ensemble_union.py --min-votes 1`。
+- **下一成员:InternVL3-8B-hf**(首个非 Qwen,InternViT 编码器)训练中 → 完成后 s19 = union(6 + internvl8b)。配置见全局记忆 internvl-fleet-config(MAX_PIXELS=401408 必设、use_logits=false、HF_HOME 可写、lr 5e-5)。
