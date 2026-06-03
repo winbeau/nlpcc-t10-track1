@@ -16,6 +16,11 @@ data/*
 images/
 *.zip
 *.jsonl          # derived splits / preds; official data lives in ../NLPCC-2026-Task10-Science
+# ...but DO track the final Codabench submissions (predictions only = {id, labels}; safe per policy).
+# Naming: testp1_s{NN}_{tag}.{zip,jsonl} (see CLAUDE.md §8). No more `git add -f` needed.
+!submissions/
+!submissions/testp1_s*.zip
+!submissions/testp1_s*.jsonl
 
 # ---- model / training outputs ----
 outputs/*

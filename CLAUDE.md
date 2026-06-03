@@ -12,7 +12,7 @@ NLPCC 2026 Shared Task 10 **Track 1**：*Claim-level Faithfulness to Experimenta
   - 数据：`data/`（train-dev + Phase 1 test，图片在 Git-LFS）
   - 官方评测器：`offline_eval/evaluate.py`（**唯一权威打分**，必须用它）
   - 基线 prompting kit：`baseline_prompting/`
-- 目标：在官方指标上**超过 trivial baseline（≈43.2%）**并尽量冲榜（见 §4）。
+- 目标：冲榜。**当前最优 testp1 = s15 ensemble 50.26**（最佳单模型 grid s01=47.80）；testp1 的 trivial≈19（**不是** 43.2，见 §4）。
 - Phase 1 提交平台：Codabench 16666。Phase 2 隐藏测试集 2026-06-11 放出，**所有结果 2026-06-20 截止**。
 
 ## 1. 硬约束（务必遵守）
@@ -68,12 +68,12 @@ NLPCC 2026 Shared Task 10 **Track 1**：*Claim-level Faithfulness to Experimenta
 - **PEM (Paragraph Exact Match)**：整段所有句子全对才算 1。
 - **score = (Macro-F1 + PEM) / 2**。
 
-**核心洞察（决定整个策略）：**
-- **trivial「全预测 Supported」基线 ≈ score 43.2%**（Macro-F1 **0.1935** + PEM **0.6697**）。
-- 这个 trivial 基线**碾压官方报告的所有 LLM 基线**（Gemini 10.4% / GPT-5.4 16.4% / Qwen 18.9%）——因为 LLM 乱开少数类，把 **67% 本来全 Supported 的段落**打碎，PEM 崩到 1–12%。
-- 结论：**score 由 PEM 主导，是 precision-critical 局面。** 在 Supported 句上每多 1 个 false positive，就可能让一整段从 PEM-correct 翻成 wrong，代价极大。
-- **胜负手 = 在不打碎干净段落（保 PEM）的前提下，只在高置信时召回那 ~6.3% 少数类句子（提 Macro-F1）。**
-- ⚠️ 因此「过采样少数类」（见 §5）必须配**精确率约束**：重采样比例、阈值/弃权要**按 9:1 dev 上的真实 score 调**，不能只看少数类 recall——否则 score 反而下降。
+**核心洞察（已由 16+ 次 testp1 提交证伪/证实，详见 `notes/submissions_log.md`）：**
+- ⚠️ **原计划的「precision-critical / 抑制少数类保 PEM」框架已被推翻。** 那是基于 train-dev 的 trivial（67% 全-Supported 短段 → PEM 0.67 → score 43.2）。**testp1 完全不同**：段落长（均值 8.7、最长 31 句）、少数类密集（~84% 段含 ≥1 gold 少数类），**全-Supported trivial ≈ 19 分**（实测 s05=18.85）。
+- ⇒ **testp1 是 RECALL-critical**：拿 PEM 必须 catch 到长段里的 gold 少数类句。**抑制少数类（veto / 置信阈值 / 降过采样 / ≥2 票一致）在 testp1 上单调掉分。** PEM 也是召回受限，不是精度受限。
+- **胜负手 = 最大化「正确的」少数类召回。** 已验证**唯一**超 grid 的杠杆 = **多样模型的并集 ensemble**（`scripts/ensemble_union.py --min-votes 1`；成员越多样，Macro-F1 和 PEM **同时**涨）。
+- **当前最优：s15 = 50.26**（grid + 多样 8B/32B 的 5 模型并集）；最佳单模型 grid s01 = 47.80。
+- **已证伪（别再走）**：提分辨率（−3.3）、降过采样（1.5×）、逐类过采样、2 epoch、段落联合格式（单模型 ≤grid，32B 比 8B 好 +1.1 但仍 <grid）、所有抑制类后处理。
 
 评测命令见 §7。
 
@@ -93,30 +93,37 @@ NLPCC 2026 Shared Task 10 **Track 1**：*Claim-level Faithfulness to Experimenta
 - `user`：label 定义 + `evidence_bundle`（图片 + caption）+ 完整 `claim_text` + **TARGET sentence**（指明判这一句）。
 - `assistant`（label / 训练目标）：`{"label": "Unsupported Entity"}`。
 
-**推理后处理建议**（即使句子级训练，也在段落级做一次收口，呼应 §4）：
-- 段落级一致性/阈值校正：对不确定句**偏向 Supported**（降低 false positive，保 PEM）。
-- 阈值/弃权点在 9:1 dev 上以 **score** 为目标网格搜索。
+**推理 / 集成（已验证的赢家路径，呼应 §4）**：
+- ⚠️ **不要做「偏向 Supported / 阈值弃权」的抑制收口——已证伪会掉分。**
+- **赢家 = 多样模型并集 ensemble**：训多个差异化模型（种子 / 基座 / 格式 / 数据切分），`scripts/ensemble_union.py --min-votes 1` 取并集（任一模型开少数类即采纳）。`--min-votes 2`（≥2 票）更差。
+- **段落联合格式**（`build_dataset --joint` + `scripts/train_joint.sh`，纯 CE、one-forward/record）已打通：8B≈24G、**32B≈70G** 显存，是上 32B 的唯一前置（per-sentence 32B 因每句重复图前缀会 OOM ~200G）。单模型 ≤grid，但作 ensemble 的**异构成员**有用。
+- `use_logits_to_keep`：softmin 必须 false（因果位移对齐）；联合纯 CE 可 true。提分辨率（max_pixels↑）已证有害，保持 401408。
 
 ## 6. 仓库结构
 
 ```
 nlpcc-t10-track1/
-├── CLAUDE.md                  # 本文件
-├── pyproject.toml             # uv；重依赖在 [optional-dependencies].train
-├── configs/
-│   └── qwen3vl_lora_sft.yaml  # ms-swift 训练/推理配置模板
+├── CLAUDE.md / pyproject.toml
 ├── src/nlpcc_t10/
-│   ├── build_dataset.py       # 9:1 切分 + 句子级展开 + 重采样 → ms-swift jsonl
-│   ├── infer.py               # 批量推理（KV-cache 前缀复用）→ 句子级原始预测
-│   ├── aggregate.py           # 句子级预测 → 提交格式 {id, labels}（保序、数量对齐）
-│   └── eval_local.py          # 调官方 evaluate.py 在 9:1 dev 上打分
-├── scripts/                   # 服务器上 tmux/ssh 跑的 .sh
-│   ├── setup_env.sh           # uv sync --extra train + lfs pull + 解压图片（仅服务器）
-│   ├── train.sh / infer.sh / eval.sh
-├── notes/analysis.md          # 数据/指标分析与策略（含 §4 的全部数字）
-├── data/   (gitignored)       # 派生数据：句子级 jsonl、9:1 split
-└── outputs/(gitignored)       # 预测、checkpoint、eval 报告
+│   ├── build_dataset.py   # 9:1 切分 + 展开 + 重采样;支持 --joint(段落联合) / --minority-oversample-per-class(逐类)
+│   ├── infer.py           # 推理 → 句子级 raw(含 min_logprob);支持 --joint(一记录一请求,解析 labels 数组)
+│   ├── aggregate.py       # 句子级 → {id,labels}(保序/数量对齐/Supported 兜底)
+│   ├── eval_local.py      # 调官方 evaluate.py 打分
+│   └── swift_softmin/     # ms-swift 4.2.3 softmin-PEM loss + paragraph sampler 集成
+├── scripts/
+│   ├── train_softmin.py + retrain_fullres.sh   # per-sentence softmin LoRA(+infer+zip);TAG/EPOCHS/MAX_PIXELS env
+│   ├── train_joint.py + train_joint.sh         # 段落联合 plain-CE(+infer --joint+zip);MODEL_ID 可换 32B
+│   ├── ensemble_union.py        # ★赢家:多模型并集(--min-votes K)
+│   ├── threshold_variants.py / lone_minority_veto.py   # 后处理(已证伪,留档)
+│   ├── make_submission_zip.py / validate_submission.py # 扁平 zip(顶层 track1_pred.jsonl)+ 校验
+│   └── grid_search.py / smoke_full_res.sh / overnight_recall_queue.sh
+├── submissions/  # testp1_s{NN}_{tag}.{zip,jsonl}(已 git-track;命名规范见 §8)
+├── notes/submissions_log.md   # ★权威:得分总表 + 逐项复现 + 命名规范
+├── notes/overnight_plan.md / analysis.md
+├── data/   (gitignored)  # 派生:train_sft.jsonl / split.json / dev_gold.jsonl
+└── outputs/(gitignored)  # LoRA adapter checkpoint / raw 预测
 ```
+- **模型/提交归档已上传 HF**:`winbeau/nlpcc2026-task10`(private;8 个 adapter + scripts + submissions + README)。新模型增量加 `models/sNN_*/` 重传。
 
 ## 7. 端到端流程（命令都在服务器上跑）
 
@@ -149,16 +156,17 @@ uv run python "$DATA_ROOT/offline_eval/evaluate.py" --track 1 \
 - 提交 `labels` 数量必须 == 句子数，**顺序不能乱**；缺一条 record 评测会报 id 集合不一致。
 - id：测试集自带，原样回填；本地 9:1 dev 用 `prepare_dev_eval.py` 风格的 `track1-NNNNNN` id 生成 gold。
 - 模型解析失败/越界标签时，**fallback 到 `Supported`**（最安全、保 PEM）。
-- 改 prompt / 重采样比例 / 阈值后，**必须在固定的 9:1 dev 上用官方评测器复测 score** 再决定。
-- 实验记录写进 `notes/`（每次配置 → dev score / Macro-F1 / PEM），别只看单一指标。
+- ⚠️ **不要信 9:1 dev（=88）选型**：32% 记录跨切分共享图片（泄漏）+ 分布失配（短/少数类稀 vs testp1 长/密）→ 排不了模型、也没预警到 fullres 掉分。**真信号 = Codabench 排行榜**（上限 100）或无泄漏的 testp1-shaped 子集。
+- **提交命名规范**：`testp1_s{NN}_{tag}.{zip,jsonl}`，`s{NN}` = 按创建顺序的稳定序号；新提交取下一个号 → 重命名 → 追加 `notes/submissions_log.md`（含三元组得分 + 逐类计数 + 复现 + 为什么试它）。
+- 数据构造命令**务必记**（含 `--supported-downsample`；grid 那次漏记，反推吃了亏）。
 
-## 9. 待办 / 开放项
+## 9. 待办 / 开放项（当前路线，已证伪项见 §4 不再列）
 
-- [ ] §5 句子级 prompt 模板定稿（label 定义措辞、是否给同段其他句作上下文）。
-- [ ] 重采样比例（少数类倍率 / Supported 下采样率）网格——按 dev **score** 选。
-- [ ] 推理段落级收口策略（阈值/弃权/偏 Supported）是否真涨 score。
-- [ ] 表格图是否需要 OCR 辅助文本（vs 纯 VL）。
-- [ ] LoRA 超参（rank/alpha/lr/epoch、是否冻结 vision encoder）。
+- [ ] **段落级 verifier/corrector**（优先）：修长段残余 1–2 句错 → 翻整段 PEM。V-B（对并集 flag 的少数类做二分核实）或 V-A（训练式 corrector，需 OOF 候选）。前置：图去重 + 长段 dev 评测台。
+- [ ] **fleet ensemble**：训异构成员（InternVL3-8B / Qwen3-VL-4B / MiniCPM-V / 多种子 / k-fold bagging）→ 巨型并集。多样性已验证单调提分（47.8→50.3），目标 53–56。
+- [ ] **self-consistency 采样**：每模型 temp>0 多采样 → 并集（便宜的召回倍增，叠在 ensemble 上）。
+- [ ] **图去重 9:1 重切分 + devhard 评测台**（长段+少数类子集），让离线选型可信、少烧提交。
+- [ ] Phase-2（2026-06-11 放出）：勿过拟合 Phase-1 排行榜；保 s01/s15 为保底。
 
 ## 10. 参考（官方文件路径）
 
