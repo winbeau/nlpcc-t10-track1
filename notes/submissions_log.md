@@ -1,120 +1,100 @@
-# Codabench Track-1 提交记录（得分 + 复现命令）
+# Codabench Track-1 提交记录(命名规范 + 得分 + 复现命令)
 
-> 每次提交都登记在这里：官方分数 + **能从头复现该提交的命令**。新提交追加一行表格 + 一节复现步骤。
-> 官方评测：`score = (Sentence Macro-F1 + Paragraph Exact Match PEM) / 2`。平台 = Codabench arena 16666（提交上限 100）。
+> 官方评测:`score = (Sentence Macro-F1 + Paragraph Exact Match PEM)/2`。平台 = Codabench arena 16666(提交上限 100)。
 
-## 关键背景（务必先读）
-- **testp1 的 trivial（全 Supported）≈ 19 分**（实测：`veto_all` 99% Supported → 18.85）。**不是** train-dev 的 43.2。
-  testp1 段落长（均值 8.7、最长 31 句）且少数类密集（~84% 段含 ≥1 个 gold 少数类）。
-- ⇒ **testp1 是「召回-critical」**：必须把少数类句判对才拿得到 PEM。**抑制少数类（veto/阈值/降过采样）单调掉分**。
-- ⇒ 方向：**最大化「正确的」少数类召回**（过采样往高、容量、ensemble…），而不是抑制。详见 `memory/testp1-result-v1.md`。
+## 命名规范(务必遵守)
+```
+testp1_s{NN}_{tag}.zip   (+ 同名 .jsonl)
+```
+- `testp1` — 阶段(Phase-1 测试集;Phase-2 用 `testp2_`)。
+- **`s{NN}`** — 2 位**提交序号**,按创建顺序递增,稳定唯一 ID(上传 Codabench / 记分时用它指代)。
+- `{tag}` — 简短配置标识(grid / fullres / tau020 / os4 / perclass / ensU / joint8b / joint32b …)。
+- zip 内文件**永远是 `track1_pred.jsonl`**(官方扁平 zip 规范;`make_submission_zip.py` 自动处理)。
+- 新增提交:取下一个 `s{NN}`,重命名 zip/jsonl,追加下面总表一行 + 复现命令。
 
-## 环境（H200，所有命令在服务器跑）
+## 关键背景(先读)
+- **testp1 trivial(全 Supported)≈ 19**(实测 s05=18.85),**不是** train-dev 的 43.2。testp1 段落长(均值 8.7、最长 31 句)、少数类密集(~84% 段含 ≥1 gold 少数类)。
+- ⇒ **testp1 是召回-critical**:抑制少数类(veto/阈值/降过采样)单调掉分(见 s03–s07)。
+- ⇒ 已证实**走不通**:过采样调召回(均匀/逐类都不改 OOD 逐类率)、提分辨率(s02 −3.3)、2 epoch(过拟合)。详见 `memory/testp1-result-v1.md`。
+
+## 环境(H200,命令在服务器跑)
 ```bash
 cd /data/chenjiayu/wenbiao_zhao/nlpcc-t10-track1
 export DATA_ROOT=/data/chenjiayu/wenbiao_zhao/NLPCC-2026-Task10-Science
 export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
-# 打包：uv run python scripts/make_submission_zip.py --sub <jsonl> --ref "$DATA_ROOT/data/testp1-track-1.jsonl" --out <zip>
-# 校验：uv run python scripts/validate_submission.py --sub <jsonl> --ref "$DATA_ROOT/data/testp1-track-1.jsonl"
+# 校验+打包:uv run python scripts/make_submission_zip.py --sub <jsonl> --ref "$DATA_ROOT/data/testp1-track-1.jsonl" --out submissions/testp1_sNN_tag.zip
 ```
 
-## 得分总表（按 Score 降序）
-| # | 提交文件 (zip) | Score | Macro-F1 | PEM | #少数类 | 配置一句话 |
-|---|---|---:|---:|---:|---:|---|
-| 1 | `testp1_b5_l0.5_submission.zip` ⭐ | **47.79897** | 52.76518 | 42.83276 | 253 | grid 最优：β5 λ0.5，过采样 **3.0×**，max_pixels 401408（392 tok/img），use_logits_to_keep=false，1 epoch |
-| 2 | `testp1_gridckpt_thr_tau-0p20.zip` | 43.85382 | 48.28784 | 39.41980 | 190 | A·置信度阈值：把 min_logprob<−0.20 的少数类退回 Supported |
-| 3 | `testp1_fullres_b5_l0.5_submission.zip` | 44.46574 | 48.99973 | 39.93174 | 260 | 全分辨率：max_pixels **802816**（784 tok/img）+ use_logits_to_keep=true（**有害 −3.3**） |
-| 4 | `testp1_gentle1.5_b5_l0.5_submission.zip` | 40.90984 | 46.83674 | 34.98294 | 246 | B·降过采样 **1.5×**（更差 → 过采样别降） |
-| 5 | `testp1_veto_gated.zip` | 39.57432 | 44.33635 | 34.81229 | 171 | #1·孤立少数类 veto（仅退最虚的 82 个，gate −0.05） |
-| 6 | `testp1_gridckpt_thr_tau-0p03.zip` | 38.47759 | 42.48420 | 34.47099 | 127 | A·置信度阈值：min_logprob<−0.03 退回 |
-| 7 | `testp1_veto_all.zip` | 18.85468 | 22.00970 | 15.69966 | 46 | #1·孤立少数类 veto（全退 207 个）≈ testp1 trivial |
+## 得分总表(按序号)
+| 序号 | zip (submissions/) | Score | Macro-F1 | PEM | #少数类(UCM/UE/SO/Contra) | 配置一句话 |
+|---|---|---:|---:|---:|---|---|
+| **s01** | `testp1_s01_grid.zip` ⭐ | **47.79897** | 52.76518 | 42.83276 | 253 (109/92/29/23) | grid 最优:β5 λ0.5,过采样 3.0×,max_pixels 401408,use_logits_to_keep=false,1ep |
+| s02 | `testp1_s02_fullres.zip` | 44.46574 | 48.99973 | 39.93174 | 260 (104/108/22/26) | 全分辨率 802816 + ulk=true(**有害 −3.3**) |
+| s03 | `testp1_s03_tau020.zip` | 43.85382 | 48.28784 | 39.41980 | 190 | 后处理:min_logprob<−0.20 的少数类→Supported |
+| s04 | `testp1_s04_tau003.zip` | 38.47759 | 42.48420 | 34.47099 | 127 | 后处理:min_logprob<−0.03→Supported |
+| s05 | `testp1_s05_vetoAll.zip` | 18.85468 | 22.00970 | 15.69966 | 46 | 孤立少数类全 veto(≈testp1 trivial 锚点) |
+| s06 | `testp1_s06_vetoGated.zip` | 39.57432 | 44.33635 | 34.81229 | 171 | 孤立少数类 veto(仅退最虚 82,gate −0.05) |
+| s07 | `testp1_s07_gentle15.zip` | 40.90984 | 46.83674 | 34.98294 | 246 | 降过采样 1.5×(更差→过采样别降) |
+| s08 | `testp1_s08_os4.zip` | _TBD_ | | | 235 (102/80/28/25) | 均匀过采样 4×,1ep |
+| s09 | `testp1_s09_perclass.zip` | _TBD_ | | | 268 (104/112/33/19) | 逐类过采样 Contra6/SO5/UCM3/UE2,ds0.6,1ep |
+| s10 | `testp1_s10_perclassEp2.zip` | _TBD_ | | | 193 (80/74/17/22) | 逐类过采样,2ep(过拟合,少数类反减) |
+| s11 | `testp1_s11_ensU.zip` | _TBD_ | | | 339 (127/142/43/27) | union ensemble(s01+s08+s09),**召回最激进** |
+| s12 | `testp1_s12_joint8b.zip` | _TBD_ | | | 209 (90/66/31/22) | 8B 段落联合 plain-CE,1ep(健康,7记录 fallback) |
+| s13 | `testp1_s13_joint32b.zip` | _TBD_ | | | 183 (97/40/19/27) | 32B 段落联合 plain-CE,1ep,**0 fallback**(更保守) |
 
-**结论**：#1 grid(47.8) 至今最优；所有"抑制少数类"的变体都更低，单调随少数类数下降 → testp1 召回-critical。
+**当前最优 = s01 grid(47.80)**。s08–s13 待提交(晨起优先 **s11 ensU**(召回最激进)、**s13 joint32b**(看 32B 精度);别忘把 s01 顶回保底)。
+更新得分:把对应行 `_TBD_` 替换为官方三元组。
 
 ---
 
-## 复现命令（逐提交）
+## 复现命令(按序号)
 
-### #1 grid b5_l0.5 — 47.79897（当前最优，保持为榜上提交）
-- **数据**：过采样 3.0× + Supported 下采样（产出 12741 train 样本 / 9750 Supported；⚠️ 当初的 `--supported-downsample` 具体值未记录，反推约 0.55–0.66 区间，逐类过采样确认为 3.0×）。重建近似命令：
-  ```bash
-  PYTHONPATH=src uv run python -m nlpcc_t10.build_dataset --data-root "$DATA_ROOT" --out data \
-    --minority-oversample 3.0 --supported-downsample 0.6   # 调到 Supported≈9750 / 共≈12741
-  ```
-- **训练**（2 卡 DDP，β5 λ0.5）：经 `scripts/grid_search.py` 跑出；等价单配置命令：
-  ```bash
-  CUDA_VISIBLE_DEVICES=0,1 SOFTMIN_BETA=5 SOFTMIN_LAMBDA=0.5 \
-  PYTHONPATH=src uv run torchrun --nproc_per_node=2 --master_port=29531 scripts/train_softmin.py \
-    --model Qwen/Qwen3-VL-8B-Instruct --tuner_type lora --torch_dtype bfloat16 \
-    --dataset data/train_sft.jsonl --split_dataset_ratio 0 --loss_type softmin_pem \
-    --num_train_epochs 1 --per_device_train_batch_size 1 --gradient_accumulation_steps 1 \
-    --learning_rate 1e-4 --lora_rank 16 --lora_alpha 32 --freeze_vit true \
-    --max_length 4096 --max_pixels 401408 --attn_impl sdpa --packing false --padding_free false \
-    --use_logits_to_keep false --save_strategy epoch --save_total_limit 1 --output_dir outputs/grid_b5_l0.5
-  # checkpoint: outputs/grid_b5_l0.5/v0-20260602-095341/checkpoint-2000
-  ```
-- **推理+提交**：
-  ```bash
-  MAX_PIXELS=401408 bash scripts/make_testp1_submission.sh b5_l0.5     # -> outputs/testp1_b5_l0.5_submission.jsonl
-  uv run python scripts/make_submission_zip.py --sub submissions/testp1_b5_l0.5_submission.jsonl \
-    --ref "$DATA_ROOT/data/testp1-track-1.jsonl" --out submissions/testp1_b5_l0.5_submission.zip
-  ```
+### s01 grid — 47.80(当前最优,保持榜上)
+- 数据:`build_dataset --minority-oversample 3.0 --supported-downsample 0.6`(产出 ~12741 train/9750 Supported;⚠️ 当初 downsample 未记,反推 ~0.6)。
+- 训练:2 卡 DDP,`SOFTMIN_BETA=5 SOFTMIN_LAMBDA=0.5 ... scripts/train_softmin.py ... --max_pixels 401408 --use_logits_to_keep false --num_train_epochs 1`(ckpt `outputs/grid_b5_l0.5/v0-20260602-095341/checkpoint-2000`)。
+- 推理+打包:`MAX_PIXELS=401408 bash scripts/make_testp1_submission.sh b5_l0.5` → `make_submission_zip.py` 出 `testp1_s01_grid.zip`。
 
-### #3 full-res b5_l0.5 — 44.46574（全分辨率，已证有害）
+### s02 fullres — 44.47(全分辨率,有害)
+`MAX_PIXELS=802816 GPUS=0,1 bash scripts/retrain_fullres.sh`(ulk=true)。
+
+### s03/s04 后处理阈值(零重训;先用 s01 的 grid ckpt 带 logprob 重推)
 ```bash
-MAX_PIXELS=802816 GPUS=0,1 bash scripts/retrain_fullres.sh     # TAG 默认 fullres_b5_l0.5；自带 infer+aggregate+zip
-# ckpt: outputs/p0_fullres_b5_l0.5/v0-20260602-135956/checkpoint-2000
-# 产物: submissions/testp1_fullres_b5_l0.5_submission.zip
-```
-
-### #4 B gentle 1.5× — 40.90984（降过采样，已证更差）
-```bash
-PYTHONPATH=src uv run python -m nlpcc_t10.build_dataset --data-root "$DATA_ROOT" --out data \
-  --minority-oversample 1.5 --supported-downsample 0.66          # 12804 train 样本
-TAG=gentle1.5_b5_l0.5 MAX_PIXELS=401408 GPUS=0,1 bash scripts/retrain_fullres.sh
-# ckpt: outputs/p0_gentle1.5_b5_l0.5/v0-20260602-151948/checkpoint-1400
-# 产物: submissions/testp1_gentle1.5_b5_l0.5_submission.zip
-```
-
-### #2 / #6 A·置信度阈值变体（在 grid checkpoint 上后处理，零重训）
-```bash
-# 1) 用修好 logprob 的 infer.py 重推 grid ckpt（带 min_logprob）
 CUDA_VISIBLE_DEVICES=5 MAX_PIXELS=401408 PYTHONPATH=src uv run python -m nlpcc_t10.infer \
-  --split testp1 --adapter outputs/grid_b5_l0.5/v0-20260602-095341/checkpoint-2000 \
-  --engine pt --data-root "$DATA_ROOT" --out outputs/testp1_gridckpt_lp_raw.jsonl
-# 2) 生成阈值变体（自动按 25/50/75 百分位选 tau）
-uv run python scripts/threshold_variants.py --raw outputs/testp1_gridckpt_lp_raw.jsonl \
-  --out-prefix submissions/testp1_gridckpt_thr
-#   -> ..._tau-0p20.jsonl (190 少数类, 43.85)  /  ..._tau-0p03.jsonl (127, 38.48)
-# 3) 打包：uv run python scripts/make_submission_zip.py --sub <variant>.jsonl --ref "$DATA_ROOT/data/testp1-track-1.jsonl" --out <variant>.zip
+  --split testp1 --adapter outputs/grid_b5_l0.5/v0-20260602-095341/checkpoint-2000 --engine pt \
+  --data-root "$DATA_ROOT" --out outputs/testp1_gridckpt_lp_raw.jsonl
+uv run python scripts/threshold_variants.py --raw outputs/testp1_gridckpt_lp_raw.jsonl --out-prefix submissions/thr  # -> tau020/tau003
 ```
 
-### #5 / #7 #1·孤立少数类 veto（同上 raw，零重训）
+### s05/s06 孤立少数类 veto(同上 raw,零重训)
 ```bash
-uv run python scripts/lone_minority_veto.py --raw outputs/testp1_gridckpt_lp_raw.jsonl \
-  --out submissions/testp1_veto_all.jsonl   --mode all                    # 退全部 207 -> 18.85
-uv run python scripts/lone_minority_veto.py --raw outputs/testp1_gridckpt_lp_raw.jsonl \
-  --out submissions/testp1_veto_gated.jsonl --mode gated --gate -0.05     # 退最虚 82 -> 39.57
-# 打包同上
+uv run python scripts/lone_minority_veto.py --raw outputs/testp1_gridckpt_lp_raw.jsonl --out submissions/s05.jsonl --mode all
+uv run python scripts/lone_minority_veto.py --raw outputs/testp1_gridckpt_lp_raw.jsonl --out submissions/s06.jsonl --mode gated --gate -0.05
 ```
 
----
+### s07 / s08 / s09 / s10 重训(网格分辨率 401408,scripts/retrain_fullres.sh)
+```bash
+# s07 gentle1.5: build_dataset --minority-oversample 1.5 --supported-downsample 0.66 ; TAG=gentle1.5_b5_l0.5 MAX_PIXELS=401408 GPUS=0,1 bash scripts/retrain_fullres.sh
+# s08 os4:       build_dataset --minority-oversample 4.0 --supported-downsample 0.66 ; TAG=os4_b5_l0.5 ... bash scripts/retrain_fullres.sh
+# s09 perclass:  build_dataset --supported-downsample 0.6 --minority-oversample-per-class "Contradiction:6,Scope Overgeneralization:5,Unsupported Causal Mechanistic:3,Unsupported Entity:2" ; TAG=perclass_b5_l0.5 ...
+# s10 perclassEp2: 同 s09 数据 ; TAG=perclass_ep2_b5_l0.5 EPOCHS=2 ...
+```
 
-## 约定（往后每次提交都做）
-1. 提交前 `validate_submission.py` 必过；`make_submission_zip.py` 打扁平 zip（顶层 `track1_pred.jsonl`）。
-2. **数据构造命令务必记进本表**（grid 那次没记 `--supported-downsample`，吃了亏）。
-3. 新提交追加：表格一行 + 一节复现命令 + 该配置的"为什么试它"。
-4. 当前最优 = #1（47.80）。若平台按最新提交计分，传完实验变体后**记得把 `testp1_b5_l0.5_submission.zip` 顶回去**。
+### s11 ensU union ensemble(零重训,纯后处理)
+```bash
+uv run python scripts/ensemble_union.py --out submissions/s11.jsonl \
+  submissions/testp1_s01_grid.jsonl submissions/testp1_s08_os4.jsonl submissions/testp1_s09_perclass.jsonl
+```
 
-- **os4_b5_l0.5** (uniform 4x, 1ep, grid res) testp1 per-class: UCM=102 UE=80 SO=28 Contra=25 (minority 235, Supported 4861) | Score TBD (submit AM)
+### s12 / s13 段落联合(plain-CE,scripts/train_joint.sh;先 build_dataset --joint)
+```bash
+PYTHONPATH=src uv run python -m nlpcc_t10.build_dataset --data-root "$DATA_ROOT" --out data --joint --joint-hard-oversample 2.0
+# s12 8B:  TAG=joint8b  GPUS=0,1 MAX_PIXELS=401408 bash scripts/train_joint.sh
+# s13 32B: MODEL_ID=Qwen/Qwen3-VL-32B-Instruct TAG=joint32b GPUS=0,1 MAX_PIXELS=401408 bash scripts/train_joint.sh
+#   注:train_joint.sh 的 infer 步必须传 --model(否则 32B adapter 加载到默认 8B 基座会 state_dict 不匹配)。
+```
 
-- **perclass_b5_l0.5** (Contra6/SO5/UCM3/UE2, ds0.6, 1ep, grid res) testp1 per-class: UCM=104 UE=112 SO=33 Contra=19 (minority 268, Supported 4828) | Score TBD (submit AM). vs grid UCM109/UE92/SO29/Contra23
-
-- **ensU_grid_os4_perclass** (union ensemble of grid+os4+perclass, recall-additive) testp1 per-class: UCM=127 UE=142 SO=43 Contra=27 (minority 339, Supported 4757) | Score TBD (submit AM). 最激进召回点；并集新增 164 个少数类(分歧位)
-
-- **perclass_ep2_b5_l0.5** (per-class Contra6/SO5/UCM3/UE2, ds0.6, 2ep) testp1 per-class: UCM=80 UE=74 SO=17 Contra=22 (minority 193, Supported 4903) | Score TBD. (2 epoch 过拟合风险)
-
-- **joint8b** (8B paragraph-JOINT plain-CE, 1ep, ds-joint hard2x) testp1 per-class: UCM=90 UE=66 SO=31 Contra=22 (minority 209, Supported 4887) | parse_fallbacks=173/586 (30%, HIGH) | gate=OK-no-collapse | Score TBD
-
-- **CORRECTION joint8b**: parse_fallbacks=173 是句子行数；实际仅 **7 记录(1.2
-- **joint32b** (Qwen3-VL-32B paragraph-JOINT plain-CE, 1ep, 0 parse-fallback) testp1 per-class: UCM=97 UE=40 SO=19 Contra=27 (minority 183, Supported 4913) | gate=SO-flat(no capacity gain on SO) | Score TBD
+## 约定
+1. 提交前 `validate_submission.py` 必过;`make_submission_zip.py` 打扁平 zip(顶层 `track1_pred.jsonl`)。
+2. **数据构造命令务必记**(含 `--supported-downsample`;grid 那次漏记,吃了亏)。
+3. 新提交:取下一个 `s{NN}` → 重命名 zip/jsonl → 追加总表一行 + 复现命令 + "为什么试它"。
+4. 若平台按最新提交计分,实验后**把 s01(47.80)顶回保底**。
