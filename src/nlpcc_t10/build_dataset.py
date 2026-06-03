@@ -244,6 +244,81 @@ def stratified_split(
     return train_idx, dev_idx
 
 
+def _record_image_stems(rec: dict[str, Any]) -> set[str]:
+    """Image identifiers (sha stems) referenced by a record's evidence_bundle."""
+    stems: set[str] = set()
+    for ev in rec.get("evidence_bundle", []):
+        ip = ev.get("img_path", "")
+        if ip:
+            stems.add(Path(ip).stem)
+    return stems
+
+
+def build_image_components(records: list[dict[str, Any]]) -> list[list[int]]:
+    """Connected components of records linked when they SHARE an image sha (union-find).
+    Records sharing no image are singleton components. This is the leakage boundary: an
+    image-disjoint split must keep each whole component on one side."""
+    parent = list(range(len(records)))
+
+    def find(x: int) -> int:
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a: int, b: int) -> None:
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[ra] = rb
+
+    img_first: dict[str, int] = {}  # image stem -> first record index seen
+    for i, rec in enumerate(records):
+        for stem in _record_image_stems(rec):
+            if stem in img_first:
+                union(i, img_first[stem])
+            else:
+                img_first[stem] = i
+
+    comps: dict[int, list[int]] = {}
+    for i in range(len(records)):
+        comps.setdefault(find(i), []).append(i)
+    return list(comps.values())
+
+
+def component_aware_split(
+    records: list[dict[str, Any]],
+    dev_ratio: float,
+    seed: int,
+) -> tuple[list[int], list[int]]:
+    """Image-DISJOINT 9:1-style split: whole image-sharing components go to ONE side, so NO
+    image sha appears in both train and dev (kills the ~32% cross-split image leak that made
+    the old dev read 88 vs testp1 50.26). Greedy-fills dev with whole components (deterministic
+    seed shuffle) until ~round(n*dev_ratio) records, then HARD-ASSERTS zero sha overlap."""
+    comps = build_image_components(records)
+    rng = random.Random(seed)
+    # Deterministic order: largest components first (so a giant component can't silently
+    # blow past the target by landing last), then seeded shuffle within for reproducibility.
+    comps.sort(key=lambda c: (-len(c), min(c)))
+    rng.shuffle(comps)
+
+    n = len(records)
+    target_dev = round(n * dev_ratio)
+    dev_idx: list[int] = []
+    train_idx: list[int] = []
+    for comp in comps:
+        if len(dev_idx) < target_dev:
+            dev_idx.extend(comp)
+        else:
+            train_idx.extend(comp)
+
+    train_stems: set[str] = set().union(*(_record_image_stems(records[i]) for i in train_idx)) if train_idx else set()
+    dev_stems: set[str] = set().union(*(_record_image_stems(records[i]) for i in dev_idx)) if dev_idx else set()
+    overlap = train_stems & dev_stems
+    assert not overlap, f"component_aware_split BUG: {len(overlap)} image shas overlap across the split"
+
+    return sorted(train_idx), sorted(dev_idx)
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # EVIDENCE BUNDLE -> USER MESSAGE HELPERS
 # ──────────────────────────────────────────────────────────────────────────────
@@ -438,19 +513,24 @@ def build_dataset_joint(
     seed: int,
     hard_oversample: float = 2.0,
     limit: int | None = None,
+    split_mode: str = "random",
 ) -> dict[str, Any]:
     """Paragraph-JOINT pipeline: one sample per record (all N labels as a JSON array). Train-time
     imbalance = duplicate WHOLE minority-containing records `hard_oversample`x (fresh channel id),
     which lifts the minority fraction WITHOUT the per-sentence singleton trick (plain-CE, no softmin).
-    Reuses the same 9:1 stratified split + train-only label_freq as the per-sentence build."""
+    Reuses the same 9:1 split + train-only label_freq as the per-sentence build (split_mode:
+    'random' stratified, or 'component_aware' image-disjoint)."""
     data_path = data_root / "data" / "traindev-track-1.jsonl"
     records = load_jsonl(data_path)
     if limit is not None:
         records = records[:limit]
     print(f"[JOINT] Loaded {len(records)} records")
 
-    train_idx, dev_idx = stratified_split(records, dev_ratio, seed)
-    print(f"[JOINT] Split: {len(train_idx)} train / {len(dev_idx)} dev records")
+    if split_mode == "component_aware":
+        train_idx, dev_idx = component_aware_split(records, dev_ratio, seed)
+    else:
+        train_idx, dev_idx = stratified_split(records, dev_ratio, seed)
+    print(f"[JOINT] Split [{split_mode}]: {len(train_idx)} train / {len(dev_idx)} dev records")
     split_map: dict[str, str] = {}
     for i in train_idx:
         split_map[f"track1-{i:06d}"] = "train"
@@ -620,6 +700,7 @@ def build_dataset(
     supported_downsample: float,
     limit: int | None = None,
     per_class_oversample: dict[str, float] | None = None,
+    split_mode: str = "random",
 ) -> dict[str, Any]:
     """Full pipeline: load, split, expand, resample, write. Returns summary dict."""
     data_path = data_root / "data" / "traindev-track-1.jsonl"
@@ -628,10 +709,16 @@ def build_dataset(
         records = records[:limit]
     print(f"Loaded {len(records)} records from {data_path}")
 
-    # 1) Stratified 9:1 split by record (BEFORE computing label frequency, so dev
-    #    sentences do not contaminate multi-label target selection — review finding #9).
-    train_idx, dev_idx = stratified_split(records, dev_ratio, seed)
-    print(f"Split: {len(train_idx)} train records / {len(dev_idx)} dev records")
+    # 1) 9:1 split by record (BEFORE computing label frequency, so dev sentences do not
+    #    contaminate multi-label target selection — review finding #9). split_mode:
+    #    'random' = stratified-by-hard (leaky: shares images across split);
+    #    'component_aware' = image-DISJOINT (kills the leak; for a trustworthy testp1-tracking dev).
+    if split_mode == "component_aware":
+        train_idx, dev_idx = component_aware_split(records, dev_ratio, seed)
+        print(f"Split [component_aware / image-disjoint]: {len(train_idx)} train / {len(dev_idx)} dev records")
+    else:
+        train_idx, dev_idx = stratified_split(records, dev_ratio, seed)
+        print(f"Split [random / stratified]: {len(train_idx)} train records / {len(dev_idx)} dev records")
     print(f"  train hard (any minority): "
           f"{sum(is_hard_record(records[i]) for i in train_idx)}/{len(train_idx)}")
     print(f"  dev   hard (any minority): "
@@ -751,6 +838,21 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--dev-ratio", type=float, default=0.1)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument(
+        "--split-mode",
+        choices=["random", "component_aware"],
+        default="random",
+        help="'random' = stratified-by-hard (default; back-compat — SHARES images across split = leaky). "
+             "'component_aware' = IMAGE-DISJOINT split via union-find over image shas (no sha in both "
+             "train and dev) -> a trustworthy testp1-tracking dev (kills the ~32%% cross-split image leak).",
+    )
+    p.add_argument(
+        "--val-ratio",
+        type=float,
+        default=None,
+        help="Override --dev-ratio for the val/dev fraction (used with --split-mode component_aware, "
+             "e.g. 0.15 for a bigger, more stable devhard). Falls back to --dev-ratio when unset.",
+    )
+    p.add_argument(
         "--minority-oversample",
         type=float,
         default=1.0,
@@ -831,25 +933,28 @@ def main(argv: list[str] | None = None) -> int:
     args = build_arg_parser().parse_args(argv)
     data_root = Path(args.data_root).resolve()
     out_dir = Path(args.out).resolve()
+    ratio = args.val_ratio if args.val_ratio is not None else args.dev_ratio
     if args.joint:
         build_dataset_joint(
             data_root=data_root,
             out_dir=out_dir,
-            dev_ratio=args.dev_ratio,
+            dev_ratio=ratio,
             seed=args.seed,
             hard_oversample=args.joint_hard_oversample,
             limit=args.limit,
+            split_mode=args.split_mode,
         )
         return 0
     build_dataset(
         data_root=data_root,
         out_dir=out_dir,
-        dev_ratio=args.dev_ratio,
+        dev_ratio=ratio,
         seed=args.seed,
         minority_oversample=args.minority_oversample,
         supported_downsample=args.supported_downsample,
         limit=args.limit,
         per_class_oversample=_parse_per_class(args.minority_oversample_per_class),
+        split_mode=args.split_mode,
     )
     return 0
 
