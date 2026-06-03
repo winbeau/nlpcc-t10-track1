@@ -61,9 +61,11 @@ try:  # 作为包运行：python -m nlpcc_t10.infer
     from .build_dataset import (
         SYSTEM_PROMPT,
         SYSTEM_PROMPT_JOINT,
+        SYSTEM_PROMPT_CORRECTOR,
         TRACK1_LABELS,
         build_user_content,
         build_user_content_joint,
+        build_user_content_corrector,
         load_jsonl,
     )
 except ImportError:  # 直接运行脚本时的回退
@@ -71,9 +73,11 @@ except ImportError:  # 直接运行脚本时的回退
     from nlpcc_t10.build_dataset import (  # type: ignore
         SYSTEM_PROMPT,
         SYSTEM_PROMPT_JOINT,
+        SYSTEM_PROMPT_CORRECTOR,
         TRACK1_LABELS,
         build_user_content,
         build_user_content_joint,
+        build_user_content_corrector,
         load_jsonl,
     )
 
@@ -494,6 +498,51 @@ def infer_record_joint(eng, adapter_request, engine_kind, request_config, record
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# CORRECTOR inference: one request per record, with the ensemble's candidate labels in the prompt
+# ──────────────────────────────────────────────────────────────────────────────
+
+def infer_record_corrector(eng, adapter_request, engine_kind, request_config, record, data_root, candidates_map):
+    """Like joint inference but the prompt carries the ensemble's INITIAL label per sentence; the
+    corrector outputs the corrected label array. candidates_map: {id -> [labels]}."""
+    from swift import InferRequest  # noqa: WPS433
+
+    rid = record["id"]
+    sentences: list[str] = record["sentences"]
+    if not sentences:
+        return []
+    cands = candidates_map.get(rid, ["Supported"] * len(sentences))
+    if len(cands) != len(sentences):
+        cands = (cands + ["Supported"] * len(sentences))[:len(sentences)]
+    user_text, image_paths = build_user_content_corrector(
+        record["claim_text"], sentences, cands, record["evidence_bundle"], data_root
+    )
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT_CORRECTOR},
+        {"role": "user", "content": user_text},
+    ]
+    kw: dict[str, Any] = {"messages": messages}
+    if image_paths:
+        kw["images"] = image_paths
+    infer_kwargs: dict[str, Any] = {}
+    if engine_kind == "vllm" and adapter_request is not None:
+        infer_kwargs["adapter_request"] = adapter_request
+    responses = eng.infer([InferRequest(**kw)], request_config, use_tqdm=False, **infer_kwargs)
+    if len(responses) != 1:
+        return [{"id": rid, "sent_index": i, "label": "Supported", "raw": "", "logprob": None,
+                 "min_logprob": None, "sum_logprob": None, "n_tokens": None, "parsed_ok": False}
+                for i in range(len(sentences))]
+    text, conf = _extract_text_and_logprob(responses[0])
+    labels, ok = parse_labels_joint(text, len(sentences))
+    rows = []
+    for i, lab in enumerate(labels):
+        rows.append({"id": rid, "sent_index": i, "label": lab, "raw": text if i == 0 else "",
+                     "logprob": None, "min_logprob": conf["min_logprob"] if i == 0 else None,
+                     "sum_logprob": conf["sum_logprob"] if i == 0 else None,
+                     "n_tokens": conf["n_tokens"] if i == 0 else None, "parsed_ok": ok})
+    return rows
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # dry-run（本地、无 torch）：只构造请求并打印，验证 prompt/分组/输出契约
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -573,6 +622,17 @@ def build_arg_parser() -> argparse.ArgumentParser:
              "(must match a model trained with build_dataset --joint). max_tokens auto-bumped to 512.",
     )
     p.add_argument(
+        "--corrector",
+        action="store_true",
+        help="CORRECTOR inference: prompt carries the --candidates initial labels per sentence; "
+             "outputs the corrected JSON array (model trained on build_corrector_data.py output).",
+    )
+    p.add_argument(
+        "--candidates",
+        default=None,
+        help="ensemble predictions {id,labels} jsonl — REQUIRED for --corrector (the initial labels).",
+    )
+    p.add_argument(
         "--no-logprob",
         action="store_true",
         help="关闭 logprob 解码（更快；段落级阈值收口将无置信度可用）。",
@@ -617,7 +677,7 @@ def main(argv: list[str] | None = None) -> int:
     # Joint mode emits up to N labels (testp1 max 31 sentences) -> bigger budget than the
     # per-sentence 24-token default; 512 covers 31 labels + JSON structure.
     request_config = RequestConfig(
-        max_tokens=(512 if args.joint else args.max_new_tokens),
+        max_tokens=(512 if (args.joint or args.corrector) else args.max_new_tokens),
         temperature=0.0,  # 贪心：分类任务要确定性
         logprobs=not args.no_logprob,
         top_logprobs=1 if not args.no_logprob else None,
@@ -630,7 +690,20 @@ def main(argv: list[str] | None = None) -> int:
     n_fallback = 0
     label_counter: dict[str, int] = {lbl: 0 for lbl in TRACK1_LABELS}
     with out_path.open("w", encoding="utf-8") as f:
-        _infer = infer_record_joint if args.joint else infer_record
+        if args.corrector:
+            if not args.candidates:
+                print("error: --corrector requires --candidates", file=sys.stderr)
+                return 2
+            cmap = {r["id"]: r["labels"] for r in (json.loads(line) for line in
+                    Path(args.candidates).read_text(encoding="utf-8").splitlines() if line.strip())}
+            print(f"[corrector] loaded candidates for {len(cmap)} records from {args.candidates}")
+
+            def _infer(eng, ar, ek, rc, rec, dr):
+                return infer_record_corrector(eng, ar, ek, rc, rec, dr, cmap)
+        elif args.joint:
+            _infer = infer_record_joint
+        else:
+            _infer = infer_record
         for ri, rec in enumerate(records):
             rows = _infer(
                 eng, adapter_request, engine_kind, request_config, rec, data_root

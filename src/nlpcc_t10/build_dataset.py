@@ -115,6 +115,44 @@ Output format: {"labels": ["<label for sentence 1>", "<label for sentence 2>", .
 — exactly one label per numbered sentence, in the same order, same count.\
 """
 
+# ── CORRECTOR mode (paragraph-joint 2nd stage: review an ensemble's initial labels + fix) ────
+# Targets PEM: most paragraphs are off by 1-2 sentences; correcting the marginal error flips the
+# whole paragraph to PEM=1. The corrector sees the evidence + numbered sentences + the ensemble's
+# INITIAL label per sentence, and outputs the corrected full label array (keep correct, fix wrong).
+SYSTEM_PROMPT_CORRECTOR = (
+    "You are a careful scientific claim verification system reviewing an initial labeling. "
+    "Given evidence (figures/tables with captions), a claim paragraph with numbered sentences, and an "
+    "INITIAL label guess for each sentence, output the CORRECTED label for every sentence: keep the "
+    "ones that are right and fix the ones that are wrong, based strictly on the evidence. "
+    "Return valid JSON only, no explanation or extra keys."
+)
+
+
+def build_user_content_corrector(
+    claim_text: str,
+    sentences: list[str],
+    candidates: list[str],
+    evidence_bundle: list[dict[str, Any]],
+    data_root: Path,
+) -> tuple[str, list[str]]:
+    """Corrector user text: evidence + claim + numbered sentences each tagged with its INITIAL label."""
+    evidence_text, image_paths = evidence_to_text_and_images(evidence_bundle, data_root)
+    lines = []
+    for i, s in enumerate(sentences):
+        cand = candidates[i] if i < len(candidates) else "Supported"
+        lines.append(f"{i + 1}. {s}\n   [initial: {cand}]")
+    numbered = "\n".join(lines)
+    parts = [
+        LABEL_DEFINITIONS_JOINT,
+        "",
+        evidence_text,
+        "",
+        f"Claim paragraph:\n{claim_text}",
+        "",
+        f"Sentences with initial labels (output the corrected label per sentence, in order):\n{numbered}",
+    ]
+    return "\n".join(parts), image_paths
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # I/O HELPERS

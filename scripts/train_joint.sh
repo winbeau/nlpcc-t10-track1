@@ -22,14 +22,14 @@ echo "### JOINT TRAIN $TAG | model=$MODEL | plain-CE | max_pixels=$MP | max_leng
 CUDA_VISIBLE_DEVICES="$GPUS" PYTHONPATH=src uv run torchrun --nproc_per_node="$NPROC" --master_port=29537 \
   scripts/train_joint.py \
   --model "$MODEL" --tuner_type lora --torch_dtype bfloat16 \
-  --dataset data/train_sft.jsonl --split_dataset_ratio 0 \
+  --dataset "${DATASET:-data/train_sft.jsonl}" --split_dataset_ratio 0 \
   --num_train_epochs "$EPOCHS" --per_device_train_batch_size 1 --gradient_accumulation_steps 4 \
   --learning_rate 1e-4 --lora_rank 16 --lora_alpha 32 --freeze_vit true \
   --max_length "$MAXLEN" --max_pixels "$MP" --attn_impl sdpa --packing false --padding_free false \
   --use_logits_to_keep true --eval_strategy no --save_strategy epoch --save_total_limit 1 \
   --logging_steps 5 --dataloader_num_workers 4 --output_dir "$OUTDIR" "${STEP_ARGS[@]}"
 
-[ -n "${SMOKE:-}" ] && { echo "### SMOKE done (no infer) ###"; exit 0; }
+[ -n "${SMOKE:-}${NO_INFER:-}" ] && { echo "### train done (no infer: SMOKE/NO_INFER) ###"; exit 0; }
 
 CKPT=$(ls -d "$OUTDIR"/v*/checkpoint-* 2>/dev/null | sort | tail -1)
 [ -n "$CKPT" ] || { echo "ERROR: no checkpoint in $OUTDIR"; exit 1; }
