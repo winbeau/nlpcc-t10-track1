@@ -114,9 +114,11 @@ PYTHONPATH=src uv run python -m nlpcc_t10.build_dataset --data-root "$DATA_ROOT"
 
 | 序号 | zip | 机制 | #少数类(UCM/UE/SO/Contra) | Score |
 |---|---|---|---|---|
-| s17 | testp1_q4b_submission.zip | **Qwen3-VL-4B** 单模型(规模多样性成员;非提交首选,主要作并集源) | 220 (91/78/27/24) | 待测 |
-| **s18** | testp1_s18_fleetU.zip | union(s01+s08+s09+s12+s13 **+ q4b**)=6 成员,测规模多样性 | 404 (139/164/58/43) | **待测(对比 50.26)** |
+| s17 | testp1_q4b_submission.zip | **Qwen3-VL-4B** 单模型(规模多样性成员;并集源) | 220 (91/78/27/24) | 未单独提交 |
+| s18 | testp1_s18_fleetU.zip | union(s01+s08+s09+s12+s13 **+ q4b**)=6 成员,测规模多样性 | 404 (139/164/58/43) | **49.71340** / MF1 57.27662 / PEM 42.15017 |
 
-- q4b 单模型偏好 UCM(91,高于多数 8B 成员)→ 有差异化价值。s18 比 ensU5 多 22 个少数类预测(382→404)。
+- **⚠️ q4b 证伪:s18(49.71) < s15 ensU5(50.26),−0.55。** MF1 微升(57.17→57.28)但 **PEM 跌 1.19(43.34→42.15)**:q4b 多出的 22 个少数类预测大多是**假阳性**,打碎干净段落。
+- **教训:规模多样性(同 Qwen 家族的 4B)无用——错误相关 + 模型弱 → 只叠加冗余/有害 FP。真正有价值的是架构多样性(非 Qwen)。并集基底回到 5 Qwen(s15),q4b 踢出。**
+- 下一步:测 InternVL(InternViT 异构编码器)加入 5-Qwen 基底:s19=+2B、s20=+8B、s21=+2B+8B,逐一 isolate 看架构多样性是否真的帮(且不带 q4b)。
 - 复现:`scripts/train_internvl.sh` 同类的 q4b 由 `MODEL_ID=Qwen/Qwen3-VL-4B-Instruct TAG=q4b ... bash scripts/retrain_fullres.sh`(infer 步已修 `--model`);union 同上 `ensemble_union.py --min-votes 1`。
 - **下一成员:InternVL3-8B-hf**(首个非 Qwen,InternViT 编码器)训练中 → 完成后 s19 = union(6 + internvl8b)。配置见全局记忆 internvl-fleet-config(MAX_PIXELS=401408 必设、use_logits=false、HF_HOME 可写、lr 5e-5)。
