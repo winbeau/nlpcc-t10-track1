@@ -115,3 +115,6 @@ uv run python scripts/lone_minority_veto.py --raw outputs/testp1_gridckpt_lp_raw
 - **perclass_ep2_b5_l0.5** (per-class Contra6/SO5/UCM3/UE2, ds0.6, 2ep) testp1 per-class: UCM=80 UE=74 SO=17 Contra=22 (minority 193, Supported 4903) | Score TBD. (2 epoch 过拟合风险)
 
 - **joint8b** (8B paragraph-JOINT plain-CE, 1ep, ds-joint hard2x) testp1 per-class: UCM=90 UE=66 SO=31 Contra=22 (minority 209, Supported 4887) | parse_fallbacks=173/586 (30%, HIGH) | gate=OK-no-collapse | Score TBD
+
+- **CORRECTION joint8b**: parse_fallbacks=173 是句子行数；实际仅 **7 记录(1.2
+- **joint32b** (Qwen3-VL-32B paragraph-JOINT plain-CE, 1ep, 0 parse-fallback) testp1 per-class: UCM=97 UE=40 SO=19 Contra=27 (minority 183, Supported 4913) | gate=SO-flat(no capacity gain on SO) | Score TBD
