@@ -35,15 +35,14 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | s05 | `testp1_s05_vetoAll.zip` | 18.85468 | 22.00970 | 15.69966 | 46 | 孤立少数类全 veto(≈testp1 trivial 锚点) |
 | s06 | `testp1_s06_vetoGated.zip` | 39.57432 | 44.33635 | 34.81229 | 171 | 孤立少数类 veto(仅退最虚 82,gate −0.05) |
 | s07 | `testp1_s07_gentle15.zip` | 40.90984 | 46.83674 | 34.98294 | 246 | 降过采样 1.5×(更差→过采样别降) |
-| s08 | `testp1_s08_os4.zip` | _TBD_ | | | 235 (102/80/28/25) | 均匀过采样 4×,1ep |
-| s09 | `testp1_s09_perclass.zip` | _TBD_ | | | 268 (104/112/33/19) | 逐类过采样 Contra6/SO5/UCM3/UE2,ds0.6,1ep |
-| s10 | `testp1_s10_perclassEp2.zip` | _TBD_ | | | 193 (80/74/17/22) | 逐类过采样,2ep(过拟合,少数类反减) |
-| s11 | `testp1_s11_ensU.zip` | _TBD_ | | | 339 (127/142/43/27) | union ensemble(s01+s08+s09),**召回最激进** |
-| s12 | `testp1_s12_joint8b.zip` | _TBD_ | | | 209 (90/66/31/22) | 8B 段落联合 plain-CE,1ep(健康,7记录 fallback) |
-| s13 | `testp1_s13_joint32b.zip` | _TBD_ | | | 183 (97/40/19/27) | 32B 段落联合 plain-CE,1ep,**0 fallback**(更保守) |
+| s08 | `testp1_s08_os4.zip` | 45.10490 | 50.44872 | 39.76109 | 235 (102/80/28/25) | 均匀过采样 4×,1ep(<grid) |
+| s09 | `testp1_s09_perclass.zip` | 43.83218 | 49.95104 | 37.71331 | 268 (104/112/33/19) | 逐类过采样 Contra6/SO5/UCM3/UE2,ds0.6,1ep(<grid) |
+| s10 | `testp1_s10_perclassEp2.zip` | 41.69745 | 46.53484 | 36.86007 | 193 (80/74/17/22) | 逐类过采样,2ep(过拟合,最差) |
+| **s11** | `testp1_s11_ensU.zip` ⭐ | **48.21778** | **54.79733** | 41.63823 | 339 (127/142/43/27) | union ensemble(s01+s08+s09)→ **新最优 +0.42**,集成是赢家方向 |
+| s12 | `testp1_s12_joint8b.zip` | 43.33171 | 48.26752 | 38.39590 | 209 (90/66/31/22) | 8B 段落联合 plain-CE,1ep(<grid) |
+| s13 | `testp1_s13_joint32b.zip` | 44.43184 | 49.44389 | 39.41980 | 183 (97/40/19/27) | 32B 段落联合 plain-CE,0 fallback(<grid,但 >joint8b +1.1:容量在联合内有用) |
 
-**当前最优 = s01 grid(47.80)**。s08–s13 待提交(晨起优先 **s11 ensU**(召回最激进)、**s13 joint32b**(看 32B 精度);别忘把 s01 顶回保底)。
-更新得分:把对应行 `_TBD_` 替换为官方三元组。
+**当前最优 = s11 ensU(48.22)**。结论:**ensemble(召回叠加)是唯一超 grid 的方向**;过采样/联合格式/容量在单模型上都 ≤grid。下一步推 ensemble(更多样并集 / ≥2 票一致),见 §ensemble。
 
 ---
 

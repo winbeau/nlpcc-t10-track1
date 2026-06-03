@@ -44,7 +44,10 @@ def load(path: str) -> dict[str, list[str]]:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Union-ensemble per-sentence submissions (recall-additive).")
     ap.add_argument("--out", required=True)
-    ap.add_argument("subs", nargs="+", help="2+ submission jsonls to union")
+    ap.add_argument("--min-votes", type=int, default=1,
+                    help="a position is labelled minority only if >=K models predict minority there "
+                         "(1 = union/recall-max; 2 = consensus/precision). Default 1.")
+    ap.add_argument("subs", nargs="+", help="2+ submission jsonls to combine")
     args = ap.parse_args(argv)
 
     models = [load(p) for p in args.subs]
@@ -63,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
         for i in range(n):
             votes = [ll[i] for ll in label_lists]
             mino_votes = [v for v in votes if v in PRIORITY]
-            if not mino_votes:
+            if len(mino_votes) < args.min_votes:
                 merged.append("Supported")
             else:
                 # most-voted minority; tie -> rarer class (lower PRIORITY value)
