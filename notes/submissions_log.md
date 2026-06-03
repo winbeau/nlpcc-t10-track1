@@ -101,8 +101,10 @@ PYTHONPATH=src uv run python -m nlpcc_t10.build_dataset --data-root "$DATA_ROOT"
 ## ensemble 推进变体(s14–s16,待提交;基于 s11 ensU=48.22 是赢家方向)
 | 序号 | zip | 机制 | #少数类(UCM/UE/SO/Contra) | Score |
 |---|---|---|---|---|
-| s14 | testp1_s14_ensU4.zip | union(s01+s08+s09+**s13 joint32b**),加 32B 多样性 | 365 (137/148/48/32) | _TBD_ |
-| s15 | testp1_s15_ensU5.zip | union 全 5(s01+s08+s09+s12+s13),召回最大 | 382 (139/155/52/36) | _TBD_ |
-| s16 | testp1_s16_ens2of4.zip | **≥2 票一致**(s01,s08,s09,s13),精度向/恢复 PEM | 253 (110/87/32/24) | _TBD_ |
+| s14 | testp1_s14_ensU4.zip | union(s01+s08+s09+**s13 joint32b**),加 32B 多样性 | 365 (137/148/48/32) | **49.98915** / MF1 56.80424 / PEM 43.17406 |
+| **s15** | testp1_s15_ensU5.zip ⭐ | union 全 5(s01+s08+s09+s12+s13),召回最大 | 382 (139/155/52/36) | **50.25660** / MF1 57.16849 / PEM 43.34471 **(新最优)** |
+| s16 | testp1_s16_ens2of4.zip | **≥2 票一致**(s01,s08,s09,s13),精度向 | 253 (110/87/32/24) | 47.28613 / MF1 52.59274 / PEM 41.97952 (<ensU,union 胜过 consensus) |
+
+**关键规律:union 成员越多样 → MacroF1 和 PEM 同时单调上涨**(47.8→48.2→50.0→50.3)。≥2票一致(s16)反而更差 → **纯并集(召回最大)是对的**。PEM 在这个少数类密集的集上是**召回受限**(catch 到 gold 少数类才能让长段 PEM=1),不是精度受限。→ 下一步:**把多样性堆到极致**。
 
 复现:scripts/ensemble_union.py --min-votes {1|2} --out <jsonl> <成员 jsonl...>(s14/s15 用 --min-votes 1,s16 用 2)。
