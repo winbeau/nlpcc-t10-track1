@@ -7,9 +7,13 @@
 #   bash scripts/train_internvl.sh                 # full 1-epoch train+infer+zip on GPU 1
 #   MAX_STEPS=8 SMOKE=1 bash scripts/train_internvl.sh   # smoke: 8 steps, no save/infer
 #
-# CRITICAL knobs (validated by smoke):
-#   - MAX_PIXELS=401408 is MANDATORY: at the HF processor's default tiling InternVL runs ~24s/it and
-#     peaks ~127 GiB (multi-image records OOM). At 401408 it is ~1.1s/it and ~29 GiB. 20x faster, 4x lighter.
+# CRITICAL knobs (validated the hard way — 3 OOM/error cycles before this worked):
+#   - --vit_gradient_checkpointing TRUE is THE fix for OOM. The LLM's gradient_checkpointing=True is on
+#     by default but the InternViT VISION TOWER's is OFF -> it stores ALL vision activations -> ~128 GiB
+#     baseline + a 37.65 GiB spike on tile-heavy records -> OOM at ~step 450. Checkpointing the ViT slashes it.
+#   - MAX_PIXELS is INERT for InternVL-hf (it is a Qwen pixel-budget knob; InternVL tiles via max_patches in
+#     the processor config, which --max_pixels does NOT touch). 401408 vs 200704 gave byte-identical OOM.
+#   - max_length 4096: at 2048 some records' tokens exceed it -> ms-swift "Failed to retrieve dataset" ValueError.
 #   - --use_logits_to_keep FALSE: the -hf path does not support it (Qwen does; InternVL does not).
 #   - HF_HOME must point at our writable cache (default points at another user's read-only dir).
 #   - lr 5e-5 (not the Qwen 1e-4): the 1e-4 smoke showed a transient nan grad; 5e-5 trains clean.
@@ -40,6 +44,7 @@ PYTHONPATH=src uv run torchrun --nproc_per_node="$NPROC" --master_port=29553 \
   --gradient_accumulation_steps 1 --learning_rate "$LR" \
   --lora_rank 16 --lora_alpha 32 --freeze_vit true \
   --max_length "$MAXLEN" --max_pixels "$MP" --attn_impl sdpa \
+  --gradient_checkpointing true --vit_gradient_checkpointing true \
   --packing false --padding_free false --use_logits_to_keep false \
   --eval_strategy no --save_strategy epoch --save_total_limit 1 \
   --logging_steps 20 --dataloader_num_workers 4 --output_dir "$OUTDIR" "${STEP_ARGS[@]}"
