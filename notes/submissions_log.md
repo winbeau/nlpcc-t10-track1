@@ -97,3 +97,12 @@ PYTHONPATH=src uv run python -m nlpcc_t10.build_dataset --data-root "$DATA_ROOT"
 2. **数据构造命令务必记**(含 `--supported-downsample`;grid 那次漏记,吃了亏)。
 3. 新提交:取下一个 `s{NN}` → 重命名 zip/jsonl → 追加总表一行 + 复现命令 + "为什么试它"。
 4. 若平台按最新提交计分,实验后**把 s01(47.80)顶回保底**。
+
+## ensemble 推进变体(s14–s16,待提交;基于 s11 ensU=48.22 是赢家方向)
+| 序号 | zip | 机制 | #少数类(UCM/UE/SO/Contra) | Score |
+|---|---|---|---|---|
+| s14 | testp1_s14_ensU4.zip | union(s01+s08+s09+**s13 joint32b**),加 32B 多样性 | 365 (137/148/48/32) | _TBD_ |
+| s15 | testp1_s15_ensU5.zip | union 全 5(s01+s08+s09+s12+s13),召回最大 | 382 (139/155/52/36) | _TBD_ |
+| s16 | testp1_s16_ens2of4.zip | **≥2 票一致**(s01,s08,s09,s13),精度向/恢复 PEM | 253 (110/87/32/24) | _TBD_ |
+
+复现:scripts/ensemble_union.py --min-votes {1|2} --out <jsonl> <成员 jsonl...>(s14/s15 用 --min-votes 1,s16 用 2)。
