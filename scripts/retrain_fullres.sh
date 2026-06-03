@@ -48,7 +48,7 @@ echo "### trained -> $CKPT ; INFER testp1 (resolution-matched to training) ###"
 RAW="outputs/testp1_${TAG}_raw.jsonl"; SUB="submissions/testp1_${TAG}_submission.jsonl"
 INFER_ENV=("CUDA_VISIBLE_DEVICES=${GPUS%%,*}"); [ -n "$MP" ] && INFER_ENV+=("MAX_PIXELS=$MP")
 env "${INFER_ENV[@]}" PYTHONPATH=src uv run python -m nlpcc_t10.infer \
-  --split testp1 --adapter "$CKPT" --engine pt --data-root "$DATA_ROOT" --out "$RAW"
+  --split testp1 --model "$MODEL" --adapter "$CKPT" --engine pt --data-root "$DATA_ROOT" --out "$RAW"
 PYTHONPATH=src uv run python -m nlpcc_t10.aggregate \
   --pred "$RAW" --ref "$DATA_ROOT/data/testp1-track-1.jsonl" --out "$SUB"
 uv run python scripts/make_submission_zip.py --sub "$SUB" \
