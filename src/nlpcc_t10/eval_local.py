@@ -43,6 +43,30 @@ TRACK1_LABELS = [
     "Scope Overgeneralization",
     "Contradiction",
 ]
+MINORITY_LABELS = set(TRACK1_LABELS) - {"Supported"}
+
+
+def filter_to_hard(gold_path: Path, pred_path: Path, min_sent: int, tmpdir: Path) -> tuple[Path, Path, int, int]:
+    """Filter gold + pred to the HARD subset: records with >=min_sent sentences AND >=1 gold
+    minority sentence. testp1 is long+minority-dense; this devhard subset is a far better offline
+    proxy than the full 9:1 dev (short, minority-sparse, image-leaky). Writes filtered temp files
+    and returns (gold_hard, pred_hard, n_hard, n_total)."""
+    gold = [json.loads(l) for l in gold_path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    hard_ids = set()
+    for rec in gold:
+        sl = rec.get("sentence_label", [])
+        if len(sl) >= min_sent and any(
+            any(t != "Supported" for t in s.get("types", [])) for s in sl
+        ):
+            hard_ids.add(rec["id"])
+    g_hard = [r for r in gold if r["id"] in hard_ids]
+    pred = [json.loads(l) for l in pred_path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    p_hard = [r for r in pred if r.get("id") in hard_ids]
+    gp = tmpdir / "gold_hard.jsonl"
+    pp = tmpdir / "pred_hard.jsonl"
+    gp.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in g_hard) + "\n", encoding="utf-8")
+    pp.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in p_hard) + "\n", encoding="utf-8")
+    return gp, pp, len(hard_ids), len(gold)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -236,6 +260,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--keep-result", action="store_true",
         help="Keep the evaluator's result JSON file (default: delete after reading)."
     )
+    p.add_argument(
+        "--hard-subset", action="store_true",
+        help="Score ONLY the testp1-shaped hard subset: dev records with >=--min-sent sentences "
+             "AND >=1 gold minority sentence (a usable offline proxy; full dev is leaky+mismatched)."
+    )
+    p.add_argument("--min-sent", type=int, default=7, help="hard-subset min sentences/record (default 7).")
     return p
 
 
@@ -250,6 +280,14 @@ def main(argv: list[str] | None = None) -> int:
         if not p.exists():
             print(f"error: {name} file not found: {p}", file=sys.stderr)
             return 2
+
+    if args.hard_subset:
+        tmpdir = Path(tempfile.mkdtemp(prefix="devhard_"))
+        gold_path, pred_path, n_hard, n_total = filter_to_hard(
+            gold_path, pred_path, args.min_sent, tmpdir
+        )
+        print(f"[eval_local] HARD subset: {n_hard}/{n_total} dev records "
+              f"(>={args.min_sent} sentences AND >=1 gold minority).", file=sys.stderr)
 
     # Determine result JSON output path: next to pred, auto-named by evaluate.py convention
     result_path = pred_path.with_name(f"{pred_path.stem}_eval_result.json")
