@@ -57,7 +57,7 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | s24 | m | iv2b 单模 InternVL3-2B | `s24_m_iv2b` | 待测 | — | — | 241 (71/134/18/18) |
 | s25 | m | iv8b 单模 InternVL3-8B@2tiles | `s25_m_iv8b` | 40.04057 | 45.26884 | 34.81229 | 210 (79/74/31/26) |
 | s26 | m | gemma26b 单模 Gemma4-26B(2卡zero3) | `s26_m_gemma26b` | 44.69206 | 51.84146 | 37.54266 | 370 (105/191/46/28) |
-| s27 | m | gemma31b 单模 Gemma4-31B(2卡zero3,极保守) | `s27_m_gemma31b` | 待测 | — | — | 87 (45/23/13/6) |
+| s27 | m | gemma31b 单模 Gemma4-31B(2卡zero3,极保守) | `s27_m_gemma31b` | 29.27701 | 33.98063 | 24.57338 | 87 (45/23/13/6) |
 | s28 | u | 5Q+gemma31b | `s28_u_q5-gemma31b` | 待测 | — | — | 397 (145/161/54/37) |
 | s29 | u | 5Q+gemma26b+gemma31b | `s29_u_q5-gemma26b31b` | 待测 | — | — | 507 (153/243/66/45) |
 
@@ -131,5 +131,5 @@ PYTHONPATH=src uv run python -m nlpcc_t10.build_dataset --data-root "$DATA_ROOT"
 
 - **⚠️ q4b 证伪(s17 单模 / s18 union):s18(49.71) < s15(50.26),−0.55。** MF1 微升但 **PEM 跌 1.19**:q4b 多出的少数类多是**假阳性**,打碎干净段落。**教训:规模多样性(同 Qwen 4B)无用 —— 错误相关 + 模型弱 → 只叠 FP。要的是架构多样性(非 Qwen)。** 并集基底回到 5 Qwen,q4b 踢出。
 - **InternVL3(s24 iv2b / s25 iv8b 单模;s19/s20/s21 union)**:首个非 Qwen(InternViT 编码器)。8B OOM 修复 = `INTERNVL_MAX_PATCHES=2`(见记忆 internvl-fleet-config:MAX_PIXELS=401408、use_logits=false、HF_HOME 可写、lr 5e-5)。union 少数类大涨(s21=472)但**待测**是否破 50.26。
-- **Gemma4-26B(s26 单模;s23 union=5Q+26B,498 少数类)**:强 + 架构异构(SigLIP 视觉塔 + MoE),理论最有希望破顶。攻克的坑:**单卡 OOM → 2 卡 deepspeed zero3**(切权重,deepspeed 0.19.1 已装);**多图 record 激活暴涨 OOM → ≤2图过滤数据** `data/train_sft_le2img.jsonl`;**infer 必传 `--template gemma4_nothinking`**(否则 thinking 泄漏 → JSON 解析崩 → 全-Supported)。**s27 = Gemma4-31B 同流程训练中**。
+- **Gemma4-26B(s26 单模;s23 union=5Q+26B,498 少数类)**:强 + 架构异构(SigLIP 视觉塔 + MoE),理论最有希望破顶。攻克的坑:**单卡 OOM → 2 卡 deepspeed zero3**(切权重,deepspeed 0.19.1 已装);**多图 record 激活暴涨 OOM → ≤2图过滤数据** `data/train_sft_le2img.jsonl`;**infer 必传 `--template gemma4_nothinking`**(否则 thinking 泄漏 → JSON 解析崩 → 全-Supported)。**s27 = Gemma4-31B 单模仅 29.28**(只 87 少数类→漏 84% 段 gold→PEM 24.57):**模型越大反而越保守越糟,坐实"数据先验(≤1少数类/段)压过模型规模"——堆更大/更多 Gemma 已死路**。s28(5Q+31B,397)/s29(5Q+26B+31B,507)待上传但大概率 ≤50.26。
 - 复现:单模 `scripts/train_gemma4.sh`(`DEEPSPEED=zero3 GPUS=4,5 MODEL_ID=google/gemma-4-31B-it TAG=gemma4_31b DATASET=data/train_sft_le2img.jsonl MAX_LENGTH=4096 bash ...`)、`scripts/train_internvl.sh`、q4b 用 `MODEL_ID=Qwen/Qwen3-VL-4B-Instruct ... retrain_fullres.sh`;union 一律 `ensemble_union.py --min-votes 1 <成员 jsonl...>`。
