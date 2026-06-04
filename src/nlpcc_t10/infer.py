@@ -629,6 +629,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--max-new-tokens", type=int, default=DEFAULT_MAX_NEW_TOKENS)
     p.add_argument(
+        "--temperature", type=float, default=0.0,
+        help="采样温度。0.0=贪心(默认,行为不变)。E1 自洽采样用 >0(如 0.7);"
+             "多样本由调用方多次跑(不同 --seed)再 union，而非引擎 n>1。",
+    )
+    p.add_argument(
+        "--seed", type=int, default=None,
+        help="采样种子(仅 temperature>0 时透传引擎,使一次采样可复现)。",
+    )
+    p.add_argument(
         "--joint",
         action="store_true",
         help="PARAGRAPH-JOINT inference: one request per record -> JSON array of N labels "
@@ -690,12 +699,18 @@ def main(argv: list[str] | None = None) -> int:
 
     # Joint mode emits up to N labels (testp1 max 31 sentences) -> bigger budget than the
     # per-sentence 24-token default; 512 covers 31 labels + JSON structure.
-    request_config = RequestConfig(
+    # Default (temperature=0.0) is greedy = unchanged. E1 self-consistency passes temperature>0;
+    # `seed` is only attached when sampling so the greedy path stays byte-identical (and we don't
+    # depend on RequestConfig accepting `seed` for normal runs).
+    rc_kwargs: dict[str, Any] = dict(
         max_tokens=(512 if (args.joint or args.corrector) else args.max_new_tokens),
-        temperature=0.0,  # 贪心：分类任务要确定性
+        temperature=args.temperature,
         logprobs=not args.no_logprob,
         top_logprobs=1 if not args.no_logprob else None,
     )
+    if args.temperature and args.temperature > 0 and args.seed is not None:
+        rc_kwargs["seed"] = args.seed
+    request_config = RequestConfig(**rc_kwargs)
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
