@@ -157,7 +157,7 @@ uv run python "$DATA_ROOT/offline_eval/evaluate.py" --track 1 \
 - id：测试集自带，原样回填；本地 9:1 dev 用 `prepare_dev_eval.py` 风格的 `track1-NNNNNN` id 生成 gold。
 - 模型解析失败/越界标签时，**fallback 到 `Supported`**（最安全、保 PEM）。
 - ⚠️ **不要信 9:1 dev（=88）选型**：32% 记录跨切分共享图片（泄漏）+ 分布失配（短/少数类稀 vs testp1 长/密）→ 排不了模型、也没预警到 fullres 掉分。**真信号 = Codabench 排行榜**（上限 100）或无泄漏的 testp1-shaped 子集。
-- **提交命名规范**：`testp1_s{NN}_{tag}.{zip,jsonl}`，`s{NN}` = 按创建顺序的稳定序号；新提交取下一个号 → 重命名 → 追加 `notes/submissions_log.md`（含三元组得分 + 逐类计数 + 复现 + 为什么试它）。
+- **提交命名规范**：`testp1_s{NN}_{T}_{desc}.{zip,jsonl}`，`s{NN}` = 按创建顺序的稳定序号，`{T}` = 类型(`m`=单模 / `pp`=后处理 / `u`=union)，`{desc}` = 简短描述(desc 内用 `-`，`_` 只分隔三段)。新提交取下一个号 + 定类型 → 重命名 → 追加 `notes/submissions_log.md` 统一总表一行(序号/类型/描述/三元组得分/逐类计数)+ 复现 + 为什么试它。
 - 数据构造命令**务必记**（含 `--supported-downsample`；grid 那次漏记，反推吃了亏）。
 
 ## 9. 待办 / 开放项（当前路线，已证伪项见 §4 不再列）
