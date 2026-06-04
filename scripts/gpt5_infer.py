@@ -47,6 +47,18 @@ FINAL: <label#1> ||| <label#2> ||| ... ||| <label#N>
 using the exact label strings above, one per sentence, in order, N total."""
 
 
+FEWSHOT_BLOCK = """Study these LABELED EXAMPLES from this exact task (real gold). Match their conventions; note how most descriptive sentences are Supported and the bar for each minority label:
+
+Ex1: "Figure 11 shows the improvement of using adaptive loss on both the Informer baseline and our multi-scale version." [evidence: a figure of that improvement] -> Supported  (merely DESCRIBES what the provided figure shows; named methods are present.)
+Ex2: "As shown across all tables, calibrated models show consistent improvement over fine-tuned models across datasets and tasks." [evidence: one calibration table] -> Scope Overgeneralization  ("across all tables / consistent / across datasets and tasks" generalizes far beyond the single result shown.)
+Ex3: "All tables in this paper show that the proposed loss is not largely sensitive to those factors." [evidence: one sensitivity table] -> Scope Overgeneralization  ("All tables in this paper" over-generalizes from the one provided.)
+Ex4: "As shown in Table 6, CoRTX outperforms L2X on two metrics." [evidence: Table 5, a comparison with L2X; no CoRTX result present] -> Unsupported Entity  (it cites a result/comparison whose CONTENT is genuinely not in the provided evidence — not merely a different number.)
+Ex5: "We underperform DDA by almost 8% at a budget of 0.2x10^9 MACs, and REDA by 6.9%." [evidence: a performance figure] -> Contradiction  (the specific numbers conflict with the values shown.)
+Ex6: "Because of this, the network will generalise on this portion of the mapping and is systematic." [evidence: a figure of the network mapping] -> Unsupported Causal Mechanistic  (asserts a "because"/mechanism the evidence does not establish.)
+
+Again: the DEFAULT is Supported (~85% of sentences). Only depart from it for a clear violation like the examples above."""
+
+
 def canon(s: str) -> str:
     """Map a free-text label to one of the 5 canonical strings (fallback Supported)."""
     t = s.strip().lower()
@@ -155,6 +167,7 @@ def main(argv=None) -> int:
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--max-images", type=int, default=6)
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--fewshot", action="store_true", help="prepend labeled few-shot examples (teach gold conventions)")
     ap.add_argument("--dry-run", action="store_true", help="build+print prompt for 1 record, no API/images")
     args = ap.parse_args(argv)
 
@@ -197,6 +210,8 @@ def main(argv=None) -> int:
 
     def work(rec):
         msgs, n = build_messages(rec, data_root, args.max_images)
+        if args.fewshot:
+            msgs[0]["content"] = SYSTEM + "\n\n" + FEWSHOT_BLOCK
         out = ""
         try:
             out = call_api(msgs, args.model, args.base, key)
