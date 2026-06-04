@@ -256,6 +256,7 @@ def load_engine(
     max_model_len: int,
     gpu_mem_util: float,
     lora_rank: int,
+    template_type: str | None = None,
 ):
     """构造 ms-swift InferEngine。返回 (engine_obj, adapter_request_or_None, engine_kind)。
 
@@ -274,6 +275,10 @@ def load_engine(
             adapters=[adapter] if adapter else None,
             max_batch_size=max_batch_size,
             attn_impl="sdpa",  # 推理稳妥；如装了 flash-attn 可改 "flash_attn"
+            # CRITICAL: match the TRAINING template at inference. Gemma4 26B/31B default to the
+            # THINKING template (gemma4) -> emits <|channel|>thought... -> JSON-label parse fails ->
+            # all-Supported -> trivial ~19. Pass template_type=gemma4_nothinking (what training used).
+            **({"template_type": template_type} if template_type else {}),
         )
         return eng, None, "pt"
 
@@ -289,6 +294,7 @@ def load_engine(
             max_model_len=max_model_len,
             gpu_memory_utilization=gpu_mem_util,
             limit_mm_per_prompt={"image": 8},  # evidence 图数有限，给足额度
+            **({"template_type": template_type} if template_type else {}),
         )
         adapter_request = (
             AdapterRequest(name="default", path=adapter) if adapter else None
@@ -593,6 +599,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="基座模型 Hub id 或本地路径（须与训练一致）。",
     )
     p.add_argument("--adapter", default="outputs/qwen3vl8b_lora", help="LoRA adapter 目录")
+    p.add_argument(
+        "--template",
+        default=None,
+        help="Override the ms-swift template_type at inference (must MATCH training). "
+             "REQUIRED for Gemma4 26B/31B: pass 'gemma4_nothinking' or the THINKING template leaks "
+             "<|channel|>thought tokens -> JSON parse fails -> all-Supported. None = model default.",
+    )
     p.add_argument("--out", required=True, help="输出句子级 raw jsonl 路径")
     p.add_argument(
         "--engine",
@@ -672,6 +685,7 @@ def main(argv: list[str] | None = None) -> int:
         max_model_len=args.max_model_len,
         gpu_mem_util=args.gpu_mem_util,
         lora_rank=args.lora_rank,
+        template_type=args.template,
     )
 
     # Joint mode emits up to N labels (testp1 max 31 sentences) -> bigger budget than the
