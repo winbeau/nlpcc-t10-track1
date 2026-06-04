@@ -52,7 +52,7 @@ PYTHONPATH=src uv run torchrun --nproc_per_node="$NPROC" --master_port="$PORT" \
   --gradient_checkpointing true --vit_gradient_checkpointing true \
   --packing false --padding_free false --use_logits_to_keep false \
   --eval_strategy no --save_strategy epoch --save_total_limit 1 \
-  --logging_steps 10 --dataloader_num_workers 4 --output_dir "$OUTDIR" "${STEP_ARGS[@]}" "${DS_ARGS[@]}"
+  --logging_steps "${LOG_STEPS:-10}" --dataloader_num_workers 4 --output_dir "$OUTDIR" "${STEP_ARGS[@]}" "${DS_ARGS[@]}"
 
 [ -n "${SMOKE:-}${NO_INFER:-}" ] && { echo "### train done (no infer: SMOKE/NO_INFER) ###"; exit 0; }
 
