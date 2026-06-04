@@ -111,7 +111,14 @@ def build_messages(rec: dict, data_root: Path, max_images: int) -> tuple[list, i
     for ev in rec.get("evidence_bundle", []):
         ip = ev.get("img_path")
         if ip and imgs < max_images:
-            uri = b64_image(data_root / ip)
+            # Official layout: <data_root>/data/images/<sha>.jpg (img_path is "images/<sha>.jpg",
+            # missing the 'data/' segment). Fall back to <data_root>/<ip> and bare <ip>.
+            cand = data_root / "data" / ip
+            if not cand.exists():
+                cand = data_root / ip
+            if not cand.exists():
+                cand = Path(ip)
+            uri = b64_image(cand)
             if uri:
                 content.append({"type": "image_url", "image_url": {"url": uri}})
                 imgs += 1
