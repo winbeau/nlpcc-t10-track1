@@ -44,7 +44,13 @@
 
 ---
 
-## 状态 (2026-06-04):PHASE A 完成 ✅,PHASE B 待 GPU
+## 状态 (2026-06-04):PHASE A+B 完成 ✅ → 转 PHASE C(详见 [[gate_b_phaseB_result]])
+
+**PHASE B 结果(4×H200,16 锚点)**:densematch 是最佳 gold 变体,Spearman(dev_score,testp1)=**+0.590**(raw −0.02 / reshaped +0.22 单调上升 → 证实 testp1-shaping 方向对),但**全部 < 0.8 可信门**。根因=**记忆泄漏**:旧 adapter 在全量(含 dev')训过,dev 分压缩在 90–98(s10 二轮过拟合 dev 最高 98.05 却 testp1 倒数 41.70 → 泄漏与泛化反相关)。**结论:旧 adapter 不能可信选型;densematch +0.59 是下界(泄漏压低)。** → **唯一干净路 = PHASE C 累积协议**:新候选只在 `data/devbench/train_sft.jsonl`(image-disjoint train')训 + densematch 离线评 + 同时交 testp1,攒无泄漏 (dev,testp1) 对;第一个干净点 = 密度匹配模型(P1 破局杠杆),评测台与破局合一。驱动脚本:`scripts/phaseB_run.sh` + `scripts/phaseB_synth_rankcorr.sh`。
+
+---
+
+### (历史) PHASE A 完成记录
 
 **A1 ✅** `build_dataset --split-mode component_aware --val-ratio 0.15 --out data/devbench` → 2832 train / **501 dev** record,零-sha 断言通过。
 **A2 ✅** `scripts/reshape_devbench.py`(纯 stdlib)产 3 个 gold 变体 + `notes/devbench_shape_report.md`:

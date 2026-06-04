@@ -168,8 +168,8 @@ uv run python "$DATA_ROOT/offline_eval/evaluate.py" --track 1 \
 > - **抑制类后处理 / 置信门控 union 死了**：testp1 PEM 召回受限(s16 砍单票 −2.97);门控 PEM-safe 版退化成 s15。
 > **根因(已坐实)**：训练数据「≤1 少数类/段」伪先验(长段仅 0.46% 含≥2;s01 testp1 仅 3.8% 段开≥2)→ 系统性漏召回。
 
-- [ ] **★P0 GATE-B 离线评测台**(`notes/gate_b_plan.md`,**第一优先**)：image-disjoint(component_aware)+ 重塑 testp1 形状 + 用 23 锚点 rank-corr 验证。停止盲烧提交。PHASE A 本地纯 Python 零风险可立刻起。
-- [ ] **★P1 密度匹配训练**(`notes/breakthrough_plan.md`,主攻,+3~6)：把真少数类句插进长段、joint 训练,让单模在密集长段 catch 多个真少数类（造 union 没有的新正确召回）。在 GATE-B 的 train' 上训→reshaped dev' 无泄漏离线评（与 P0 合一）。
+- [x] **★P0 GATE-B 离线评测台 PHASE A+B 完成**(`notes/gate_b_plan.md` / `notes/gate_b_phaseB_result.md`)：`build_dataset --split-mode component_aware --val-ratio 0.15 --out data/devbench`(501 dev,零-sha)→ `scripts/reshape_devbench.py` 产 raw/reshaped/**densematch** 3 变体(trivial 全-Sup 试金石:densematch 17.2≈testp1 18.85 → 召回-critical 对)。**PHASE B(4×H200,16 锚点,`scripts/phaseB_run.sh`+`phaseB_synth_rankcorr.sh`+`rankcorr_meta.py`)**:**densematch 最佳 Spearman +0.590**(raw −0.02 / reshaped +0.22 单调升 → shaping 方向对),但 <0.8 可信门 —— **旧 adapter 记忆泄漏封顶**(s10 二轮过拟合 dev 98.05/testp1 41.70 反相关)。**⇒ 旧 adapter 不能选型;唯一干净路 = P1 累积协议。**
+- [ ] **★P1 密度匹配训练 = PHASE C 累积协议(主攻,+3~6,评测台与破局合一)**(`notes/breakthrough_plan.md`)：把真少数类句插进长段、joint 训练,让单模在密集长段 catch 多个真少数类（造 union 没有的新正确召回）。**只在 `data/devbench/train_sft.jsonl`(image-disjoint train',从不见 dev')训 → `data/devbench/dev_gold_densematch.jsonl` 无泄漏离线评 + 同时交 testp1**,累积无泄漏 (dev,testp1) 对(第一个干净点既是破局模型又校准评测台)。densematch +0.59 是泄漏下界,干净后应更高。
 - [ ] **P2 便宜叠加**(P1 跑通后)：纯加法自洽采样(temp>0 多采样、只增不删,需给 infer.py 加 --temperature/--n)；OCR 数字通道(表格数字转写,UE/Contra 接地)。
 - [ ] Phase-2（2026-06-11 放出）：勿过拟合 Phase-1；**保 s01(47.80)/s15(50.26) 永久保底**。
 
