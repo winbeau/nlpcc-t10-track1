@@ -30,6 +30,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
+import os
 import subprocess
 import sys
 import tempfile
@@ -69,8 +71,8 @@ ANCHORS: dict[str, tuple[str, float | None, float | None, float | None]] = {
     "s28": ("u", None, None, None),
     "s29": ("u", None, None, None),
 }
-# union family used for the "can the bench rank the union knee?" test (s15 is the known top).
-UNION_FAMILY = [n for n, v in ANCHORS.items() if v[0] == "u" and v[1] is not None]
+# NOTE: the union-knee test in main() derives its family from the rows that actually have dev preds
+# (`uni = [r for r in rows if r[1]=="u"]`), so there is no module-level union list to keep in sync.
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -140,6 +142,13 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
     return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
 
 
+def _mktemp(suffix: str) -> str:
+    """Atomically create a temp file (mkstemp, no TOCTOU) and return its path."""
+    fd, path = tempfile.mkstemp(suffix=suffix)
+    os.close(fd)
+    return path
+
+
 def score_on_gold(
     gold_path: Path,
     pred_path: Path,
@@ -149,16 +158,25 @@ def score_on_gold(
     Returns {score,macro_f1,pem} *100, or None if the pred does not cover every gold id."""
     gold = load_jsonl(gold_path)
     gold_ids = [r["id"] for r in gold]
-    pred_by_id = {r["id"]: r for r in load_jsonl(pred_path)}
+    pred_list = load_jsonl(pred_path)
+    pred_by_id = {r["id"]: r for r in pred_list}
+    if len(pred_by_id) != len(pred_list):
+        print(f"    !! {pred_path.name}: duplicate ids collapsed "
+              f"({len(pred_list)} rows -> {len(pred_by_id)} ids); kept last each", file=sys.stderr)
     missing = [i for i in gold_ids if i not in pred_by_id]
     if missing:
         print(f"    !! {pred_path.name}: missing {len(missing)}/{len(gold_ids)} gold ids "
               f"(e.g. {missing[:3]}) -> skipped", file=sys.stderr)
         return None
+    no_labels = [i for i in gold_ids if "labels" not in pred_by_id[i]]
+    if no_labels:
+        print(f"    !! {pred_path.name}: {len(no_labels)} records lack a 'labels' key "
+              f"(raw infer.py output, not aggregate.py?) -> skipped", file=sys.stderr)
+        return None
     pred_sub = [{"id": i, "labels": pred_by_id[i]["labels"]} for i in gold_ids]
     ev = data_root / "offline_eval" / "evaluate.py"
-    pf = Path(tempfile.mktemp(suffix=".jsonl"))
-    of = Path(tempfile.mktemp(suffix=".json"))
+    pf = Path(_mktemp(".jsonl"))
+    of = Path(_mktemp(".json"))
     try:
         with pf.open("w", encoding="utf-8") as f:
             for r in pred_sub:
@@ -264,6 +282,10 @@ def main(argv: list[str] | None = None) -> int:
         print("\n  Union-knee: not enough union anchors with s15 present to test.")
 
     # ---- B6 decision gate ----
+    if math.isnan(rho_sc):
+        print("\n  DECISION: rho=nan — zero-variance dev scores (degenerate gold variant or all anchors "
+              "tie on it). Cannot rank; inspect the per-anchor table above. NOT a true anticorrelation.")
+        return 2
     print("\n  DECISION (plan B6, on dev_score rho):")
     if rho_sc >= 0.8:
         print(f"    rho={rho_sc:+.3f} >= 0.80 -> TRUSTWORTHY selection bench (but still each 1 Codabench "

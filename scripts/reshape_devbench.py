@@ -38,10 +38,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import subprocess
 import sys
 import tempfile
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -97,7 +99,17 @@ def select(
     easy = [r for r in pool if minority_count(r) == 0]
     H = len(hard)
     # density = H / (H + keep_easy)  ==  minority_frac  ->  keep_easy = H * (1 - frac) / frac
-    keep_easy = round(H * (1.0 - minority_frac) / minority_frac) if minority_frac > 0 else len(easy)
+    if minority_frac >= 1.0:
+        keep_easy = 0
+    elif minority_frac <= 0.0:
+        keep_easy = len(easy)
+    else:
+        keep_easy = round(H * (1.0 - minority_frac) / minority_frac)
+        if H > 0 and keep_easy == 0:
+            keep_easy = 1  # tiny-H guard: avoid density collapsing to 1.0 (rounds-to-0 at H<=2)
+    if H == 0:
+        warnings.warn(f"select(): pool has 0 minority-carrying records -> variant will carry NO minority "
+                      f"signal ({len(easy)} minority-free available). Check --min-len.")
     rng = random.Random(seed)
     # primary key: length desc; secondary: a seeded shuffle for tie robustness (stable id fallback)
     easy_shuffled = easy[:]
@@ -197,6 +209,13 @@ def render_table(rows: list[tuple[str, dict[str, Any]]]) -> str:
     return "\n".join(lines)
 
 
+def _mktemp(suffix: str) -> str:
+    """Atomically create a temp file (mkstemp, no TOCTOU) and return its path."""
+    fd, path = tempfile.mkstemp(suffix=suffix)
+    os.close(fd)
+    return path
+
+
 def trivial_baseline(gold_path: Path, data_root: Path) -> dict[str, float] | None:
     """Score the TRIVIAL all-Supported prediction against a gold variant via the OFFICIAL evaluator.
     The single most diagnostic number: a bench is recall-critical (like testp1, trivial~=19) only if
@@ -206,9 +225,11 @@ def trivial_baseline(gold_path: Path, data_root: Path) -> dict[str, float] | Non
     if not ev.exists():
         return None
     gold = load_jsonl(gold_path)
+    if not gold:
+        return None  # empty variant -> evaluate.py has nothing to score
     pred = [{"id": r["id"], "labels": ["Supported"] * len(r["sentence_label"])} for r in gold]
-    pf = Path(tempfile.mktemp(suffix=".jsonl"))
-    of = Path(tempfile.mktemp(suffix=".json"))
+    pf = Path(_mktemp(".jsonl"))
+    of = Path(_mktemp(".json"))
     try:
         write_jsonl(pred, pf)
         r = subprocess.run(
