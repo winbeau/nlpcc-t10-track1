@@ -4,13 +4,14 @@
 
 ## 命名规范(务必遵守)
 ```
-testp1_s{NN}_{tag}.zip   (+ 同名 .jsonl)
+testp1_s{NN}_{T}_{desc}.zip   (+ 同名 .jsonl)
 ```
 - `testp1` — 阶段(Phase-1 测试集;Phase-2 用 `testp2_`)。
 - **`s{NN}`** — 2 位**提交序号**,按创建顺序递增,稳定唯一 ID(上传 Codabench / 记分时用它指代)。
-- `{tag}` — 简短配置标识(grid / fullres / tau020 / os4 / perclass / ensU / joint8b / joint32b …)。
+- **`{T}` — 类型**:`m`=单模(单个训练模型) / `pp`=后处理(单模的规则后处理) / `u`=union(并集集成)。
+- **`{desc}` — 简短描述**:单模=模型+配置(`q8b-grid` / `q32b-joint` / `gemma26b` / `iv8b` …);union=成员(`q5` / `q5-gemma26b` / `2of4` …);后处理=手法(`tau020` / `vetoAll` …)。**desc 内部用 `-` 连接,`_` 只分隔三段**。
 - zip 内文件**永远是 `track1_pred.jsonl`**(官方扁平 zip 规范;`make_submission_zip.py` 自动处理)。
-- 新增提交:取下一个 `s{NN}`,重命名 zip/jsonl,追加下面总表一行 + 复现命令。
+- 新增提交:取下一个 `s{NN}` + 定类型 → 重命名 zip/jsonl → 追加下面总表一行(序号/类型/描述/score)+ 复现命令。
 
 ## 关键背景(先读)
 - **testp1 trivial(全 Supported)≈ 19**(实测 s05=18.85),**不是** train-dev 的 43.2。testp1 段落长(均值 8.7、最长 31 句)、少数类密集(~84% 段含 ≥1 gold 少数类)。
@@ -25,24 +26,39 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 # 校验+打包:uv run python scripts/make_submission_zip.py --sub <jsonl> --ref "$DATA_ROOT/data/testp1-track-1.jsonl" --out submissions/testp1_sNN_tag.zip
 ```
 
-## 得分总表(按序号)
-| 序号 | zip (submissions/) | Score | Macro-F1 | PEM | #少数类(UCM/UE/SO/Contra) | 配置一句话 |
-|---|---|---:|---:|---:|---|---|
-| **s01** | `testp1_s01_grid.zip` ⭐ | **47.79897** | 52.76518 | 42.83276 | 253 (109/92/29/23) | grid 最优:β5 λ0.5,过采样 3.0×,max_pixels 401408,use_logits_to_keep=false,1ep |
-| s02 | `testp1_s02_fullres.zip` | 44.46574 | 48.99973 | 39.93174 | 260 (104/108/22/26) | 全分辨率 802816 + ulk=true(**有害 −3.3**) |
-| s03 | `testp1_s03_tau020.zip` | 43.85382 | 48.28784 | 39.41980 | 190 | 后处理:min_logprob<−0.20 的少数类→Supported |
-| s04 | `testp1_s04_tau003.zip` | 38.47759 | 42.48420 | 34.47099 | 127 | 后处理:min_logprob<−0.03→Supported |
-| s05 | `testp1_s05_vetoAll.zip` | 18.85468 | 22.00970 | 15.69966 | 46 | 孤立少数类全 veto(≈testp1 trivial 锚点) |
-| s06 | `testp1_s06_vetoGated.zip` | 39.57432 | 44.33635 | 34.81229 | 171 | 孤立少数类 veto(仅退最虚 82,gate −0.05) |
-| s07 | `testp1_s07_gentle15.zip` | 40.90984 | 46.83674 | 34.98294 | 246 | 降过采样 1.5×(更差→过采样别降) |
-| s08 | `testp1_s08_os4.zip` | 45.10490 | 50.44872 | 39.76109 | 235 (102/80/28/25) | 均匀过采样 4×,1ep(<grid) |
-| s09 | `testp1_s09_perclass.zip` | 43.83218 | 49.95104 | 37.71331 | 268 (104/112/33/19) | 逐类过采样 Contra6/SO5/UCM3/UE2,ds0.6,1ep(<grid) |
-| s10 | `testp1_s10_perclassEp2.zip` | 41.69745 | 46.53484 | 36.86007 | 193 (80/74/17/22) | 逐类过采样,2ep(过拟合,最差) |
-| **s11** | `testp1_s11_ensU.zip` ⭐ | **48.21778** | **54.79733** | 41.63823 | 339 (127/142/43/27) | union ensemble(s01+s08+s09)→ **新最优 +0.42**,集成是赢家方向 |
-| s12 | `testp1_s12_joint8b.zip` | 43.33171 | 48.26752 | 38.39590 | 209 (90/66/31/22) | 8B 段落联合 plain-CE,1ep(<grid) |
-| s13 | `testp1_s13_joint32b.zip` | 44.43184 | 49.44389 | 39.41980 | 183 (97/40/19/27) | 32B 段落联合 plain-CE,0 fallback(<grid,但 >joint8b +1.1:容量在联合内有用) |
+## 得分总表(按序号;类型 **m**=单模 / **pp**=后处理 / **u**=union)
+> zip 列省略前缀 `testp1_` 和后缀 `.zip`(+ 同名 `.jsonl`)。`待测` = 已打包未上传 Codabench。
 
-**当前最优 = s11 ensU(48.22)**。结论:**ensemble(召回叠加)是唯一超 grid 的方向**;过采样/联合格式/容量在单模型上都 ≤grid。下一步推 ensemble(更多样并集 / ≥2 票一致),见 §ensemble。
+| 序号 | 类型 | 描述 | 文件(submissions/) | Score | MF1 | PEM | #少数类(UCM/UE/SO/Contra) |
+|---|---|---|---|---:|---:|---:|---|
+| **s01** | m | q8b 句级 grid 最优 ⭐保底 | `s01_m_q8b-grid` | **47.79897** | 52.76518 | 42.83276 | 253 (109/92/29/23) |
+| s02 | m | q8b 全分辨率802816(有害−3.3) | `s02_m_q8b-fullres` | 44.46574 | 48.99973 | 39.93174 | 260 (104/108/22/26) |
+| s03 | pp | min_logprob<−0.20 少数类→Sup | `s03_pp_tau020` | 43.85382 | 48.28784 | 39.41980 | 190 |
+| s04 | pp | min_logprob<−0.03→Sup | `s04_pp_tau003` | 38.47759 | 42.48420 | 34.47099 | 127 |
+| s05 | pp | 孤立少数类全 veto(trivial 锚) | `s05_pp_vetoAll` | 18.85468 | 22.00970 | 15.69966 | 46 |
+| s06 | pp | 孤立少数类 gated veto(−0.05) | `s06_pp_vetoGated` | 39.57432 | 44.33635 | 34.81229 | 171 |
+| s07 | m | q8b 降过采样1.5×(更差) | `s07_m_q8b-gentle15` | 40.90984 | 46.83674 | 34.98294 | 246 |
+| s08 | m | q8b 均匀过采样4× | `s08_m_q8b-os4` | 45.10490 | 50.44872 | 39.76109 | 235 (102/80/28/25) |
+| s09 | m | q8b 逐类过采样 | `s09_m_q8b-perclass` | 43.83218 | 49.95104 | 37.71331 | 268 (104/112/33/19) |
+| s10 | m | q8b 逐类过采样2ep(过拟合最差) | `s10_m_q8b-perclassEp2` | 41.69745 | 46.53484 | 36.86007 | 193 (80/74/17/22) |
+| **s11** | u | q8b×3(s01+08+09) | `s11_u_q3` | **48.21778** | 54.79733 | 41.63823 | 339 (127/142/43/27) |
+| s12 | m | q8b 段落联合 plain-CE | `s12_m_q8b-joint` | 43.33171 | 48.26752 | 38.39590 | 209 (90/66/31/22) |
+| s13 | m | q32b 段落联合 plain-CE | `s13_m_q32b-joint` | 44.43184 | 49.44389 | 39.41980 | 183 (97/40/19/27) |
+| s14 | u | 4成员(s01+08+09+s13) | `s14_u_q4` | 49.98915 | 56.80424 | 43.17406 | 365 (137/148/48/32) |
+| **s15** | u | **5 Qwen 全 ⭐当前最优** | `s15_u_q5` | **50.25660** | 57.16849 | 43.34471 | 382 (139/155/52/36) |
+| s16 | u | ≥2票共识(4成员,差) | `s16_u_2of4` | 47.28613 | 52.59274 | 41.97952 | 253 (110/87/32/24) |
+| s17 | m | q4b 单模(4B,证伪) | `s17_m_q4b` | 待测 | — | — | 220 (91/78/27/24) |
+| s18 | u | 5Q+q4b(证伪 −0.55) | `s18_u_q5-q4b` | 49.71340 | 57.27662 | 42.15017 | 404 (139/164/58/43) |
+| s19 | u | 5Q+iv2b | `s19_u_q5-iv2b` | 待测 | — | — | 448 (146/201/58/43) |
+| s20 | u | 5Q+iv8b | `s20_u_q5-iv8b` | 待测 | — | — | 415 (139/171/58/47) |
+| s21 | u | 5Q+iv2b+iv8b | `s21_u_q5-iv2b8b` | 待测 | — | — | 472 (146/212/61/53) |
+| s22 | u | consensus8(8成员≥2票) | `s22_u_consensus8` | 待测 | — | — | 332 (121/129/48/34) |
+| s23 | u | 5Q+gemma26b | `s23_u_q5-gemma26b` | 待测 | — | — | 498 (152/237/65/44) |
+| s24 | m | iv2b 单模 InternVL3-2B | `s24_m_iv2b` | 待测 | — | — | 241 (71/134/18/18) |
+| s25 | m | iv8b 单模 InternVL3-8B@2tiles | `s25_m_iv8b` | 待测 | — | — | 210 (79/74/31/26) |
+| s26 | m | gemma26b 单模 Gemma4-26B(2卡zero3) | `s26_m_gemma26b` | 待测 | — | — | 370 (105/191/46/28) |
+
+**当前最优 = s15 u_q5(50.26)**。结论:**union(召回叠加)是唯一超 grid 的方向**(s11→s14→s15 单调涨);单模(过采样/联合/容量)都 ≤grid;后处理(s03-s07)单调掉分(testp1 召回-critical)。规模多样性(q4b s18)证伪。**待测的 s19-s26**(架构异构成员 InternVL/Gemma4 + 其 union)是当前在验证的方向 —— 单模 s17/s24/s25/s26 交了看强弱,union s19-s23 看是否破 50.26。
 
 ---
 
@@ -51,7 +67,7 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 ### s01 grid — 47.80(当前最优,保持榜上)
 - 数据:`build_dataset --minority-oversample 3.0 --supported-downsample 0.6`(产出 ~12741 train/9750 Supported;⚠️ 当初 downsample 未记,反推 ~0.6)。
 - 训练:2 卡 DDP,`SOFTMIN_BETA=5 SOFTMIN_LAMBDA=0.5 ... scripts/train_softmin.py ... --max_pixels 401408 --use_logits_to_keep false --num_train_epochs 1`(ckpt `outputs/grid_b5_l0.5/v0-20260602-095341/checkpoint-2000`)。
-- 推理+打包:`MAX_PIXELS=401408 bash scripts/make_testp1_submission.sh b5_l0.5` → `make_submission_zip.py` 出 `testp1_s01_grid.zip`。
+- 推理+打包:`MAX_PIXELS=401408 bash scripts/make_testp1_submission.sh b5_l0.5` → `make_submission_zip.py` 出 `testp1_s01_m_q8b-grid.zip`。
 
 ### s02 fullres — 44.47(全分辨率,有害)
 `MAX_PIXELS=802816 GPUS=0,1 bash scripts/retrain_fullres.sh`(ulk=true)。
@@ -80,8 +96,8 @@ uv run python scripts/lone_minority_veto.py --raw outputs/testp1_gridckpt_lp_raw
 
 ### s11 ensU union ensemble(零重训,纯后处理)
 ```bash
-uv run python scripts/ensemble_union.py --out submissions/s11.jsonl \
-  submissions/testp1_s01_grid.jsonl submissions/testp1_s08_os4.jsonl submissions/testp1_s09_perclass.jsonl
+uv run python scripts/ensemble_union.py --out submissions/testp1_s11_u_q3.jsonl \
+  submissions/testp1_s01_m_q8b-grid.jsonl submissions/testp1_s08_m_q8b-os4.jsonl submissions/testp1_s09_m_q8b-perclass.jsonl
 ```
 
 ### s12 / s13 段落联合(plain-CE,scripts/train_joint.sh;先 build_dataset --joint)
@@ -98,27 +114,15 @@ PYTHONPATH=src uv run python -m nlpcc_t10.build_dataset --data-root "$DATA_ROOT"
 3. 新提交:取下一个 `s{NN}` → 重命名 zip/jsonl → 追加总表一行 + 复现命令 + "为什么试它"。
 4. 若平台按最新提交计分,实验后**把 s01(47.80)顶回保底**。
 
-## ensemble 推进变体(s14–s16,待提交;基于 s11 ensU=48.22 是赢家方向)
-| 序号 | zip | 机制 | #少数类(UCM/UE/SO/Contra) | Score |
-|---|---|---|---|---|
-| s14 | testp1_s14_ensU4.zip | union(s01+s08+s09+**s13 joint32b**),加 32B 多样性 | 365 (137/148/48/32) | **49.98915** / MF1 56.80424 / PEM 43.17406 |
-| **s15** | testp1_s15_ensU5.zip ⭐ | union 全 5(s01+s08+s09+s12+s13),召回最大 | 382 (139/155/52/36) | **50.25660** / MF1 57.16849 / PEM 43.34471 **(新最优)** |
-| s16 | testp1_s16_ens2of4.zip | **≥2 票一致**(s01,s08,s09,s13),精度向 | 253 (110/87/32/24) | 47.28613 / MF1 52.59274 / PEM 41.97952 (<ensU,union 胜过 consensus) |
+## ensemble 规律(s11/s14/s15/s16;逐项得分见上方总表)
+**关键规律:union 成员越多样 → MacroF1 和 PEM 同时单调上涨**(s01 47.8 → s11 48.2 → s14 50.0 → s15 50.3)。≥2票一致(s16)反而更差 → **纯并集(召回最大)是对的**。PEM 在这个少数类密集的集上是**召回受限**(catch 到 gold 少数类才能让长段 PEM=1),不是精度受限。→ 方向:**把架构多样性堆到极致**。
 
-**关键规律:union 成员越多样 → MacroF1 和 PEM 同时单调上涨**(47.8→48.2→50.0→50.3)。≥2票一致(s16)反而更差 → **纯并集(召回最大)是对的**。PEM 在这个少数类密集的集上是**召回受限**(catch 到 gold 少数类才能让长段 PEM=1),不是精度受限。→ 下一步:**把多样性堆到极致**。
+复现:`scripts/ensemble_union.py --min-votes {1|2} --out <jsonl> <成员 jsonl...>`(s11/s14/s15 用 `--min-votes 1`;s16/s22 共识用 `2`)。成员文件名见总表。
 
-复现:scripts/ensemble_union.py --min-votes {1|2} --out <jsonl> <成员 jsonl...>(s14/s15 用 --min-votes 1,s16 用 2)。
+## fleet 异构成员推进(s17–s27;目标 50.26→53–56,靠架构多样性;逐项见总表)
+> 方向:s15 的 5 成员全是 Qwen3-VL(高相关)。加**架构差异化**的非 Qwen 成员到并集,逼出不相关错误 → 更大并集收益。dev 泄漏不可信,每个新成员是近盲交。
 
-## fleet 异构成员推进(s17–,待提交;目标 50.26→53–56,靠架构多样性)
-> 方向:s15 的 5 成员全是 Qwen3-VL(高相关)。加入**规模/架构差异化**的新成员到并集,逼出不相关错误 → 更大并集收益。dev 泄漏不可信,每个新成员是近盲交。
-
-| 序号 | zip | 机制 | #少数类(UCM/UE/SO/Contra) | Score |
-|---|---|---|---|---|
-| s17 | testp1_q4b_submission.zip | **Qwen3-VL-4B** 单模型(规模多样性成员;并集源) | 220 (91/78/27/24) | 未单独提交 |
-| s18 | testp1_s18_fleetU.zip | union(s01+s08+s09+s12+s13 **+ q4b**)=6 成员,测规模多样性 | 404 (139/164/58/43) | **49.71340** / MF1 57.27662 / PEM 42.15017 |
-
-- **⚠️ q4b 证伪:s18(49.71) < s15 ensU5(50.26),−0.55。** MF1 微升(57.17→57.28)但 **PEM 跌 1.19(43.34→42.15)**:q4b 多出的 22 个少数类预测大多是**假阳性**,打碎干净段落。
-- **教训:规模多样性(同 Qwen 家族的 4B)无用——错误相关 + 模型弱 → 只叠加冗余/有害 FP。真正有价值的是架构多样性(非 Qwen)。并集基底回到 5 Qwen(s15),q4b 踢出。**
-- 下一步:测 InternVL(InternViT 异构编码器)加入 5-Qwen 基底:s19=+2B、s20=+8B、s21=+2B+8B,逐一 isolate 看架构多样性是否真的帮(且不带 q4b)。
-- 复现:`scripts/train_internvl.sh` 同类的 q4b 由 `MODEL_ID=Qwen/Qwen3-VL-4B-Instruct TAG=q4b ... bash scripts/retrain_fullres.sh`(infer 步已修 `--model`);union 同上 `ensemble_union.py --min-votes 1`。
-- **下一成员:InternVL3-8B-hf**(首个非 Qwen,InternViT 编码器)训练中 → 完成后 s19 = union(6 + internvl8b)。配置见全局记忆 internvl-fleet-config(MAX_PIXELS=401408 必设、use_logits=false、HF_HOME 可写、lr 5e-5)。
+- **⚠️ q4b 证伪(s17 单模 / s18 union):s18(49.71) < s15(50.26),−0.55。** MF1 微升但 **PEM 跌 1.19**:q4b 多出的少数类多是**假阳性**,打碎干净段落。**教训:规模多样性(同 Qwen 4B)无用 —— 错误相关 + 模型弱 → 只叠 FP。要的是架构多样性(非 Qwen)。** 并集基底回到 5 Qwen,q4b 踢出。
+- **InternVL3(s24 iv2b / s25 iv8b 单模;s19/s20/s21 union)**:首个非 Qwen(InternViT 编码器)。8B OOM 修复 = `INTERNVL_MAX_PATCHES=2`(见记忆 internvl-fleet-config:MAX_PIXELS=401408、use_logits=false、HF_HOME 可写、lr 5e-5)。union 少数类大涨(s21=472)但**待测**是否破 50.26。
+- **Gemma4-26B(s26 单模;s23 union=5Q+26B,498 少数类)**:强 + 架构异构(SigLIP 视觉塔 + MoE),理论最有希望破顶。攻克的坑:**单卡 OOM → 2 卡 deepspeed zero3**(切权重,deepspeed 0.19.1 已装);**多图 record 激活暴涨 OOM → ≤2图过滤数据** `data/train_sft_le2img.jsonl`;**infer 必传 `--template gemma4_nothinking`**(否则 thinking 泄漏 → JSON 解析崩 → 全-Supported)。**s27 = Gemma4-31B 同流程训练中**。
+- 复现:单模 `scripts/train_gemma4.sh`(`DEEPSPEED=zero3 GPUS=4,5 MODEL_ID=google/gemma-4-31B-it TAG=gemma4_31b DATASET=data/train_sft_le2img.jsonl MAX_LENGTH=4096 bash ...`)、`scripts/train_internvl.sh`、q4b 用 `MODEL_ID=Qwen/Qwen3-VL-4B-Instruct ... retrain_fullres.sh`;union 一律 `ensemble_union.py --min-votes 1 <成员 jsonl...>`。
