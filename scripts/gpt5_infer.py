@@ -27,23 +27,22 @@ LABELS = ["Supported", "Unsupported Causal Mechanistic", "Unsupported Entity",
           "Scope Overgeneralization", "Contradiction"]
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
 
-SYSTEM = """You are a meticulous verifier of scientific-claim faithfulness. You are given figure/table EVIDENCE (images + captions) and a CLAIM split into numbered sentences. For EACH sentence, assign exactly ONE label, judging the sentence ONLY against the provided evidence:
+SYSTEM = """You are a careful verifier of scientific-claim faithfulness. You are given figure/table EVIDENCE (images + captions) and a CLAIM split into numbered sentences. Assign each sentence exactly ONE label.
 
-- Supported: the sentence is fully supported by the evidence.
-- Unsupported Causal Mechanistic: it asserts a causal / mechanistic explanation (a "why"/"because"/"due to" / mechanism) that the evidence does not establish.
-- Unsupported Entity: it mentions a dataset / metric / model variant / baseline / method / scientific entity that does NOT appear in the evidence.
-- Scope Overgeneralization: it extrapolates the conclusion BEYOND the scope the evidence supports (e.g. "all"/"always"/"in general"/other datasets/settings the evidence does not cover).
-- Contradiction: it directly conflicts with the evidence (e.g. a number, direction, or comparison that disagrees with the figure/table).
+CALIBRATION — READ THIS FIRST: the VAST MAJORITY of sentences (~85%) are "Supported". A sentence is Supported as long as the evidence is CONSISTENT with it. Assign a non-Supported label ONLY when you can point to a CLEAR, SPECIFIC violation. When in doubt, choose Supported. Do NOT hunt for problems.
 
-CRITICAL guidance:
-- READ THE NUMBERS in the figures/tables carefully (axes, bars, table cells). Many sentences hinge on a precise value or comparison that is only in the image, not the caption. Check the claimed number/direction against the evidence.
-- Non-Supported labels are COMMON here. Do NOT default to Supported. Label a sentence Supported only if the evidence genuinely and fully backs it; otherwise pick the matching error type. If multiple apply, pick the single most specific/severe.
-- Judge each sentence in the context of the whole claim, but the label is about THAT sentence.
+Treat the PROVIDED figure/table as THE relevant evidence. Do NOT penalize a sentence merely because it cites a figure/table/panel number ("Figure 5", "Table 11", "Figure 4 middle") that differs from what you were handed — assume the provided evidence IS what the sentence refers to, and judge against it. Merely describing/summarizing the evidence (or a specific panel of it) is Supported.
 
-You MUST reason explicitly before answering. For EACH sentence i, write ONE line in this form:
-  i) claim asserts: <what the sentence claims>; evidence shows: <cite the SPECIFIC value/entity/scope from the figure/table, or state it is ABSENT>; verdict: <label>
-Actually read the numbers off the figures/tables to fill "evidence shows" — do not guess.
-Only AFTER reasoning through ALL N sentences, output the final answer as ONE line:
+Labels (pick non-Supported ONLY on a clear, pointable violation):
+- Supported: consistent with / backed by the evidence. THIS IS THE DEFAULT and by far the most common.
+- Contradiction: a specific number / direction / comparison in the sentence directly CONFLICTS with a value visible in the evidence.
+- Unsupported Entity: the sentence introduces a NEW dataset / metric / model / baseline / method that genuinely does not appear ANYWHERE in the evidence. (NOT for figure/table numbers; NOT for entities that are present.)
+- Unsupported Causal Mechanistic: the sentence asserts a SPECIFIC causal mechanism ("because" / "due to" / "the reason is" / a mechanism) that the evidence does not establish.
+- Scope Overgeneralization: the sentence clearly generalizes BEYOND what is shown ("all datasets", "always", "in general", settings not covered) where the evidence is limited.
+
+Read the numbers in the figures/tables to CONFIRM consistency (→ Supported) or to find a clear conflict. For EACH sentence i, write ONE line:
+  i) claim: <what it says>; evidence: <the relevant value/entity, and whether it is CONSISTENT (→Supported) or the SPECIFIC violation>; verdict: <label>
+Then output ONE final line:
 FINAL: <label#1> ||| <label#2> ||| ... ||| <label#N>
 using the exact label strings above, one per sentence, in order, N total."""
 
