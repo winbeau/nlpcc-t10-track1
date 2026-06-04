@@ -41,3 +41,16 @@
 
 ## 验收门(统计功效诚实声明)
 ~500 record 的台**分不清 50.0~50.3 的细微 union 取舍**(噪声内),但**能可靠杀大动作坏方向**(提分辨率/降采样/抑制后处理)→ 省一半盲交。顶尖取舍仍各交 1 发定。
+
+---
+
+## 状态 (2026-06-04):PHASE A 完成 ✅,PHASE B 待 GPU
+
+**A1 ✅** `build_dataset --split-mode component_aware --val-ratio 0.15 --out data/devbench` → 2832 train / **501 dev** record,零-sha 断言通过。
+**A2 ✅** `scripts/reshape_devbench.py`(纯 stdlib)产 3 个 gold 变体 + `notes/devbench_shape_report.md`:
+- `dev_gold_raw`(501,对照,traindev 形状)/ `dev_gold_reshaped`(30,长≥8+密 84%,testp1 regime 探针)/ `dev_gold_densematch`(206,密度 84% 无长度地板,高功效)。
+- **关键验证(trivial all-Supported 试金石,官方评测器)**:raw=**42.37**(PEM 65!=抑制陷阱,会奖励已证伪的压少数类);reshaped=**17.88** / densematch=**17.24** ≈ testp1 trivial **18.85**(s05)。→ **reshape 成功把台子从「奖励抑制」翻成 testp1 同款「召回-critical」regime**。
+- ⚠️ **池子天花板坐实**:image-disjoint dev 只有 ~25 个 record 同时「长(≥8)+ 含少数类」→ 严格 reshaped 注定 ~30 record(低功效,只能定方向不能排 union 顶部)。**正是 PHASE C 密度匹配训练数据=干净长期解的理由。**
+**B5 写在前(ready,未跑)** `scripts/rankcorr_meta.py`:手写 Spearman(selftest 过)+ 内嵌 24 个锚点 testp1 分(已对账 submissions_log.md 零误差)+ 端到端 plumbing 已用合成 dev 预测 smoke 过(rho 方向正确)。**跑它只差 PHASE B 的 dev 预测(需 GPU)。**
+
+**PHASE B 起跑清单(下次上 GPU)**:在 `data/devbench/train_sft.jsonl`(=train', image-disjoint 无泄漏)重训/或重跑可复现 adapter → 对 `data/devbench/dev_sft.jsonl` 推理 → `aggregate` 出每锚点 `outputs/devbench_preds/<sNN>.jsonl` → 本地 `ensemble_union.py` 合成 union 锚点 → `rankcorr_meta.py --gold dev_gold_{reshaped,densematch,raw}.jsonl --pred-dir outputs/devbench_preds`。⚠️ 旧 adapter 在全量(含 dev')训过=对它们 dev' 泄漏,B 是粗 sanity;干净点 = 在 train' 重训的新模型(与 PHASE C/P1 合一)。
