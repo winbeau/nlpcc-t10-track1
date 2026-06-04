@@ -93,34 +93,54 @@ def do_train(cfg: dict, out: Path, gpu: str) -> str:
     if existing:  # idempotent: a re-launch after an infer/eval failure must NOT retrain
         log(f"checkpoint already exists, skipping training: {existing[-1]}")
         return existing[-1]
-    n = sum(1 for _ in open(REPO / TRAIN_DATA))
-    assert n == TRAIN_LINES, f"REFUSING TO TRAIN: {TRAIN_DATA} has {n} lines, expected {TRAIN_LINES} " \
-                             f"(image-disjoint train'). Are you about to train on the leaky split?"
-    mode = cfg.get("train_mode", "softmin")
-    beta = str(cfg.get("beta", 5))
-    lam = str(cfg.get("lambda", 0.5 if mode == "softmin" else 0.0))
+    # Safety: train ONLY on image-disjoint train' under data/devbench/ (never the leaky data/train_sft.jsonl).
+    train_data = cfg.get("train_dataset", TRAIN_DATA)
+    assert train_data.startswith("data/devbench/") and train_data != "data/train_sft.jsonl", \
+        f"REFUSING TO TRAIN: dataset {train_data!r} is not under data/devbench/ (image-disjoint train')."
+    n = sum(1 for _ in open(REPO / train_data))
+    if train_data == TRAIN_DATA:
+        assert n == TRAIN_LINES, f"REFUSING: {TRAIN_DATA} has {n} lines, expected {TRAIN_LINES}."
+    log(f"train data: {train_data} ({n} lines)")
     mp = str(cfg.get("max_pixels", 401408))
     model = cfg.get("model", "Qwen/Qwen3-VL-8B-Instruct")
     env = base_env()
-    env.update(CUDA_VISIBLE_DEVICES=gpu, SOFTMIN_BETA=beta, SOFTMIN_LAMBDA=lam)
+    env.update(CUDA_VISIBLE_DEVICES=gpu)
     port = str(29500 + (int(gpu.split(",")[0]) if gpu else 0))
-    # per-sentence softmin path; LAMBDA=0 => plain mean-CE in the SAME format (loss.py:217). Grid
-    # recipe (use_logits_to_keep=false, 401408, 1 epoch, lr 1e-4) — matches the s01 champion single.
-    cmd = ["uv", "run", "torchrun", "--nproc_per_node=1", f"--master_port={port}",
-           "scripts/train_softmin.py",
-           "--model", model, "--tuner_type", "lora", "--torch_dtype", "bfloat16",
-           "--dataset", TRAIN_DATA, "--split_dataset_ratio", "0",
-           "--loss_type", "softmin_pem",
-           "--num_train_epochs", str(cfg.get("epochs", 1)),
-           "--per_device_train_batch_size", "1", "--gradient_accumulation_steps", "1",
-           "--learning_rate", "1e-4", "--lora_rank", "16", "--lora_alpha", "32",
-           "--freeze_vit", "true", "--max_length", "10240", "--max_pixels", mp,
-           "--attn_impl", "sdpa", "--packing", "false", "--padding_free", "false",
-           "--use_logits_to_keep", "false",
-           "--eval_strategy", "no", "--save_strategy", "epoch", "--save_total_limit", "1",
-           "--logging_steps", "20", "--dataloader_num_workers", "0",
-           "--output_dir", str(ckdir)]
-    log(f"TRAIN mode={mode} beta={beta} lambda={lam} max_pixels={mp} gpu={gpu} port={port}")
+    if cfg.get("joint"):
+        # PARAGRAPH-JOINT plain-CE (B1 density-match): one sample/record, JSON-array target.
+        cmd = ["uv", "run", "torchrun", "--nproc_per_node=1", f"--master_port={port}",
+               "scripts/train_joint.py",
+               "--model", model, "--tuner_type", "lora", "--torch_dtype", "bfloat16",
+               "--dataset", train_data, "--split_dataset_ratio", "0",
+               "--num_train_epochs", str(cfg.get("epochs", 1)),
+               "--per_device_train_batch_size", "1", "--gradient_accumulation_steps", "4",
+               "--learning_rate", "1e-4", "--lora_rank", "16", "--lora_alpha", "32",
+               "--freeze_vit", "true", "--max_length", "8192", "--max_pixels", mp,
+               "--attn_impl", "sdpa", "--packing", "false", "--padding_free", "false",
+               "--use_logits_to_keep", "true",
+               "--eval_strategy", "no", "--save_strategy", "epoch", "--save_total_limit", "1",
+               "--logging_steps", "20", "--dataloader_num_workers", "4", "--output_dir", str(ckdir)]
+        log(f"TRAIN joint plain-CE dataset={train_data} max_pixels={mp} gpu={gpu} port={port}")
+    else:
+        # per-sentence path via train_softmin.py; LAMBDA=0 => plain mean-CE (loss.py:217). Grid recipe.
+        mode = cfg.get("train_mode", "plaince")
+        beta = str(cfg.get("beta", 5))
+        lam = str(cfg.get("lambda", 0.5 if mode == "softmin" else 0.0))
+        env.update(SOFTMIN_BETA=beta, SOFTMIN_LAMBDA=lam)
+        cmd = ["uv", "run", "torchrun", "--nproc_per_node=1", f"--master_port={port}",
+               "scripts/train_softmin.py",
+               "--model", model, "--tuner_type", "lora", "--torch_dtype", "bfloat16",
+               "--dataset", train_data, "--split_dataset_ratio", "0",
+               "--loss_type", "softmin_pem",
+               "--num_train_epochs", str(cfg.get("epochs", 1)),
+               "--per_device_train_batch_size", "1", "--gradient_accumulation_steps", "1",
+               "--learning_rate", "1e-4", "--lora_rank", "16", "--lora_alpha", "32",
+               "--freeze_vit", "true", "--max_length", "10240", "--max_pixels", mp,
+               "--attn_impl", "sdpa", "--packing", "false", "--padding_free", "false",
+               "--use_logits_to_keep", "false",
+               "--eval_strategy", "no", "--save_strategy", "epoch", "--save_total_limit", "1",
+               "--logging_steps", "20", "--dataloader_num_workers", "0", "--output_dir", str(ckdir)]
+        log(f"TRAIN mode={mode} beta={beta} lambda={lam} max_pixels={mp} gpu={gpu} port={port}")
     run(cmd, env)
     cks = sorted(glob.glob(str(ckdir / "v*/checkpoint-*")))
     if not cks:
