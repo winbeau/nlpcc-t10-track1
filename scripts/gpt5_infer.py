@@ -40,7 +40,10 @@ CRITICAL guidance:
 - Non-Supported labels are COMMON here. Do NOT default to Supported. Label a sentence Supported only if the evidence genuinely and fully backs it; otherwise pick the matching error type. If multiple apply, pick the single most specific/severe.
 - Judge each sentence in the context of the whole claim, but the label is about THAT sentence.
 
-Reason briefly per sentence, THEN output the final answer as ONE line:
+You MUST reason explicitly before answering. For EACH sentence i, write ONE line in this form:
+  i) claim asserts: <what the sentence claims>; evidence shows: <cite the SPECIFIC value/entity/scope from the figure/table, or state it is ABSENT>; verdict: <label>
+Actually read the numbers off the figures/tables to fill "evidence shows" — do not guess.
+Only AFTER reasoning through ALL N sentences, output the final answer as ONE line:
 FINAL: <label#1> ||| <label#2> ||| ... ||| <label#N>
 using the exact label strings above, one per sentence, in order, N total."""
 
@@ -116,7 +119,11 @@ def build_messages(rec: dict, data_root: Path, max_images: int) -> tuple[list, i
 
 
 def call_api(messages: list, model: str, base: str, key: str, retries: int = 4) -> str:
-    body = json.dumps({"model": model, "messages": messages}).encode()
+    payload = {"model": model, "messages": messages}
+    eff = os.environ.get("GPT5_REASONING_EFFORT")
+    if eff:
+        payload["reasoning_effort"] = eff  # try to enable deep reasoning (proxy may ignore)
+    body = json.dumps(payload).encode()
     last = None
     for a in range(retries):
         try:
@@ -179,10 +186,12 @@ def main(argv=None) -> int:
 
     lock = __import__("threading").Lock()
     fout = open(out_path, "a", encoding="utf-8")
+    fraw = open(out_path.with_suffix(".raw.jsonl"), "a", encoding="utf-8")  # full model output (reasoning) for inspection
     n_done = [0]; n_fb = [0]
 
     def work(rec):
         msgs, n = build_messages(rec, data_root, args.max_images)
+        out = ""
         try:
             out = call_api(msgs, args.model, args.base, key)
             labs = parse_labels(out, n)
@@ -191,6 +200,9 @@ def main(argv=None) -> int:
             with lock:
                 n_fb[0] += 1
             print(f"[fallback] {rec['id']}: {type(e).__name__} {e}", file=sys.stderr)
+        with lock:
+            fraw.write(json.dumps({"id": rec["id"], "labels": labs, "raw": out}, ensure_ascii=False) + "\n")
+            fraw.flush()
         return {"id": rec["id"], "labels": labs}
 
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
@@ -203,7 +215,8 @@ def main(argv=None) -> int:
                 if n_done[0] % 25 == 0:
                     print(f"  {n_done[0]}/{len(todo)} done (fallback {n_fb[0]})")
     fout.close()
-    print(f"### GPT5 INFER DONE: {out_path} ({len(done)+n_done[0]} records, {n_fb[0]} fallbacks) ###")
+    fraw.close()
+    print(f"### GPT5 INFER DONE: {out_path} ({len(done)+n_done[0]} records, {n_fb[0]} fallbacks); raw -> {out_path.with_suffix('.raw.jsonl')} ###")
     return 0
 
 
