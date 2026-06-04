@@ -158,7 +158,9 @@ def do_infer_eval(cfg: dict, out: Path, gpu: str, adapter: str) -> None:
              "--ref", DEV_GOLD, "--out", str(predp)])
 
     pred = out / "dev_pred.jsonl"
-    if n_samp > 1:
+    if pred.exists() and pred.stat().st_size > 0:
+        log(f"reusing existing {pred.name} (skip infer)")     # idempotent: re-eval without re-infer
+    elif n_samp > 1:
         # E1 self-consistency: run infer K times (temperature from infer_extra, fresh --seed k),
         # aggregate each, union (min-votes 1) = additive recall. No reliance on engine n>1.
         ks = []
@@ -174,8 +176,17 @@ def do_infer_eval(cfg: dict, out: Path, gpu: str, adapter: str) -> None:
         run(base_infer + ["--out", str(raw)] + extra, env)
         aggregate(raw, pred)
 
+    # evaluate.py requires identical gold/pred id sets -> subset the 501-rec dev pred to the
+    # 206 densematch ids before scoring (the dev pred legitimately covers more records).
+    dm_ids = {json.loads(l)["id"] for l in open(REPO / DENSEMATCH) if l.strip()}
+    pred_dm = out / "dev_pred_densematch.jsonl"
+    with open(pred) as f, open(pred_dm, "w") as g:
+        for line in f:
+            if line.strip() and json.loads(line)["id"] in dm_ids:
+                g.write(line)
+
     tag = cfg.get("tag", NAME)
-    run(["uv", "run", "python", "-m", "nlpcc_t10.eval_local", "--pred", str(pred),
+    run(["uv", "run", "python", "-m", "nlpcc_t10.eval_local", "--pred", str(pred_dm),
          "--gold", DENSEMATCH, "--data-root", DATA_ROOT, "--tag", tag,
          "--log", LEDGER, "--keep-result"], env)
 
