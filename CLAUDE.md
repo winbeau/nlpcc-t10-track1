@@ -160,13 +160,18 @@ uv run python "$DATA_ROOT/offline_eval/evaluate.py" --track 1 \
 - **提交命名规范**：`testp1_s{NN}_{T}_{desc}.{zip,jsonl}`，`s{NN}` = 按创建顺序的稳定序号，`{T}` = 类型(`m`=单模 / `pp`=后处理 / `u`=union)，`{desc}` = 简短描述(desc 内用 `-`，`_` 只分隔三段)。新提交取下一个号 + 定类型 → 重命名 → 追加 `notes/submissions_log.md` 统一总表一行(序号/类型/描述/三元组得分/逐类计数)+ 复现 + 为什么试它。
 - 数据构造命令**务必记**（含 `--supported-downsample`；grid 那次漏记，反推吃了亏）。
 
-## 9. 待办 / 开放项（当前路线，已证伪项见 §4 不再列）
+## 9. 待办 / 开放项（2026-06-04 大改：3 个 multi-agent 调研重定方向，详见 notes/）
 
-- [ ] **段落级 verifier/corrector**（优先）：修长段残余 1–2 句错 → 翻整段 PEM。V-B（对并集 flag 的少数类做二分核实）或 V-A（训练式 corrector，需 OOF 候选）。前置：图去重 + 长段 dev 评测台。
-- [ ] **fleet ensemble**：训异构成员（InternVL3-8B / Qwen3-VL-4B / MiniCPM-V / 多种子 / k-fold bagging）→ 巨型并集。多样性已验证单调提分（47.8→50.3），目标 53–56。
-- [ ] **self-consistency 采样**：每模型 temp>0 多采样 → 并集（便宜的召回倍增，叠在 ensemble 上）。
-- [ ] **图去重 9:1 重切分 + devhard 评测台**（长段+少数类子集），让离线选型可信、少烧提交。
-- [ ] Phase-2（2026-06-11 放出）：勿过拟合 Phase-1 排行榜；保 s01/s15 为保底。
+> **已证伪、别再投入**（见 `notes/submissions_log.md` 总表 + `notes/breakthrough_plan.md`）：
+> - **堆 union 成员死了**：规模多样性(q4b s18)、架构多样性(InternVL s19-21 / Gemma s23/s28/s29)全 ≤50.26;**模型越大越糟**(31B 单模 s27=29.28 < 26B s26=44.69)。50.26 是 naive-union 天花板。
+> - **外部数据增强死了**(`notes/data_augmentation_research.md`)：SciFact/SciNLI/HaluEval/FactCC 模态+标签双错位。
+> - **抑制类后处理 / 置信门控 union 死了**：testp1 PEM 召回受限(s16 砍单票 −2.97);门控 PEM-safe 版退化成 s15。
+> **根因(已坐实)**：训练数据「≤1 少数类/段」伪先验(长段仅 0.46% 含≥2;s01 testp1 仅 3.8% 段开≥2)→ 系统性漏召回。
+
+- [ ] **★P0 GATE-B 离线评测台**(`notes/gate_b_plan.md`,**第一优先**)：image-disjoint(component_aware)+ 重塑 testp1 形状 + 用 23 锚点 rank-corr 验证。停止盲烧提交。PHASE A 本地纯 Python 零风险可立刻起。
+- [ ] **★P1 密度匹配训练**(`notes/breakthrough_plan.md`,主攻,+3~6)：把真少数类句插进长段、joint 训练,让单模在密集长段 catch 多个真少数类（造 union 没有的新正确召回）。在 GATE-B 的 train' 上训→reshaped dev' 无泄漏离线评（与 P0 合一）。
+- [ ] **P2 便宜叠加**(P1 跑通后)：纯加法自洽采样(temp>0 多采样、只增不删,需给 infer.py 加 --temperature/--n)；OCR 数字通道(表格数字转写,UE/Contra 接地)。
+- [ ] Phase-2（2026-06-11 放出）：勿过拟合 Phase-1；**保 s01(47.80)/s15(50.26) 永久保底**。
 
 ## 10. 参考（官方文件路径）
 
