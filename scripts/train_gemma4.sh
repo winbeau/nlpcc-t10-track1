@@ -60,7 +60,7 @@ CKPT=$(ls -d "$OUTDIR"/v*/checkpoint-* 2>/dev/null | sort | tail -1)
 [ -n "$CKPT" ] || { echo "ERROR: no checkpoint in $OUTDIR"; exit 1; }
 echo "### trained -> $CKPT ; INFER testp1 (per-sentence, template=$TEMPLATE) ###"
 RAW="outputs/testp1_${TAG}_raw.jsonl"; SUB="submissions/testp1_${TAG}_submission.jsonl"
-env "CUDA_VISIBLE_DEVICES=${GPUS%%,*}" "MAX_PIXELS=$MP" "HF_HOME=$HF_HOME" "USE_HF=$USE_HF" \
+env "CUDA_VISIBLE_DEVICES=${GPUS%%,*}" "MAX_PIXELS=$MP" "HF_HOME=$HF_HOME" "USE_HF=$USE_HF" "TOKENIZERS_PARALLELISM=false" \
   PYTHONPATH=src uv run python -m nlpcc_t10.infer \
   --split testp1 --model "$MODEL" --template "$TEMPLATE" --adapter "$CKPT" --engine pt --data-root "$DATA_ROOT" --out "$RAW"
 PYTHONPATH=src uv run python -m nlpcc_t10.aggregate \
