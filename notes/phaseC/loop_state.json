@@ -1,0 +1,11 @@
+{
+  "wave": "COMPLETE",
+  "active": [],
+  "gpu_cap": 2,
+  "BEST_SYSTEM": "U3 = union(B0 joint + A1 per-sentence + E1 self-consist) = 83.90/80.42/87.38 densematch. Packaged as submissions/testp1_s30_u_cleanunion (269 minorities). Predicted testp1 ~47-50.",
+  "results": {"A0_softmin": "78.97 DEAD", "A1_plainCE": "81.13", "E1_selfconsist": "82.53 KEEP", "B0_joint": "82.89", "B1_density": "80.82 DISCARD", "E1b": "81.18 DISCARD", "U3_BEST": "83.90", "C1_soup_LEAKY": "92.76 leaky"},
+  "killed": ["softmin", "B1 density-matching", "D2 chart-reading", "E1b self-consist-on-joint"],
+  "deliverable": "submissions/testp1_s30_u_cleanunion.{zip,jsonl} on the server (validated [PASS], user submits to Codabench arena 16666). FIRST clean (densematch,testp1) calibration point.",
+  "last_action": "tick18: s30 PACKAGE DONE. Wrote submissions_log.md s30 row + CAMPAIGN_SUMMARY.md. Loop STOPPED (campaign complete).",
+  "STATUS": "STOPPED — campaign complete. To resume: add more diverse union members or E2 logit-adjust; retrain U3 members on full traindev for the final submission once s30's testp1 score calibrates the bench."
+}
