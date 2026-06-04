@@ -55,7 +55,7 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | s22 | u | consensus8(8成员≥2票) | `s22_u_consensus8` | 待测 | — | — | 332 (121/129/48/34) |
 | s23 | u | 5Q+gemma26b | `s23_u_q5-gemma26b` | 49.82598 | 57.67243 | 41.97952 | 498 (152/237/65/44) |
 | s24 | m | iv2b 单模 InternVL3-2B | `s24_m_iv2b` | 待测 | — | — | 241 (71/134/18/18) |
-| s25 | m | iv8b 单模 InternVL3-8B@2tiles | `s25_m_iv8b` | 待测 | — | — | 210 (79/74/31/26) |
+| s25 | m | iv8b 单模 InternVL3-8B@2tiles | `s25_m_iv8b` | 40.04057 | 45.26884 | 34.81229 | 210 (79/74/31/26) |
 | s26 | m | gemma26b 单模 Gemma4-26B(2卡zero3) | `s26_m_gemma26b` | 44.69206 | 51.84146 | 37.54266 | 370 (105/191/46/28) |
 
 **当前最优 = s15 u_q5(50.26),仍是天花板。** 结论:
