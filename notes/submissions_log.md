@@ -57,6 +57,9 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | s24 | m | iv2b 单模 InternVL3-2B | `s24_m_iv2b` | 待测 | — | — | 241 (71/134/18/18) |
 | s25 | m | iv8b 单模 InternVL3-8B@2tiles | `s25_m_iv8b` | 40.04057 | 45.26884 | 34.81229 | 210 (79/74/31/26) |
 | s26 | m | gemma26b 单模 Gemma4-26B(2卡zero3) | `s26_m_gemma26b` | 44.69206 | 51.84146 | 37.54266 | 370 (105/191/46/28) |
+| s27 | m | gemma31b 单模 Gemma4-31B(2卡zero3,极保守) | `s27_m_gemma31b` | 待测 | — | — | 87 (45/23/13/6) |
+| s28 | u | 5Q+gemma31b | `s28_u_q5-gemma31b` | 待测 | — | — | 397 (145/161/54/37) |
+| s29 | u | 5Q+gemma26b+gemma31b | `s29_u_q5-gemma26b31b` | 待测 | — | — | 507 (153/243/66/45) |
 
 **当前最优 = s15 u_q5(50.26),仍是天花板。** 结论:
 - **union(召回叠加)是唯一超 grid 的方向**(s11→s14→s15 单调涨,但仅限**同家族 Qwen 成员**);单模都 ≤grid;后处理(s03-s07)单调掉分(testp1 召回-critical)。
