@@ -82,17 +82,17 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 > 3. **densematch 没那么废**:它把干净同条件模型排对了(softmin<plainCE<union 两台同序),只是①压缩了幅度②给不了绝对分③**不能跨 regime 外推**。s30=43.85 的「失手」根因 = **train'(90%数据)+ 无过采样的让步(~9-13 分)**,不是台子/union 的错 —— s01(47.80)是 full-traindev + 过采样。
 > **⇒ 行动路线明确**:PHASE C 配方(plain-CE > softmin、union、自洽)已被 testp1 验证;**要破 s15(50.26)就把它搬到 full-traindev**:s15 的句级成员全是 softmin(grid/os4/perclass),**把它们换成 plain-CE 重训 full-traindev 再 union**,有望 > 50.26。复现:`scripts/phaseC_package_singles.sh`。
 
-| s33 | m | full-traindev plain-CE 单模 grid(os3.0/ds0.6) | `s33_m_grid-plainCE` | **待交** | — | — | 245 (92/108/21/24) |
-| s34 | m | full-traindev plain-CE 单模 os4(os4.0/ds0.66) | `s34_m_os4-plainCE` | **待交** | — | — | 219 (88/89/23/19) |
-| s35 | m | full-traindev plain-CE 单模 perclass(逐类) | `s35_m_perclass-plainCE` | **待交** | — | — | 283 (115/116/32/20) |
+| s33 | m | full-traindev plain-CE 单模 grid(os3.0/ds0.6) | `s33_m_grid-plainCE` | **42.87** | 48.72 | 37.03 | 245 (92/108/21/24) |
+| s34 | m | full-traindev plain-CE 单模 os4(os4.0/ds0.66) | `s34_m_os4-plainCE` | 待交 | — | — | 219 (88/89/23/19) |
+| s35 | m | full-traindev plain-CE 单模 perclass(逐类) | `s35_m_perclass-plainCE` | 待交 | — | — | 283 (115/116/32/20) |
 | s36 | m | full-traindev plain-CE 单模 gemma26b | `s36_m_gemma26b-plainCE` | 待训完 | — | — | — |
-| **s37** | u | **5-Qwen plain-CE 并集**(grid+os4+perclass plainCE + joint8b + joint32b) | `s37_u_q5-plainCE` | **待交** | — | — | 390 (132/169/50/39) |
+| **s37** | u | 5-Qwen plain-CE 并集(grid+os4+perclass plainCE + joint8b + joint32b) | `s37_u_q5-plainCE` | **48.54** | 55.62 | 41.47 | 390 (132/169/50/39) |
 | s38 | u | s37 + gemma26b plain-CE | `s38_u_q5-plainCE-gemma` | 待训完 | — | — | — |
 
-> **s33–s38 = 把验证过的 plain-CE 配方搬回 full-traindev + 过采样(去掉 train' 让步)。GPU 5/6/7 重训。**
-> - **s37 ★ 是冲 s15 的主力**:5-Qwen plain-CE 并集 = s15 同结构,只把 3 个句级成员从 softmin 换成 plain-CE(testp1 已验 +4.47)。**少数类 390 ≈ s15 的 382**(UCM132/UE169/SO50/Contra39 vs s15 的 139/155/52/36 —— UE/Contra 更多)。plain-CE 成员质量更高 → **有实打实机会 ≥ 50.26**。
-> - 单模 s33 grid(245 少数类 ≈ s01 softmin 的 253)= 直接对标 s01(47.80)的 plain-CE 版,看 plain-CE 在 full 档能否 > s01。
-> - s36/s38(Gemma plain-CE)训完再补(Gemma 占 6+7 zero3,~2.5h)。复现:`scripts/retrain_member.sh` + `scripts/train_gemma4.sh` + `scripts/ensemble_union.py`。s01(47.80)/s15(50.26)永久保底。
+> **🔴 大翻转(2026-06-05):full-traindev + 过采样这个真实配方下,softmin > plain-CE,plain-CE 重训全军覆没。**
+> - **s37(plain-CE 并集)48.54 < s15(softmin 并集)50.26,−1.72**;**s33(grid plain-CE 单模)42.87 << s01(grid softmin 单模)47.80,−4.93**。单模、并集两级都确认。
+> - **机制**:s37 少数类 390 > s15 382,但 **PEM 41.47 < 43.34**;s33 PEM 37.03 << s01 42.83(−5.8)。**plain-CE + 过采样 = 过度开火少数类(FP 打碎段落)→ PEM 崩**。**softmin 的全部价值 = 控制过采样诱发的 FP**(PEM-bottleneck loss 恰在「过采样导致过度开火」时才发挥作用)。
+> - **⇒ 之前「softmin 死、plain-CE 更好」(s31/s32)是「无过采样」regime 的伪信号**;一旦上真实的过采样配方,softmin 反超 ~5 分。**softmin 没死;s01(47.80)/s15(50.26)仍是天花板,plain-CE 这条路否决。** s36/s38(plain-CE Gemma)训完补全(大概率同样偏低)。复现:`scripts/retrain_member.sh` + `train_gemma4.sh` + `ensemble_union.py`。
 
 **当前最优 = s15 u_q5(50.26),仍是天花板。** 结论:
 - **union(召回叠加)是唯一超 grid 的方向**(s11→s14→s15 单调涨,但仅限**同家族 Qwen 成员**);单模都 ≤grid;后处理(s03-s07)单调掉分(testp1 召回-critical)。
