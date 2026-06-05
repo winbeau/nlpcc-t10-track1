@@ -85,9 +85,9 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | s33 | m | full-traindev plain-CE 单模 grid(os3.0/ds0.6) | `s33_m_grid-plainCE` | **42.87** | 48.72 | 37.03 | 245 (92/108/21/24) |
 | s34 | m | full-traindev plain-CE 单模 os4(os4.0/ds0.66) | `s34_m_os4-plainCE` | 待交 | — | — | 219 (88/89/23/19) |
 | s35 | m | full-traindev plain-CE 单模 perclass(逐类) | `s35_m_perclass-plainCE` | 待交 | — | — | 283 (115/116/32/20) |
-| s36 | m | full-traindev plain-CE 单模 gemma26b | `s36_m_gemma26b-plainCE` | 待训完 | — | — | — |
+| s36 | m | full-traindev plain-CE 单模 gemma26b | `s36_m_gemma26b-plainCE` | 待交 | — | — | 46 (15/21/7/3) |
 | **s37** | u | 5-Qwen plain-CE 并集(grid+os4+perclass plainCE + joint8b + joint32b) | `s37_u_q5-plainCE` | **48.54** | 55.62 | 41.47 | 390 (132/169/50/39) |
-| s38 | u | s37 + gemma26b plain-CE | `s38_u_q5-plainCE-gemma` | 待训完 | — | — | — |
+| s38 | u | s37 + gemma26b plain-CE | `s38_u_q5-plainCE-gemma` | 待交 | — | — | 405 (135/176/53/41) |
 
 > **🔴 大翻转(2026-06-05):full-traindev + 过采样这个真实配方下,softmin > plain-CE,plain-CE 重训全军覆没。**
 > - **s37(plain-CE 并集)48.54 < s15(softmin 并集)50.26,−1.72**;**s33(grid plain-CE 单模)42.87 << s01(grid softmin 单模)47.80,−4.93**。单模、并集两级都确认。
