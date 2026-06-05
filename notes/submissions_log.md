@@ -82,6 +82,18 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 > 3. **densematch 没那么废**:它把干净同条件模型排对了(softmin<plainCE<union 两台同序),只是①压缩了幅度②给不了绝对分③**不能跨 regime 外推**。s30=43.85 的「失手」根因 = **train'(90%数据)+ 无过采样的让步(~9-13 分)**,不是台子/union 的错 —— s01(47.80)是 full-traindev + 过采样。
 > **⇒ 行动路线明确**:PHASE C 配方(plain-CE > softmin、union、自洽)已被 testp1 验证;**要破 s15(50.26)就把它搬到 full-traindev**:s15 的句级成员全是 softmin(grid/os4/perclass),**把它们换成 plain-CE 重训 full-traindev 再 union**,有望 > 50.26。复现:`scripts/phaseC_package_singles.sh`。
 
+| s33 | m | full-traindev plain-CE 单模 grid(os3.0/ds0.6) | `s33_m_grid-plainCE` | **待交** | — | — | 245 (92/108/21/24) |
+| s34 | m | full-traindev plain-CE 单模 os4(os4.0/ds0.66) | `s34_m_os4-plainCE` | **待交** | — | — | 219 (88/89/23/19) |
+| s35 | m | full-traindev plain-CE 单模 perclass(逐类) | `s35_m_perclass-plainCE` | **待交** | — | — | 283 (115/116/32/20) |
+| s36 | m | full-traindev plain-CE 单模 gemma26b | `s36_m_gemma26b-plainCE` | 待训完 | — | — | — |
+| **s37** | u | **5-Qwen plain-CE 并集**(grid+os4+perclass plainCE + joint8b + joint32b) | `s37_u_q5-plainCE` | **待交** | — | — | 390 (132/169/50/39) |
+| s38 | u | s37 + gemma26b plain-CE | `s38_u_q5-plainCE-gemma` | 待训完 | — | — | — |
+
+> **s33–s38 = 把验证过的 plain-CE 配方搬回 full-traindev + 过采样(去掉 train' 让步)。GPU 5/6/7 重训。**
+> - **s37 ★ 是冲 s15 的主力**:5-Qwen plain-CE 并集 = s15 同结构,只把 3 个句级成员从 softmin 换成 plain-CE(testp1 已验 +4.47)。**少数类 390 ≈ s15 的 382**(UCM132/UE169/SO50/Contra39 vs s15 的 139/155/52/36 —— UE/Contra 更多)。plain-CE 成员质量更高 → **有实打实机会 ≥ 50.26**。
+> - 单模 s33 grid(245 少数类 ≈ s01 softmin 的 253)= 直接对标 s01(47.80)的 plain-CE 版,看 plain-CE 在 full 档能否 > s01。
+> - s36/s38(Gemma plain-CE)训完再补(Gemma 占 6+7 zero3,~2.5h)。复现:`scripts/retrain_member.sh` + `scripts/train_gemma4.sh` + `scripts/ensemble_union.py`。s01(47.80)/s15(50.26)永久保底。
+
 **当前最优 = s15 u_q5(50.26),仍是天花板。** 结论:
 - **union(召回叠加)是唯一超 grid 的方向**(s11→s14→s15 单调涨,但仅限**同家族 Qwen 成员**);单模都 ≤grid;后处理(s03-s07)单调掉分(testp1 召回-critical)。
 - **⚠️ 架构多样性 union 证伪(2026-06-04)**:往 5-Qwen 基底加任何**非 Qwen**成员都掉分 —— s18(+q4b)49.71、s19(+iv2b)48.48、s20(+iv8b)49.36、s21(+iv2b+iv8b)47.77、**s23(+gemma26b)49.83**(最接近但仍 −0.43)。**统一规律:新成员让 MF1↑ 但 PEM↓**(s23 MF1 57.67 > s15 57.17 **+0.50**,但 PEM 41.98 < 43.34 **−1.36**)→ 新成员加对了召回(MF1)却也加了**假阳性打碎干净段落**(PEM),净亏。s15 的 5-Qwen union 已 catch 住大部分正确少数类,再加只叠 FP。
