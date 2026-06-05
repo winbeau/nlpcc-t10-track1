@@ -68,6 +68,14 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 > - **根因(echo s18/q4b 教训)**:s30 只有 **2 个真正不同的模型**(A1 与 E1 同基座=相关;B0 联合)+ **train' 仅 90% 数据** + **联合-heavy** → B0 联合(testp1 历史 ~43)拖着整个并集到联合档(43.85≈s12/s13 的 43-44)。对比 s15 = **5 个真异构 full-traindev 成员**。**densematch 高估了联合成员 + 把相关成员当多样。**
 > - **结论**:s30 **不是**新最优;**s15(50.26)仍是天花板,s01(47.80)仍是单模最优**。**PHASE C 评测台(densematch)尚不可信**,需更多校准点(单交一个干净的纯句级 A1 会很有信息量——它没被单独测过)。复现:`scripts/phaseC_package_testp1.sh`。详见 `notes/phaseC/CAMPAIGN_SUMMARY.md`。
 
+| s31 | m | PHASE C 干净 softmin 单模(train' 句级,= A0) | `s31_m_clean-softmin` | **待交** | — | — | 164 (57/85/9/13) |
+| s32 | m | PHASE C 干净 plain-CE 单模(train' 句级,= A1) | `s32_m_clean-plainCE` | **待交** | — | — | 166 (78/56/19/13) |
+
+> **s31/s32 = 把 PHASE C 的两个干净句级单模直接交 testp1**(成员都只在 train' 训、从不见 dev')。回答两件事:
+> - **s31(softmin)vs s32(plain-CE)= 唯一一次干净·同条件的 softmin↔plain-CE 对照**(都 train' 句级、无过采样)。densematch 上 plain-CE 81.13 > softmin 78.97 判「softmin 死」,但那是 densematch 判的、testp1 没验过;softmin 在 testp1 的唯一证据是正面的(s01=47.80 就是 softmin)。**两个分一出就知道 plain-CE 是否真比 softmin 好。**
+> - **s32(纯句级 A1)vs s30(联合 union 43.85)= 钉死 s30 归因**。若 **s32 > 43.85 → 联合成员 B0 拖累了并集(union 反伤,echo s18)**;若 s32 ≈ 43.85 → 是 train' 让步的锅。
+> - ⚠️ 两者少数类都只 ~165(< s01 的 253、s30 的 269)—— **train' 90% 数据 + 无过采样 → 偏保守**,预期都 ≤ s01 47.80(少数类越少分越低)。复现:`scripts/phaseC_package_singles.sh`。
+
 **当前最优 = s15 u_q5(50.26),仍是天花板。** 结论:
 - **union(召回叠加)是唯一超 grid 的方向**(s11→s14→s15 单调涨,但仅限**同家族 Qwen 成员**);单模都 ≤grid;后处理(s03-s07)单调掉分(testp1 召回-critical)。
 - **⚠️ 架构多样性 union 证伪(2026-06-04)**:往 5-Qwen 基底加任何**非 Qwen**成员都掉分 —— s18(+q4b)49.71、s19(+iv2b)48.48、s20(+iv8b)49.36、s21(+iv2b+iv8b)47.77、**s23(+gemma26b)49.83**(最接近但仍 −0.43)。**统一规律:新成员让 MF1↑ 但 PEM↓**(s23 MF1 57.67 > s15 57.17 **+0.50**,但 PEM 41.98 < 43.34 **−1.36**)→ 新成员加对了召回(MF1)却也加了**假阳性打碎干净段落**(PEM),净亏。s15 的 5-Qwen union 已 catch 住大部分正确少数类,再加只叠 FP。
