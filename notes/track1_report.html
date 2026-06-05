@@ -6,19 +6,17 @@
 <title>NLPCC-2026 Task 10 / Track 1 — System Report</title>
 <style>
 :root{ --ink:#1a1a1a; --mut:#555; --rule:#cfc9bd; --gold:#b8860b; --teal:#2a9d8f; --brick:#c1432f;
-       --paper:#fbfaf7; --panel:#f4f1ea; --code:#efece4; }
+       --paper:#fbfaf7; --panel:#f4f1ea; --code:#efece4;
+       --serif:"Times New Roman", Times, "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, Georgia, serif; }
 *{ box-sizing:border-box; }
 html{ -webkit-text-size-adjust:100%; }
-body{ font-family:"Times New Roman", Times, Georgia, serif; color:var(--ink); background:#e9e6df;
-      margin:0; line-height:1.58; font-size:17px; }
-.page{ max-width:860px; margin:36px auto; background:var(--paper); padding:64px 72px 80px;
-       box-shadow:0 1px 4px rgba(0,0,0,.14); }
+body{ font-family:var(--serif); color:var(--ink); background:#e9e6df; margin:0; line-height:1.58; font-size:17px; }
+.page{ max-width:860px; margin:36px auto; background:var(--paper); padding:64px 72px 80px; box-shadow:0 1px 4px rgba(0,0,0,.14); position:relative; }
 h1{ font-size:30px; line-height:1.2; text-align:center; margin:0 0 6px; font-weight:700; letter-spacing:.2px; }
 .subtitle{ text-align:center; font-size:18px; color:var(--mut); font-style:italic; margin:0 0 14px; }
 .byline{ text-align:center; font-size:14px; color:var(--mut); margin-bottom:26px; }
 .byline .sep{ color:#bbb; margin:0 8px; }
-.abstract{ background:var(--panel); border:1px solid var(--rule); border-radius:3px;
-           padding:18px 24px; margin:0 0 14px; font-size:15.5px; line-height:1.6; }
+.abstract{ background:var(--panel); border:1px solid var(--rule); border-radius:3px; padding:18px 24px; margin:0 0 14px; font-size:15.5px; line-height:1.6; }
 .abstract .lab{ font-variant:small-caps; font-weight:700; letter-spacing:.6px; margin-right:8px; }
 hr.rule{ border:0; border-top:2px solid var(--ink); margin:30px 0 8px; }
 h2{ font-size:21px; margin:38px 0 10px; padding-bottom:5px; border-bottom:1px solid var(--rule); font-weight:700; }
@@ -27,29 +25,43 @@ h3{ font-size:17.5px; margin:22px 0 6px; font-weight:700; font-style:italic; col
 p{ margin:9px 0; text-align:justify; }
 ul{ margin:9px 0 9px 4px; padding-left:22px; }
 li{ margin:4px 0; }
-code{ font-family:"Times New Roman", Times, serif; background:var(--code); border:1px solid #e0dccf;
-      border-radius:2px; padding:0 4px; font-size:.96em; color:#403a2c; }
+code{ font-family:var(--serif); background:var(--code); border:1px solid #e0dccf; border-radius:2px; padding:0 4px; font-size:.96em; color:#403a2c; }
 table.data{ border-collapse:collapse; width:100%; margin:16px 0; font-size:14.5px; }
 table.data th, table.data td{ border:1px solid #d6d0c2; padding:6px 10px; text-align:left; vertical-align:top; }
 table.data thead th{ background:var(--panel); font-weight:700; }
 table.data tbody tr:nth-child(even){ background:#faf8f3; }
-blockquote.key{ margin:16px 0; padding:12px 18px; background:#fbf6ea; border-left:4px solid var(--gold);
-                border-radius:2px; font-size:15.5px; }
-blockquote.key::before{ content:"Key finding"; display:block; font-variant:small-caps; letter-spacing:.6px;
-                        font-weight:700; color:var(--gold); font-size:12.5px; margin-bottom:3px; }
+blockquote.key{ margin:16px 0; padding:12px 18px; background:#fbf6ea; border-left:4px solid var(--gold); border-radius:2px; font-size:15.5px; }
+blockquote.key::before{ content:"Key finding"; display:block; font-variant:small-caps; letter-spacing:.6px; font-weight:700; color:var(--gold); font-size:12.5px; margin-bottom:3px; }
 figure{ margin:24px 0; text-align:center; }
 .svgwrap{ background:#fff; border:1px solid var(--rule); border-radius:3px; padding:10px; }
 figure svg{ width:100%; height:auto; max-width:760px; display:block; margin:0 auto; }
-figcaption{ font-size:14px; color:var(--mut); margin-top:8px; text-align:center; line-height:1.45;
-            padding:0 18px; }
+figcaption{ font-size:14px; color:var(--mut); margin-top:8px; text-align:center; line-height:1.45; padding:0 18px; }
 strong,b{ font-weight:700; }
 .footer{ margin-top:46px; padding-top:14px; border-top:1px solid var(--rule); font-size:13px; color:var(--mut); }
-@media print{ body{ background:#fff; } .page{ box-shadow:none; margin:0; max-width:100%; padding:0; } }
-@media (max-width:680px){ .page{ padding:30px 22px; } body{ font-size:16px; } }
+/* language toggle */
+#langtoggle{ position:fixed; top:18px; right:18px; z-index:50; font-family:var(--serif); font-size:15px;
+  padding:7px 16px; background:var(--paper); color:var(--ink); border:1.5px solid var(--gold); border-radius:20px;
+  cursor:pointer; box-shadow:0 1px 5px rgba(0,0,0,.16); transition:background .15s,color .15s; }
+#langtoggle:hover{ background:var(--gold); color:#fff; }
+/* ---- Chinese adaptations (only #doc-zh) ---- */
+#doc-zh{ line-height:1.85; }
+#doc-zh p{ line-height:1.9; text-align:justify; }
+#doc-zh li{ line-height:1.85; }
+#doc-zh td, #doc-zh th{ line-height:1.7; }
+#doc-zh .abstract{ line-height:1.85; font-size:15.5px; }
+#doc-zh h3{ font-style:normal; }            /* CJK never synthetic-italic */
+#doc-zh .subtitle{ font-style:normal; }
+#doc-zh em{ font-style:normal; font-weight:600; }   /* CJK emphasis = semibold, not synthetic italic */
+#doc-zh .abstract .lab{ font-variant:normal; letter-spacing:normal; }
+#doc-zh blockquote.key::before{ content:"关键发现"; font-variant:normal; letter-spacing:1px; }
+@media print{ body{ background:#fff; } .page{ box-shadow:none; margin:0; max-width:100%; padding:0; } #langtoggle{ display:none; } }
+@media (max-width:680px){ .page{ padding:30px 22px; } body{ font-size:16px; } #langtoggle{ top:10px; right:10px; } }
 </style>
 </head>
 <body>
+<button id="langtoggle" onclick="toggleLang()" aria-label="switch language">中文</button>
 <main class="page">
+<div id="doc-en" class="doc">
 <h1>Claim-Level Faithfulness to Experimental Results</h1>
 <p class="subtitle">A System Report and Empirical Study &mdash; NLPCC&#8209;2026 Shared Task&nbsp;10, Track&nbsp;1</p>
 <p class="byline">Qwen3&#8209;VL&#8209;8B&nbsp;+&nbsp;LoRA diverse&#8209;model union<span class="sep">|</span>38 submissions<span class="sep">|</span>champion&nbsp;50.26<span class="sep">|</span>2026&#8209;06</p>
@@ -164,7 +176,7 @@ lessons, chief among them that <em>the data prior over paragraph structure domin
 
 <blockquote class='key'>Score is monotone in the count of correct minority predictions. Every suppression mechanism — veto, confidence threshold, lower oversampling ratio, or ≥2-vote consensus — monotonically hurts testp1 score.</blockquote>
 
-<figure id="fig-recall-inversion">
+<figure id="fig-en-recall-inversion">
 <div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman', Times, serif"><rect x="0" y="0" width="760" height="470" fill="#ffffff"/><text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">testp1 is recall-critical: score rises with minority count</text><line x1="78" y1="64" x2="78" y2="408" stroke="#333" stroke-width="1"/><line x1="78" y1="408" x2="724" y2="408" stroke="#333" stroke-width="1"/><line x1="78" y1="359" x2="724" y2="359" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="310" x2="724" y2="310" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="261" x2="724" y2="261" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="212" x2="724" y2="212" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="163" x2="724" y2="163" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="114" x2="724" y2="114" stroke="#e7e7e7" stroke-width="1"/><line x1="73" y1="408" x2="78" y2="408" stroke="#333" stroke-width="1"/><text x="66" y="412" text-anchor="end" font-size="12" fill="#333">15</text><line x1="73" y1="359" x2="78" y2="359" stroke="#333" stroke-width="1"/><text x="66" y="363" text-anchor="end" font-size="12" fill="#333">20</text><line x1="73" y1="310" x2="78" y2="310" stroke="#333" stroke-width="1"/><text x="66" y="314" text-anchor="end" font-size="12" fill="#333">25</text><line x1="73" y1="261" x2="78" y2="261" stroke="#333" stroke-width="1"/><text x="66" y="265" text-anchor="end" font-size="12" fill="#333">30</text><line x1="73" y1="212" x2="78" y2="212" stroke="#333" stroke-width="1"/><text x="66" y="216" text-anchor="end" font-size="12" fill="#333">35</text><line x1="73" y1="163" x2="78" y2="163" stroke="#333" stroke-width="1"/><text x="66" y="167" text-anchor="end" font-size="12" fill="#333">40</text><line x1="73" y1="114" x2="78" y2="114" stroke="#333" stroke-width="1"/><text x="66" y="118" text-anchor="end" font-size="12" fill="#333">45</text><line x1="73" y1="64" x2="78" y2="64" stroke="#333" stroke-width="1"/><text x="66" y="68" text-anchor="end" font-size="12" fill="#333">50</text><line x1="78" y1="413" x2="78" y2="408" stroke="#333" stroke-width="1"/><text x="78" y="425" text-anchor="middle" font-size="12" fill="#333">0</text><line x1="153" y1="413" x2="153" y2="408" stroke="#333" stroke-width="1"/><text x="153" y="425" text-anchor="middle" font-size="12" fill="#333">50</text><line x1="228" y1="413" x2="228" y2="408" stroke="#333" stroke-width="1"/><text x="228" y="425" text-anchor="middle" font-size="12" fill="#333">100</text><line x1="303" y1="413" x2="303" y2="408" stroke="#333" stroke-width="1"/><text x="303" y="425" text-anchor="middle" font-size="12" fill="#333">150</text><line x1="378" y1="413" x2="378" y2="408" stroke="#333" stroke-width="1"/><text x="378" y="425" text-anchor="middle" font-size="12" fill="#333">200</text><line x1="453" y1="413" x2="453" y2="408" stroke="#333" stroke-width="1"/><text x="453" y="425" text-anchor="middle" font-size="12" fill="#333">250</text><line x1="528" y1="413" x2="528" y2="408" stroke="#333" stroke-width="1"/><text x="528" y="425" text-anchor="middle" font-size="12" fill="#333">300</text><text x="401" y="455" text-anchor="middle" font-size="13" font-style="italic" fill="#222"># minority-class predictions</text><text x="24" y="236" text-anchor="middle" font-size="13" font-style="italic" fill="#222" transform="rotate(-90,24,236)">testp1 score</text><defs><marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#8a8a8a"/></marker></defs><polyline points="147,397 216,263 280,247 330,176 451,88" fill="none" stroke="#8a8a8a" stroke-width="1.5" stroke-dasharray="5,4" stroke-linecap="round" stroke-linejoin="round"/><path d="M 147,397 C 165,370 190,280 216,263 C 240,248 260,250 280,247 C 300,244 315,190 330,176 C 365,150 420,100 451,88" fill="none" stroke="#8a8a8a" stroke-width="2" stroke-dasharray="5,4" stroke-linecap="round"/><circle cx="147" cy="397" r="5" fill="#b3b3b3" stroke="#ffffff" stroke-width="1.5"/><circle cx="216" cy="263" r="5" fill="#4a6fa5" stroke="#ffffff" stroke-width="1.5"/><circle cx="280" cy="247" r="5" fill="#4a6fa5" stroke="#ffffff" stroke-width="1.5"/><circle cx="330" cy="175" r="5" fill="#4a6fa5" stroke="#ffffff" stroke-width="1.5"/><polygon points="451,72 456,85 470,85 459,93 463,107 451,98 439,107 443,93 432,85 446,85" fill="#b8860b" stroke="#8a6208" stroke-width="1"/><text x="160" y="390" text-anchor="start" font-size="11" fill="#b3b3b3">veto-all s05</text><text x="160" y="401" text-anchor="start" font-size="11" fill="#b3b3b3">(46, 18.85)</text><text x="195" y="250" text-anchor="start" font-size="11" fill="#4a6fa5">τ−0.03 s04</text><text x="195" y="261" text-anchor="start" font-size="11" fill="#4a6fa5">(127, 38.48)</text><text x="248" y="237" text-anchor="end" font-size="11" fill="#4a6fa5">veto-gated s06</text><text x="248" y="248" text-anchor="end" font-size="11" fill="#4a6fa5">(171, 39.57)</text><text x="340" y="164" text-anchor="start" font-size="11" fill="#4a6fa5">τ−0.20 s03</text><text x="340" y="175" text-anchor="start" font-size="11" fill="#4a6fa5">(190, 43.85)</text><text x="464" y="79" text-anchor="start" font-size="11" fill="#b8860b">grid s01 ★</text><text x="464" y="90" text-anchor="start" font-size="11" fill="#b8860b">(253, 47.80)</text><rect x="84" y="70" width="210" height="52" fill="#ffffff" stroke="#cccccc" stroke-width="0.8" rx="3"/><text x="92" y="86" font-size="12" fill="#1a1a1a" font-weight="bold">← suppress  ≡  move toward trivial</text><text x="92" y="102" font-size="11" fill="#555">every veto / threshold step cuts</text><text x="92" y="115" font-size="11" fill="#555">minority count and score together</text></svg></div>
 <figcaption><b>Figure 1.</b> Every suppression step moves down-left toward the all-Supported trivial (~19), refuting the precision-critical hypothesis: testp1 score rises monotonically with minority-class prediction count.</figcaption>
 </figure>
@@ -186,7 +198,7 @@ lessons, chief among them that <em>the data prior over paragraph structure domin
 
 <p>Both Macro-F1 and PEM rise together at each step (MF1: 52.77 → 54.80 → 56.80 → 57.17; PEM: 42.83 → 41.64 → 43.17 → 43.34), confirming that the minority recalls being added are predominantly correct rather than spurious.</p>
 
-<figure id="fig-union-scaling">
+<figure id="fig-en-union-scaling">
 <div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman', Times, serif">
   <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
   <text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">The diverse-union lever scales monotonically</text>
@@ -315,7 +327,7 @@ lessons, chief among them that <em>the data prior over paragraph structure domin
 
 <p>The consistent pattern — recall gain offset by PEM loss — indicates that the 5-Qwen union (s15) has already captured most of the recoverable true minorities; adding a sixth member whose errors are partially uncorrelated from those of s15 but also introduces a new set of false positives yields no net benefit. s15 at <code>50.26</code> represents the ceiling of naive union scaling with the current training recipe.</p>
 
-<figure id="fig-landscape">
+<figure id="fig-en-landscape">
 <div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman', Times, serif">
   <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
   <text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">Submission landscape: score vs. correct-minority count</text>
@@ -599,7 +611,7 @@ lessons, chief among them that <em>the data prior over paragraph structure domin
 
 <p>Phase C trained three candidates exclusively on <code>data/devbench/train_sft.jsonl</code> (the image-disjoint train', which never sees dev') and submitted each to Codabench, producing the first leakage-free (densematch, testp1) pairs.</p>
 
-<figure id="fig-calibration">
+<figure id="fig-en-calibration">
 <div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman', Times, serif">
   <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
   <!-- Title -->
@@ -819,7 +831,7 @@ s37 48.54). Notably, s37's plain-CE union fires <em>more</em> minorities (390 vs
 scores lower — the additional predictions are false positives, not true recalls.
 </p>
 
-<figure id="fig-regime-reversal">
+<figure id="fig-en-regime-reversal">
 <div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman', Times, serif">
   <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
   <text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">softmin &#x21C4; plain-CE: the sign flips with oversampling</text>
@@ -928,7 +940,7 @@ resolves. Examining the best single model (s01), per-class recall on testp1 is:
   </tbody>
 </table>
 
-<figure id="fig-per-class-recall">
+<figure id="fig-en-per-class-recall">
 <div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman', Times, serif">
   <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
   <!-- Title -->
@@ -1166,7 +1178,1082 @@ loss function alone can overcome.
 </section>
 <div class="footer">Archive: 17 LoRA adapters + 38 submissions + per&#8209;submission reproduction recipes on Hugging Face
 (<code>winbeau/nlpcc2026-task10</code>, private). Offline bench, scripts, and the full submission log are version&#8209;controlled.
-This report was synthesised from the project notes (<code>notes/</code>) and submission log. Figures rendered as inline SVG; all type set in Times&nbsp;New&nbsp;Roman.</div>
+Figures rendered as inline SVG; all type set in Times&nbsp;New&nbsp;Roman.</div>
+</div>
+<div id="doc-zh" class="doc" hidden>
+<h1>实验结果的声明级忠实度</h1>
+<p class="subtitle">系统报告与实证研究 &mdash; NLPCC&#8209;2026 共享任务&nbsp;10,Track&nbsp;1</p>
+<p class="byline">Qwen3&#8209;VL&#8209;8B&nbsp;+&nbsp;LoRA 多样模型并集<span class="sep">|</span>38 次提交<span class="sep">|</span>冠军&nbsp;50.26<span class="sep">|</span>2026&#8209;06</p>
+<div class="abstract"><span class="lab">摘要。</span>本文系统记录了我们在 NLPCC&#8209;2026 共享任务&nbsp;10、Track&nbsp;1(<em>实验结果的声明级忠实度</em>)上的探索,
+涵盖 38 次 Codabench 提交与一套无泄漏离线评测台。我们的冠军系统——基于 Qwen3&#8209;VL&#8209;8B LoRA 微调的五成员多样模型并集——
+在 Phase&#8209;1 取得 <b>50.26</b> 分(最佳单模型 <b>47.80</b>)。三点方法学发现值得关注:
+<b>(i)</b> 任务是<em>召回关键</em>而非精度关键:分数随正确召回的少数类句子数单调上升,任何抑制式启发都会掉分。
+<b>(ii)</b> PEM 瓶颈损失(softmin)与普通交叉熵(plain&#8209;CE)的优劣<em>随过采样设置而反转</em>——不过采样时 plain&#8209;CE 胜,
+过采样时 softmin 胜——因为 softmin 的存在正是为了抑制过采样所诱发的假阳性。
+<b>(iii)</b> 一套图像不相交、按分布重塑的离线评测台,能对同条件模型给出正确排序,却无法预测绝对测试分、也无法跨训练设置外推。
+我们归档了失败的方向(更大模型、架构多样性、密度匹配合成、抑制式后处理、plain&#8209;CE 重训),并提炼出持久教训——
+其中最重要的一条是:<em>段落结构上的数据先验主导了模型规模</em>。</div>
+<hr class="rule">
+<section>
+<h2><span class="secno">1</span> 引言</h2>
+<h3>引言</h3>
+<p>本文描述我们参加 NLPCC 2026 共享任务 10 第一赛道——<em>声明级忠实度（Claim-level Faithfulness to Experimental Results）</em>——的系统。该任务针对科学传播中的细粒度、句子级可靠性问题：给定一段多句声明段落及其配套的图/表证据，需逐句评估每个句子对证据实际内容的忠实程度。我们的系统以 Qwen3-VL-8B-Instruct 为基础，使用 LoRA 进行微调，在少数类过采样下以自定义 softmin-PEM 损失训练，并组合成多样模型并集集成。在 Codabench 上共提交 38 次 Phase-1 测试（testp1）后，冠军系统（s15，五成员并集）取得分数 <strong>50.26</strong>；最佳单模型（s01，grid）得分 <strong>47.80</strong>。</p>
+
+<h3>任务定义</h3>
+<p>每条输入记录由以下两部分构成：（1）预分词句子组成的<em>声明段落</em>（<code>claim_text</code> 及句子列表），以及（2）一条或多条图或表组成的<em>证据束</em>，每条证据附有 caption。系统须对每个句子分配恰好一个标签，从以下五类中选取：</p>
+
+<table class='data'>
+  <thead>
+    <tr><th>标签</th><th>含义</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Supported</code></td><td>该句子被证据充分支持。</td></tr>
+    <tr><td><code>Unsupported Causal Mechanistic</code></td><td>该句子引入了证据不能证明的因果或机制解释。</td></tr>
+    <tr><td><code>Unsupported Entity</code></td><td>该句子提及了证据中未出现的数据集、指标、模型变体或 baseline。</td></tr>
+    <tr><td><code>Scope Overgeneralization</code></td><td>该句子将结论外推至超出证据所支持的范围。</td></tr>
+    <tr><td><code>Contradiction</code></td><td>该句子与证据直接矛盾。</td></tr>
+  </tbody>
+</table>
+
+<p>标签字符串须逐字匹配（包括大小写与内部空格）。提交格式为 JSONL：每条记录对应一个对象，包含字段 <code>id</code>（原样复制自测试集）和 <code>labels</code>（有序数组，长度等于该记录的句子数）。解析失败或标签超出词表时回退为 <code>Supported</code>。</p>
+
+<p>官方评测指标由 <code>offline_eval/evaluate.py --track 1</code> 计算，包含两个分量：</p>
+<ul>
+  <li><strong>Sentence Macro-F1</strong>：五类等权 macro 平均 F1。</li>
+  <li><strong>PEM（段落精确匹配）</strong>：仅当段落中每个句子均被正确标注时，该段落得分为 1。</li>
+  <li><strong>最终分数 = (Macro-F1 + PEM) / 2。</strong></li>
+</ul>
+<p>对于多标签句子（具有多个合法 gold 标签的句子），只要预测命中其中<em>任意</em>一个 gold 标签即视为正确；命中时以命中的标签作为 F1 参考，否则使用主标签 <code>types[0]</code>。</p>
+
+<h3>数据</h3>
+<p>数据集由任务组织方发布，分为两个划分：</p>
+
+<table class='data'>
+  <thead>
+    <tr><th>划分</th><th>记录数</th><th>句子数</th><th>说明</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>train-dev</td><td>3,333</td><td>17,547</td><td>有 gold 标签；用于训练与本地验证</td></tr>
+    <tr><td>Phase-1 测试（testp1）</td><td>586</td><td>5,096</td><td>id 已预分配；无 gold 发布；在 Codabench 上评分</td></tr>
+  </tbody>
+</table>
+
+<p><strong>证据模态。</strong>所有证据均为图或表——train-dev 包含 2,017 条图片项和 1,979 条表格项，<em>不含</em>任何纯文本证据。每条证据附有 caption（均值 276 字符），但关键数值和实体名称嵌入在渲染后的图像中。这是选用视觉语言模型的核心动机：仅靠 caption 文本不足以验证 <code>Contradiction</code> 或 <code>Unsupported Entity</code> 句子。每条记录平均含 1.2 条证据（最多 7 条）；<code>claim_text</code> 长度中位数为 671 字符。</p>
+
+<p><strong>标签分布。</strong>训练数据严重不均衡。以主标签 <code>types[0]</code> 统计，93.7% 的句子为 <code>Supported</code>；四类少数类合计仅 1,109 句。另有 527 句具有多个合法 gold 标签。</p>
+
+<table class='data'>
+  <thead>
+    <tr><th>标签</th><th>主标签计数</th><th>任意标签计数</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Supported</code></td><td>16,438 (93.7%)</td><td>16,438</td></tr>
+    <tr><td><code>Scope Overgeneralization</code></td><td>540</td><td>605</td></tr>
+    <tr><td><code>Contradiction</code></td><td>216</td><td>216</td></tr>
+    <tr><td><code>Unsupported Entity</code></td><td>213</td><td>639</td></tr>
+    <tr><td><code>Unsupported Causal Mechanistic</code></td><td>140</td><td>276</td></tr>
+  </tbody>
+</table>
+
+<p><strong>testp1 的分布偏移。</strong>Phase-1 测试集与 train-dev 呈现截然不同的特征。段落较长（均值 8.7 句，最长 31 句），且少数类密集：约 84% 的 testp1 段落中至少含有一个 gold 少数类句子。testp1 上全 <code>Supported</code> 的平凡基线仅得 <strong>18.85</strong>（由提交 s05 实测），而 train-dev 上为 43.2——这反映出 testp1 的 PEM 是召回受限而非精度受限。每漏掉一个少数类句子，就会使一整段长段落损失 PEM。</p>
+
+<p><strong>"≤1 少数类/段"伪先验。</strong>在 train-dev 中，所有长段落（≥6 句）中仅有 0.46% 包含两个及以上少数类句子；在全部 3,333 条记录中，只有 8 条含 ≥2 个少数类。模型在此分布上学到一个近乎确定的伪先验：每段至多一个少数类。在 testp1 少数类密集的段落上，这一伪先验导致系统性的召回不足——这是本次参赛过程中所发现的全部单模型性能瓶颈的根本原因。</p>
+
+<h3>方法</h3>
+
+<p><strong>基础模型。</strong>我们使用 LoRA（rank 16, alpha 32，所有线性层，ViT 冻结）对 Qwen3-VL-8B-Instruct 进行 bf16 精度微调，训练框架为 ms-swift 4.2.3。图像分辨率上限设为 <code>max_pixels = 401408</code>；将分辨率提升至 802,816 在实验中有害（s02：−3.3 分）。</p>
+
+<p><strong>训练格式。</strong>我们实现了两种输入格式。在<em>逐句</em>格式中，每个训练样本由共享的证据/声明上下文加单个 TARGET 句子构成，模型输出一个标签；3,333 条记录展开为约 17,547 个逐句样本，推理时同一记录的共享前缀在 <em>n</em> 个句子之间复用 KV-cache。在<em>段落联合</em>格式中，单次前向传播覆盖完整段落，模型输出包含 <em>n</em> 个标签的 JSON 数组；这是 Qwen3-VL-32B-Instruct 的唯一可行格式（逐句 32B 因重复图像前缀需约 200 GiB 显存）。逐句格式是所有并集成员的主要格式。</p>
+
+<p><strong>损失函数。</strong>逐句 softmin-PEM 损失（自定义 ms-swift 集成）在标准交叉熵之上引入段落级瓶颈：对段落内预测错误概率最高的句子上调损失权重，惩罚会破坏 PEM 的预测配置。段落联合格式模型及消融实验使用普通交叉熵（plain-CE）。两种损失与过采样之间存在强交互（见下文）。</p>
+
+<p><strong>类别不均衡处理。</strong>在数据集构造阶段对少数类进行过采样，对 <code>Supported</code> 进行下采样。grid 最优配置（s01）采用少数类过采样倍率 3.0、<code>Supported</code> 下采样因子 0.6。对于多标签句子，选取少数类标签作为训练目标（少数类优先于 <code>Supported</code>）。划分按记录级进行（9:1，按是否含少数类分层），以防止句子级泄漏并保证验证集上 PEM 的有效性。</p>
+
+<p><strong>集成策略。</strong>并集集成（<code>scripts/ensemble_union.py --min-votes 1</code>）融合多个独立训练模型的预测：只要任一成员对某句子触发少数类标签，该标签即被采纳。这是严格意义上的召回累加操作，在成员足够多样且各自具备能力时，可同时提升 Macro-F1 与 PEM。冠军系统 s15 融合了五个以不同过采样率和格式训练的 Qwen3-VL 成员。</p>
+
+<blockquote class='key'>
+<strong>关键发现——softmin 与 plain-CE 的机制反转：</strong>在不使用过采样时，plain-CE 优于 softmin（s32 38.68 &gt; s31 34.21，+4.47）。而在真实过采样方案下（完整 train-dev，少数类过采样 3×），softmin 在单模型级别（s01 47.80 &gt; s33 42.87，+4.93）和并集级别（s15 50.26 &gt; s37 48.54，+1.72）均占优。其机制在于：过采样导致 plain-CE 过度触发少数类预测，产生的假阳性会破坏长段落的 PEM；而 softmin 的 PEM 瓶颈损失恰好抑制了这些由过采样诱发的假阳性。在无过采样或数据量减少的训练设置中得出的结论，不能安全外推至完整训练方案。
+</blockquote>
+
+<blockquote class='key'>
+<strong>关键发现——召回关键的反转：</strong>最初将该任务定性为精度关键（抑制少数类以保护 PEM）的框架源自 train-dev 上 43.2 的平凡基线分数，并在首批 testp1 提交后被推翻。在 testp1 上，所有少数类抑制干预（veto、置信阈值、≥2 票共识、降低过采样）均单调降低分数。在 testp1 上测量的抑制扫描——46 条少数类预测→18.85，127→38.48，171→39.57，190→43.85，253→47.80——证实分数与<em>正确</em>触发的少数类标签数量单调正相关。在长段、少数类密集的测试段落上，PEM 是召回受限而非精度受限。
+</blockquote>
+</section>
+
+<section>
+<h2><span class="secno">2</span> 实验结果</h2>
+<h3>召回关键的反转</h3>
+
+<p>最初的实验框架假设 testp1 是<em>精度关键</em>的：train-dev 的全-<code>Supported</code> trivial 基线得分为 43.2，这表明应将保持段落整洁以获得 PEM 置于少数类召回之上。然而这一框架在首次接触排行榜时即遭证伪。testp1 全-<code>Supported</code> trivial 实际仅得 <code>18.85</code>（s05），反映出截然不同的分布特征：段落较长（均值 8.7 句，最长 31 句），且约 84% 的段落至少包含一个 gold 少数类句子。在此训练设置下，PEM 受<em>召回</em>制约，而非受精度制约——只有当每个 gold 少数类标签均被正确预测时段落才能获得 PEM=1，因此在长段落中漏判哪怕一个少数类标签，都必然导致该段落 PEM=0。</p>
+
+<p>抑制扫描实验清晰揭示了这种单调关系。以最优单模型（s01，grid softmin）为起点，逐步抑制少数类预测，分数呈严格递减趋势：</p>
+
+<blockquote class='key'>分数与正确少数类预测数量单调正相关。所有抑制机制——否决、置信阈值、降低过采样比例或 ≥2 票一致——均单调损害 testp1 分数。</blockquote>
+
+<figure id="fig-zh-recall-inversion">
+<div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman','Source Han Serif SC','Noto Serif CJK SC','Songti SC',STSong,SimSun,serif"><rect x="0" y="0" width="760" height="470" fill="#ffffff"/><text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">testp1 为召回关键：分数随少数类预测数单调上升</text><line x1="78" y1="64" x2="78" y2="408" stroke="#333" stroke-width="1"/><line x1="78" y1="408" x2="724" y2="408" stroke="#333" stroke-width="1"/><line x1="78" y1="359" x2="724" y2="359" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="310" x2="724" y2="310" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="261" x2="724" y2="261" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="212" x2="724" y2="212" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="163" x2="724" y2="163" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="114" x2="724" y2="114" stroke="#e7e7e7" stroke-width="1"/><line x1="73" y1="408" x2="78" y2="408" stroke="#333" stroke-width="1"/><text x="66" y="412" text-anchor="end" font-size="12" fill="#333">15</text><line x1="73" y1="359" x2="78" y2="359" stroke="#333" stroke-width="1"/><text x="66" y="363" text-anchor="end" font-size="12" fill="#333">20</text><line x1="73" y1="310" x2="78" y2="310" stroke="#333" stroke-width="1"/><text x="66" y="314" text-anchor="end" font-size="12" fill="#333">25</text><line x1="73" y1="261" x2="78" y2="261" stroke="#333" stroke-width="1"/><text x="66" y="265" text-anchor="end" font-size="12" fill="#333">30</text><line x1="73" y1="212" x2="78" y2="212" stroke="#333" stroke-width="1"/><text x="66" y="216" text-anchor="end" font-size="12" fill="#333">35</text><line x1="73" y1="163" x2="78" y2="163" stroke="#333" stroke-width="1"/><text x="66" y="167" text-anchor="end" font-size="12" fill="#333">40</text><line x1="73" y1="114" x2="78" y2="114" stroke="#333" stroke-width="1"/><text x="66" y="118" text-anchor="end" font-size="12" fill="#333">45</text><line x1="73" y1="64" x2="78" y2="64" stroke="#333" stroke-width="1"/><text x="66" y="68" text-anchor="end" font-size="12" fill="#333">50</text><line x1="78" y1="413" x2="78" y2="408" stroke="#333" stroke-width="1"/><text x="78" y="425" text-anchor="middle" font-size="12" fill="#333">0</text><line x1="153" y1="413" x2="153" y2="408" stroke="#333" stroke-width="1"/><text x="153" y="425" text-anchor="middle" font-size="12" fill="#333">50</text><line x1="228" y1="413" x2="228" y2="408" stroke="#333" stroke-width="1"/><text x="228" y="425" text-anchor="middle" font-size="12" fill="#333">100</text><line x1="303" y1="413" x2="303" y2="408" stroke="#333" stroke-width="1"/><text x="303" y="425" text-anchor="middle" font-size="12" fill="#333">150</text><line x1="378" y1="413" x2="378" y2="408" stroke="#333" stroke-width="1"/><text x="378" y="425" text-anchor="middle" font-size="12" fill="#333">200</text><line x1="453" y1="413" x2="453" y2="408" stroke="#333" stroke-width="1"/><text x="453" y="425" text-anchor="middle" font-size="12" fill="#333">250</text><line x1="528" y1="413" x2="528" y2="408" stroke="#333" stroke-width="1"/><text x="528" y="425" text-anchor="middle" font-size="12" fill="#333">300</text><text x="401" y="455" text-anchor="middle" font-size="13" fill="#222">少数类预测数</text><text x="24" y="236" text-anchor="middle" font-size="13" fill="#222" transform="rotate(-90,24,236)">testp1 分数</text><defs><marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#8a8a8a"/></marker></defs><polyline points="147,397 216,263 280,247 330,176 451,88" fill="none" stroke="#8a8a8a" stroke-width="1.5" stroke-dasharray="5,4" stroke-linecap="round" stroke-linejoin="round"/><path d="M 147,397 C 165,370 190,280 216,263 C 240,248 260,250 280,247 C 300,244 315,190 330,176 C 365,150 420,100 451,88" fill="none" stroke="#8a8a8a" stroke-width="2" stroke-dasharray="5,4" stroke-linecap="round"/><circle cx="147" cy="397" r="5" fill="#b3b3b3" stroke="#ffffff" stroke-width="1.5"/><circle cx="216" cy="263" r="5" fill="#4a6fa5" stroke="#ffffff" stroke-width="1.5"/><circle cx="280" cy="247" r="5" fill="#4a6fa5" stroke="#ffffff" stroke-width="1.5"/><circle cx="330" cy="175" r="5" fill="#4a6fa5" stroke="#ffffff" stroke-width="1.5"/><polygon points="451,72 456,85 470,85 459,93 463,107 451,98 439,107 443,93 432,85 446,85" fill="#b8860b" stroke="#8a6208" stroke-width="1"/><text x="160" y="390" text-anchor="start" font-size="11" fill="#b3b3b3">全否决 s05</text><text x="160" y="401" text-anchor="start" font-size="11" fill="#b3b3b3">(46, 18.85)</text><text x="195" y="250" text-anchor="start" font-size="11" fill="#4a6fa5">τ−0.03 s04</text><text x="195" y="261" text-anchor="start" font-size="11" fill="#4a6fa5">(127, 38.48)</text><text x="248" y="237" text-anchor="end" font-size="11" fill="#4a6fa5">门控否决 s06</text><text x="248" y="248" text-anchor="end" font-size="11" fill="#4a6fa5">(171, 39.57)</text><text x="340" y="164" text-anchor="start" font-size="11" fill="#4a6fa5">τ−0.20 s03</text><text x="340" y="175" text-anchor="start" font-size="11" fill="#4a6fa5">(190, 43.85)</text><text x="464" y="79" text-anchor="start" font-size="11" fill="#b8860b">grid s01 ★</text><text x="464" y="90" text-anchor="start" font-size="11" fill="#b8860b">(253, 47.80)</text><rect x="84" y="70" width="210" height="52" fill="#ffffff" stroke="#cccccc" stroke-width="0.8" rx="3"/><text x="92" y="86" font-size="12" fill="#1a1a1a" font-weight="bold">← 抑制 ≡ 向平凡解靠近</text><text x="92" y="102" font-size="11" fill="#555">每次否决／阈值操作均同时削减</text><text x="92" y="115" font-size="11" fill="#555">少数类预测数与分数</text></svg></div>
+<figcaption><b>图 1.</b> 每一次抑制操作均使结果向左下方的全-Supported 平凡解（约 19 分）靠近，从而驳斥了精度关键假说：testp1 分数随少数类预测数单调上升。</figcaption>
+</figure>
+
+<p>这一反转现象（抑制扫描：46 个少数类 → <code>18.85</code>；127 → <code>38.48</code>；171 → <code>39.57</code>；190 → <code>43.85</code>；253 → <code>47.80</code>）表明，最优目标是最大化<em>正确</em>的少数类召回，而非控制少数类精度。后处理方法（s03–s07）因此被放弃；后续所有工作均聚焦于以加法方式提升召回。</p>
+
+<h3>多样模型并集杠杆</h3>
+
+<p>鉴于召回是核心制约因素，集成策略采取对独立训练模型取<em>并集</em>的方式：若<em>任意</em>成员对某句子触发少数类标签，则该句子被赋予该标签。具体实现为 <code>ensemble_union.py --min-votes 1</code>。加入多样成员在召回上具有加法效应：每个新模型对不同少数类句子产生独立错误，从而增加被正确召回的少数类数量，使 Macro-F1 和 PEM 同步提升。</p>
+
+<p>从单模型扩展至五成员并集的过程严格单调：</p>
+
+<ul>
+  <li>s01 — 1 个成员（grid softmin）：<code>47.80</code>（最优单模型；253 个少数类）</li>
+  <li>s11 — 3 个 Qwen 成员（s01 + s08 + s09）：<code>48.22</code>（339 个少数类）</li>
+  <li>s14 — 4 个 Qwen 成员（+ s13 joint-32B）：<code>49.99</code>（365 个少数类）</li>
+  <li>s15 — 5 个 Qwen 成员（+ s12 joint-8B）：<code>50.26</code> ★ 冠军（382 个少数类）</li>
+</ul>
+
+<p>每一步 Macro-F1 和 PEM 均同步上升（MF1：52.77 → 54.80 → 56.80 → 57.17；PEM：42.83 → 41.64 → 43.17 → 43.34），证实新增的少数类召回以真正确为主，而非假阳性。</p>
+
+<figure id="fig-zh-union-scaling">
+<div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman','Source Han Serif SC','Noto Serif CJK SC','Songti SC',STSong,SimSun,serif">
+  <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
+  <text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">多样并集杠杆呈单调缩放</text>
+
+  <!-- Plot area: x∈[78,724], y∈[64,408] -->
+  <!-- y range: 47 to 51; y mapping: val → 408 - (val-47)/(51-47)*344 = 408 - (val-47)/4*344 -->
+  <!-- x axis: categorical 1,3,4,5 members → positions -->
+  <!-- x positions: 1→165, 3→325, 4→485, 5→645 (evenly spread in plot area) -->
+
+  <!-- Horizontal gridlines at y=47,47.5,48,48.5,49,49.5,50,50.5,51 -->
+  <!-- y=47: 408; y=47.5: 408-0.5/4*344=408-43=365; y=48: 322; y=48.5: 279; y=49: 236; y=49.5: 193; y=50: 150; y=50.5: 107; y=51: 64 -->
+  <line x1="78" y1="408" x2="724" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="365" x2="724" y2="365" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="322" x2="724" y2="322" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="279" x2="724" y2="279" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="236" x2="724" y2="236" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="193" x2="724" y2="193" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="150" x2="724" y2="150" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="107" x2="724" y2="107" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="64" x2="724" y2="64" stroke="#e7e7e7" stroke-width="1"/>
+
+  <!-- Axes -->
+  <line x1="78" y1="64" x2="78" y2="408" stroke="#333" stroke-width="1"/>
+  <line x1="78" y1="408" x2="724" y2="408" stroke="#333" stroke-width="1"/>
+
+  <!-- X-axis: categorical labels 1,3,4,5 -->
+  <!-- positions: 1→165, 3→325, 4→485, 5→645 -->
+  <line x1="165" y1="408" x2="165" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="165" y="427" text-anchor="middle" font-size="12" fill="#333">1</text>
+  <line x1="325" y1="408" x2="325" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="325" y="427" text-anchor="middle" font-size="12" fill="#333">3</text>
+  <line x1="485" y1="408" x2="485" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="485" y="427" text-anchor="middle" font-size="12" fill="#333">4</text>
+  <line x1="645" y1="408" x2="645" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="645" y="427" text-anchor="middle" font-size="12" fill="#333">5</text>
+
+  <!-- Y-axis ticks: 47,47.5,48,48.5,49,49.5,50,50.5,51 -->
+  <line x1="78" y1="408" x2="73" y2="408" stroke="#333" stroke-width="1"/>
+  <text x="70" y="412" text-anchor="end" font-size="12" fill="#333">47.0</text>
+  <line x1="78" y1="365" x2="73" y2="365" stroke="#333" stroke-width="1"/>
+  <text x="70" y="369" text-anchor="end" font-size="12" fill="#333">47.5</text>
+  <line x1="78" y1="322" x2="73" y2="322" stroke="#333" stroke-width="1"/>
+  <text x="70" y="326" text-anchor="end" font-size="12" fill="#333">48.0</text>
+  <line x1="78" y1="279" x2="73" y2="279" stroke="#333" stroke-width="1"/>
+  <text x="70" y="283" text-anchor="end" font-size="12" fill="#333">48.5</text>
+  <line x1="78" y1="236" x2="73" y2="236" stroke="#333" stroke-width="1"/>
+  <text x="70" y="240" text-anchor="end" font-size="12" fill="#333">49.0</text>
+  <line x1="78" y1="193" x2="73" y2="193" stroke="#333" stroke-width="1"/>
+  <text x="70" y="197" text-anchor="end" font-size="12" fill="#333">49.5</text>
+  <line x1="78" y1="150" x2="73" y2="150" stroke="#333" stroke-width="1"/>
+  <text x="70" y="154" text-anchor="end" font-size="12" fill="#333">50.0</text>
+  <line x1="78" y1="107" x2="73" y2="107" stroke="#333" stroke-width="1"/>
+  <text x="70" y="111" text-anchor="end" font-size="12" fill="#333">50.5</text>
+  <line x1="78" y1="64" x2="73" y2="64" stroke="#333" stroke-width="1"/>
+  <text x="70" y="68" text-anchor="end" font-size="12" fill="#333">51.0</text>
+
+  <!-- Axis titles -->
+  <text x="401" y="455" text-anchor="middle" font-size="13" fill="#222">并集成员数</text>
+  <text x="18" y="236" text-anchor="middle" font-size="13" fill="#222" transform="rotate(-90,18,236)">testp1 分数</text>
+
+  <!-- DATA POINTS and LINE -->
+  <!-- Compute y coords: y = 408 - (score-47)/4*344 -->
+  <!-- s01 (1 member, 47.80): y = 408 - 0.80/4*344 = 408 - 68.8 = 339.2 -->
+  <!-- s11 (3 members, 48.22): y = 408 - 1.22/4*344 = 408 - 104.98 = 303.02 -->
+  <!-- s14 (4 members, 49.99): y = 408 - 2.99/4*344 = 408 - 257.14 = 150.86 -->
+  <!-- s15 (5 members, 50.26): y = 408 - 3.26/4*344 = 408 - 280.34 = 127.66 -->
+
+  <!-- Connecting line (teal) -->
+  <polyline points="165,339.2 325,303.02 485,150.86 645,127.66" fill="none" stroke="#2a9d8f" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- Area fill (very subtle) -->
+  <polygon points="165,339.2 325,303.02 485,150.86 645,127.66 645,408 165,408" fill="#2a9d8f" opacity="0.07"/>
+
+  <!-- s01 (1 member, 47.80) — champion single, gold marker -->
+  <circle cx="165" cy="339.2" r="7" fill="#b8860b" stroke="#00000033" stroke-width="1"/>
+  <text x="167" y="330" font-size="11" fill="#b8860b" font-weight="bold">s01 grid 47.80</text>
+
+  <!-- s11 (3 members, 48.22) -->
+  <circle cx="325" cy="303.02" r="5" fill="#2a9d8f" stroke="#00000022" stroke-width="1"/>
+  <text x="327" y="296" font-size="11" fill="#2a9d8f">s11  48.22</text>
+
+  <!-- s14 (4 members, 49.99) -->
+  <circle cx="485" cy="150.86" r="5" fill="#2a9d8f" stroke="#00000022" stroke-width="1"/>
+  <text x="487" y="145" font-size="11" fill="#2a9d8f">s14  49.99</text>
+
+  <!-- s15 (5 members, 50.26) — CHAMPION gold star -->
+  <polygon points="645,118.66 648.5,128.16 658.5,128.16 650.7,133.66 653.5,143.16 645,137.66 636.5,143.16 639.3,133.66 631.5,128.16 641.5,128.16" fill="#b8860b" stroke="#00000033" stroke-width="1"/>
+  <text x="648" y="113" font-size="11" fill="#b8860b" font-weight="bold">s15 union 50.26</text>
+
+  <!-- Annotation: +2.46 over best single -->
+  <!-- Arrow from s01 level to s15 level at x~700 -->
+  <line x1="700" y1="339.2" x2="700" y2="131.66" stroke="#555" stroke-width="1.2" marker-end="url(#arr)" marker-start="url(#arr2)"/>
+  <defs>
+    <marker id="arr" markerWidth="7" markerHeight="7" refX="3" refY="3.5" orient="auto">
+      <polygon points="0 0, 7 3.5, 0 7" fill="#555"/>
+    </marker>
+    <marker id="arr2" markerWidth="7" markerHeight="7" refX="4" refY="3.5" orient="auto-start-reverse">
+      <polygon points="0 0, 7 3.5, 0 7" fill="#555"/>
+    </marker>
+  </defs>
+  <text x="705" y="242" font-size="12" fill="#555">+2.46</text>
+  <text x="705" y="257" font-size="11" fill="#555">优于最优</text>
+  <text x="705" y="271" font-size="11" fill="#555">单模型</text>
+
+  <!-- Legend inside top-left -->
+  <rect x="88" y="75" width="160" height="68" fill="#ffffff" stroke="#ccc" stroke-width="0.8" rx="3"/>
+  <text x="100" y="92" font-size="12" fill="#1a1a1a" font-weight="bold">图例</text>
+  <circle cx="104" cy="106" r="5" fill="#2a9d8f" stroke="#00000022" stroke-width="1"/>
+  <text x="114" y="110" font-size="12" fill="#333">并集集成（蓝绿）</text>
+  <circle cx="104" cy="127" r="7" fill="#b8860b" stroke="#00000033" stroke-width="1"/>
+  <text x="114" y="131" font-size="12" fill="#333">冠军/最优单模型</text>
+</svg></div>
+<figcaption><b>图 2.</b> 多样并集杠杆呈单调缩放：向集成中逐步添加异构 Qwen 模型成员，分数持续提升，在五个成员时较最优单模型累计增益 +2.46 分。</figcaption>
+</figure>
+
+<h3>成员质量与相关性注意事项</h3>
+
+<p>并集带来的收益在很大程度上取决于成员质量和误差独立性。加入质量较弱或相关性较高的成员的实验一致呈现相同的失败模式：Macro-F1 提升（触发更多少数类）但 PEM 下降（假阳性少数类打碎了整洁段落），最终导致净分数下降。典型案例如下：</p>
+
+<ul>
+  <li>s18（+Qwen3-VL-4B，相同架构，性能较弱）：MF1 +0.11，PEM −1.19 → 分数 <code>49.71</code>（较 s15 −0.55）</li>
+  <li>s20（+InternVL3-8B，架构多样）：MF1 +0.57，PEM −1.36 → 分数 <code>49.36</code></li>
+  <li>s23（+Gemma4-26B，架构多样，最接近的失败案例）：MF1 57.67（较 s15 +0.50），PEM 41.98（−1.36）→ 分数 <code>49.83</code></li>
+  <li>s27（Gemma4-31B 单模型）：仅触发 87 个少数类 → 分数 <code>29.28</code>，证实单靠模型规模无法克服训练数据伪先验</li>
+</ul>
+
+<p>一致的规律——召回增益被 PEM 损失抵消——表明 5-Qwen 并集（s15）已捕获了大部分可恢复的真正少数类；若加入第六个成员，其误差与 s15 部分不相关，但同时也引入了一批新的假阳性，净收益为零。s15 的 <code>50.26</code> 代表了在当前训练方案下朴素并集扩展的上限。</p>
+
+<figure id="fig-zh-landscape">
+<div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman','Source Han Serif SC','Noto Serif CJK SC','Songti SC',STSong,SimSun,serif">
+  <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
+  <text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">提交全景：分数 vs. 正确少数类预测数</text>
+  <line x1="80" y1="408.0" x2="724" y2="408.0" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="361.5" x2="724" y2="361.5" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="315.0" x2="724" y2="315.0" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="268.5" x2="724" y2="268.5" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="222.1" x2="724" y2="222.1" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="175.6" x2="724" y2="175.6" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="129.1" x2="724" y2="129.1" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="82.6" x2="724" y2="82.6" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="64" x2="80" y2="408" stroke="#333" stroke-width="1.5"/>
+  <line x1="80" y1="408" x2="724" y2="408" stroke="#333" stroke-width="1.5"/>
+  <line x1="75" y1="408.0" x2="80" y2="408.0" stroke="#333" stroke-width="1"/>
+  <text x="70" y="412.0" text-anchor="end" font-size="12" fill="#333">15</text>
+  <line x1="75" y1="361.5" x2="80" y2="361.5" stroke="#333" stroke-width="1"/>
+  <text x="70" y="365.5" text-anchor="end" font-size="12" fill="#333">20</text>
+  <line x1="75" y1="315.0" x2="80" y2="315.0" stroke="#333" stroke-width="1"/>
+  <text x="70" y="319.0" text-anchor="end" font-size="12" fill="#333">25</text>
+  <line x1="75" y1="268.5" x2="80" y2="268.5" stroke="#333" stroke-width="1"/>
+  <text x="70" y="272.5" text-anchor="end" font-size="12" fill="#333">30</text>
+  <line x1="75" y1="222.1" x2="80" y2="222.1" stroke="#333" stroke-width="1"/>
+  <text x="70" y="226.1" text-anchor="end" font-size="12" fill="#333">35</text>
+  <line x1="75" y1="175.6" x2="80" y2="175.6" stroke="#333" stroke-width="1"/>
+  <text x="70" y="179.6" text-anchor="end" font-size="12" fill="#333">40</text>
+  <line x1="75" y1="129.1" x2="80" y2="129.1" stroke="#333" stroke-width="1"/>
+  <text x="70" y="133.1" text-anchor="end" font-size="12" fill="#333">45</text>
+  <line x1="75" y1="82.6" x2="80" y2="82.6" stroke="#333" stroke-width="1"/>
+  <text x="70" y="86.6" text-anchor="end" font-size="12" fill="#333">50</text>
+  <line x1="80.0" y1="408" x2="80.0" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="80.0" y="426" text-anchor="middle" font-size="12" fill="#333">0</text>
+  <line x1="203.8" y1="408" x2="203.8" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="203.8" y="426" text-anchor="middle" font-size="12" fill="#333">100</text>
+  <line x1="327.7" y1="408" x2="327.7" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="327.7" y="426" text-anchor="middle" font-size="12" fill="#333">200</text>
+  <line x1="451.5" y1="408" x2="451.5" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="451.5" y="426" text-anchor="middle" font-size="12" fill="#333">300</text>
+  <line x1="575.4" y1="408" x2="575.4" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="575.4" y="426" text-anchor="middle" font-size="12" fill="#333">400</text>
+  <line x1="699.2" y1="408" x2="699.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="699.2" y="426" text-anchor="middle" font-size="12" fill="#333">500</text>
+  <text x="402" y="452" text-anchor="middle" font-size="13" fill="#333">正确少数类预测数</text>
+  <text x="22" y="236" text-anchor="middle" font-size="13" fill="#333" transform="rotate(-90,22,236)">testp1 分数</text>
+  <line x1="80" y1="80.2" x2="724" y2="80.2" stroke="#8a8a8a" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <line x1="80" y1="103.0" x2="724" y2="103.0" stroke="#8a8a8a" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <text x="90" y="76.2" text-anchor="start" font-size="11" fill="#8a8a8a">s15 冠军 (50.26)</text>
+  <text x="90" y="99.0" text-anchor="start" font-size="11" fill="#8a8a8a">s01 最优单模型 (47.80)</text>
+  <circle cx="137.0" cy="372.2" r="5" fill="#b3b3b3" stroke="#999" stroke-width="0.7"/>
+  <circle cx="237.3" cy="189.7" r="5" fill="#b3b3b3" stroke="#999" stroke-width="0.7"/>
+  <circle cx="187.7" cy="275.2" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="383.4" cy="148.9" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="338.8" cy="144.6" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="411.9" cy="140.0" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="538.2" cy="132.0" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="371.0" cy="128.2" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="402.0" cy="134.0" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="499.8" cy="99.1" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="563.0" cy="96.2" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="532.0" cy="82.7" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="696.8" cy="84.2" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="580.3" cy="85.3" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="413.1" cy="139.8" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="393.3" cy="103.0" r="6.5" fill="#b8860b" stroke="#7a5c00" stroke-width="0.9"/>
+  <path d="M 553.09,72.18 L 555.44,76.94 L 560.70,77.71 L 556.90,81.41 L 557.79,86.65 L 553.09,84.18 L 548.39,86.65 L 549.29,81.41 L 545.48,77.71 L 550.74,76.94 Z" fill="#b8860b" stroke="#7a5c00" stroke-width="0.9"/>
+  <text x="144.0" y="364.2" text-anchor="start" font-size="11" fill="#b3b3b3" font-weight="normal">s05 trivial&#x2248;19</text>
+  <text x="194.7" y="267.2" text-anchor="start" font-size="11" fill="#4a6fa5" font-weight="normal">s27</text>
+  <text x="244.3" y="181.7" text-anchor="start" font-size="11" fill="#b3b3b3" font-weight="normal">s04</text>
+  <text x="375.4" y="162.9" text-anchor="end" font-size="11" fill="#4a6fa5" font-weight="normal">s33</text>
+  <text x="330.8" y="136.6" text-anchor="end" font-size="11" fill="#4a6fa5" font-weight="normal">s12</text>
+  <text x="419.9" y="154.0" text-anchor="start" font-size="11" fill="#4a6fa5" font-weight="normal">s09</text>
+  <text x="546.2" y="124.0" text-anchor="start" font-size="11" fill="#4a6fa5" font-weight="normal">s26</text>
+  <text x="363.0" y="120.2" text-anchor="end" font-size="11" fill="#4a6fa5" font-weight="normal">s08</text>
+  <text x="410.0" y="126.0" text-anchor="start" font-size="11" fill="#4a6fa5" font-weight="normal">s02</text>
+  <text x="403.3" y="94.0" text-anchor="start" font-size="11" fill="#b8860b" font-weight="bold">s01 grid 47.80</text>
+  <text x="491.8" y="91.1" text-anchor="end" font-size="11" fill="#2a9d8f" font-weight="normal">s11</text>
+  <text x="571.0" y="88.2" text-anchor="start" font-size="11" fill="#2a9d8f" font-weight="normal">s37</text>
+  <text x="524.0" y="74.7" text-anchor="end" font-size="11" fill="#2a9d8f" font-weight="normal">s14</text>
+  <text x="564.1" y="71.2" text-anchor="start" font-size="11" fill="#b8860b" font-weight="bold">s15 并集 50.26</text>
+  <text x="688.8" y="76.2" text-anchor="end" font-size="11" fill="#2a9d8f" font-weight="normal">s23</text>
+  <text x="588.3" y="95.3" text-anchor="start" font-size="11" fill="#2a9d8f" font-weight="normal">s18</text>
+  <text x="421.1" y="131.8" text-anchor="start" font-size="11" fill="#2a9d8f" font-weight="normal">s30</text>
+  <rect x="571" y="241" width="150" height="110" rx="3" fill="white" stroke="#ccc" stroke-width="0.8"/>
+  <circle cx="585" cy="252" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.7"/>
+  <text x="597" y="256" font-size="12" fill="#333">单模型</text>
+  <circle cx="585" cy="277" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.7"/>
+  <text x="597" y="281" font-size="12" fill="#333">并集集成</text>
+  <circle cx="585" cy="302" r="5" fill="#b3b3b3" stroke="#fff" stroke-width="0.7"/>
+  <text x="597" y="306" font-size="12" fill="#333">后处理/失效</text>
+  <circle cx="585" cy="327" r="5" fill="#b8860b" stroke="#fff" stroke-width="0.7"/>
+  <text x="597" y="331" font-size="12" fill="#333">冠军</text>
+</svg></div>
+<figcaption><b>图 3.</b> 所有 testp1 提交按正确少数类预测数与分数绘制的散点图，揭示出召回与分数之间强烈的正相关关系，并显示并集集成策略（s15，50.26）处于性能前沿。</figcaption>
+</figure>
+
+<h3>结果汇总表</h3>
+
+<table class='data'>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>类型</th>
+      <th>描述</th>
+      <th>testp1 分数</th>
+      <th>#少数类数</th>
+      <th>核心结论</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>s05</code></td>
+      <td>后处理</td>
+      <td>全量孤立少数类否决（trivial 锚点）</td>
+      <td>18.85</td>
+      <td>46</td>
+      <td>testp1 trivial；抑制策略是灾难性的</td>
+    </tr>
+    <tr>
+      <td><code>s27</code></td>
+      <td>单模型</td>
+      <td>Gemma4-31B LoRA（2-GPU ZeRO-3）</td>
+      <td>29.28</td>
+      <td>87</td>
+      <td>更大的模型 → 更保守；训练伪先验主导规模效应</td>
+    </tr>
+    <tr>
+      <td><code>s30</code></td>
+      <td>并集</td>
+      <td>PHASE C 干净并集（train′，90% 数据，无过采样）</td>
+      <td>43.85</td>
+      <td>269</td>
+      <td>无过采样损失约 9 分；densematch 高估；joint 成员拖累整体</td>
+    </tr>
+    <tr>
+      <td><code>s33</code></td>
+      <td>单模型</td>
+      <td>全量 train-dev plain-CE grid（os3.0/ds0.6）</td>
+      <td>42.87</td>
+      <td>245</td>
+      <td>plain-CE + 过采样过度触发 → PEM 37.03 vs softmin 42.83</td>
+    </tr>
+    <tr>
+      <td><code>s12</code></td>
+      <td>单模型</td>
+      <td>Qwen3-VL-8B 段落联合 plain-CE</td>
+      <td>43.33</td>
+      <td>209</td>
+      <td>联合格式单模型 ≤ 逐句 grid</td>
+    </tr>
+    <tr>
+      <td><code>s09</code></td>
+      <td>单模型</td>
+      <td>逐类过采样（Qwen3-VL-8B softmin）</td>
+      <td>43.83</td>
+      <td>268</td>
+      <td>触发更多少数类但精度低于 grid；作并集成员有用</td>
+    </tr>
+    <tr>
+      <td><code>s26</code></td>
+      <td>单模型</td>
+      <td>Gemma4-26B LoRA 单模型</td>
+      <td>44.69</td>
+      <td>370</td>
+      <td>最优非 Qwen 单模型；仍低于 grid；加入并集损害 PEM</td>
+    </tr>
+    <tr>
+      <td><code>s08</code></td>
+      <td>单模型</td>
+      <td>Qwen3-VL-8B 均匀过采样 4× softmin</td>
+      <td>45.10</td>
+      <td>235</td>
+      <td>另一种过采样训练设置；独特的误差模式使其成为有价值的并集成员</td>
+    </tr>
+    <tr>
+      <td><code>s01</code></td>
+      <td>单模型</td>
+      <td>Qwen3-VL-8B grid softmin ★ 最优单模型</td>
+      <td><strong>47.80</strong></td>
+      <td>253</td>
+      <td>永久保底；softmin + 过采样对单模型最优</td>
+    </tr>
+    <tr>
+      <td><code>s11</code></td>
+      <td>并集</td>
+      <td>3-Qwen 并集（s01 + s08 + s09）</td>
+      <td>48.22</td>
+      <td>339</td>
+      <td>并集首步；MF1 和 PEM 同步上升</td>
+    </tr>
+    <tr>
+      <td><code>s37</code></td>
+      <td>并集</td>
+      <td>5-Qwen plain-CE 并集（grid + os4 + perclass + joint-8B + joint-32B）</td>
+      <td>48.54</td>
+      <td>390</td>
+      <td>plain-CE 并集较 softmin 并集低 1.72；少数类更多但 PEM 41.47 &lt; 43.34</td>
+    </tr>
+    <tr>
+      <td><code>s23</code></td>
+      <td>并集</td>
+      <td>5-Qwen softmin + Gemma4-26B（6 成员）</td>
+      <td>49.83</td>
+      <td>498</td>
+      <td>MF1 较 s15 +0.50 但 PEM −1.36；最接近成功的架构多样性失败案例</td>
+    </tr>
+    <tr>
+      <td><code>s14</code></td>
+      <td>并集</td>
+      <td>4-Qwen 并集（s01 + s08 + s09 + s13）</td>
+      <td>49.99</td>
+      <td>365</td>
+      <td>倒数第二步；MF1 56.80 / PEM 43.17</td>
+    </tr>
+    <tr>
+      <td><code>s15</code></td>
+      <td>并集</td>
+      <td>5-Qwen softmin 并集 ★ 冠军</td>
+      <td><strong>50.26</strong></td>
+      <td>382</td>
+      <td>当前方案下朴素并集上限；MF1 57.17 / PEM 43.34</td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote class='key'>本轮实验的决定性结论：（1）testp1 是召回关键的——正确少数类数量是分数的首要驱动因素，任何形式的抑制都严格有害；（2）多样模型并集集成是发现的唯一能超越最优单模型的机制，从 <code>47.80</code>（s01）单调扩展至 <code>50.26</code>（s15），但前提是各成员需单独性能强劲且误差不相关——质量弱或相关性高的成员会增加假阳性并导致 PEM 崩塌。</blockquote>
+</section>
+
+<section>
+<h2><span class="secno">3</span> 离线评测台：构建、验证与认识论边界</h2>
+<h3>动机：朴素验证集切分为何失效</h3>
+
+<p>整个参赛周期内，每个新想法都要消耗一次 Codabench 提交（Phase-1 测试集，上限 100 次）。若能获得可靠的离线代理指标，迭代速度将成倍提升。最直观的候选方案——从 train-dev 中保留一个验证切片——在三个独立维度上均告失败。</p>
+
+<ul>
+  <li><strong>图像泄漏（32%）。</strong>随机的 90/10 记录切分未能考虑到多条记录共享同一证据图（通过图像 SHA 标识）的情况。约 32% 的验证集记录中至少包含一张图像，其 SHA 也出现在训练切分中，意味着模型在训练时已见过该视觉证据。基于此类验证集的分数因记忆效应而虚高。</li>
+  <li><strong>领域与规模失配。</strong>早期用于模型选型的朴素 88 条记录随机验证集规模小且代表性不足；更关键的是，其段落分布与 train-dev 相似（平均 5.1 句，34.5% 的记录包含少数类标签句），而非 testp1（平均 8.7 句，约 84% 的段落含少数类句）。在 train-dev 机制下评估的模型会收到误导性反馈。</li>
+  <li><strong>错误的抑制机制——抑制陷阱。</strong>在原始图像不相交验证集上，全预测 <code>Supported</code> 的平凡基线得分为 <code>42.37</code>，PEM 约 <code>65</code>。在该机制下，抑制少数类预测反而<em>提升</em>验证集分数，强化了"精度关键"这一框架——而该框架在 testp1 上早已被推翻（全 <code>Supported</code> 平凡基线 ≈ <code>18.85</code>）。任何奖励少数类抑制的验证集，均与 testp1 上真正重要的指标反相关。</li>
+</ul>
+
+<h3>Densematch 构建</h3>
+
+<p>GATE-B（Phase A）通过依次执行两个步骤，构建了一个无泄漏离线评测台。</p>
+
+<p><strong>第一步——图像不相交切分。</strong>使用基于共享图像 SHA 的并查集对记录进行划分（<code>build_dataset --split-mode component_aware --val-ratio 0.15 --seed 42</code>），确保验证集中的每个图像 SHA 均不出现在训练集中。结果：2,832 条训练记录（<code>data/devbench/train_sft.jsonl</code>）和 501 条零 SHA 重叠的验证记录——零 SHA 断言已通过程序验证。</p>
+
+<p><strong>第二步——Testp1 形状重塑。</strong>原始 501 条记录的图像不相交验证集保留了 train-dev 的形状，因此仍存在抑制陷阱。<code>scripts/reshape_devbench.py</code> 生成了三种 gold 变体：<em>raw</em>（501 条记录，对照组）、<em>reshaped</em>（段落 ≥8 句且少数类密度 ≥84%，受样本池严格限制，约 30 条记录），以及 <em>densematch</em>（206 条记录，少数类密度强制为恰好 84%，无硬性句长下限，在统计功效与形状保真度之间取得平衡）。下表汇总了各变体的形状特征。</p>
+
+<table class='data'>
+  <thead>
+    <tr><th>变体</th><th>记录数</th><th>句子数</th><th>平均段长</th><th>%≥8句</th><th>%少数类</th><th>平凡全-<code>Supported</code> 分数</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>testp1（目标）</td><td>586</td><td>5,096</td><td>8.70</td><td>53.1%</td><td>~84%</td><td>18.85（s05）</td></tr>
+    <tr><td>raw</td><td>501</td><td>2,539</td><td>5.07</td><td>15.0%</td><td>34.5%</td><td>42.37</td></tr>
+    <tr><td>reshaped</td><td>~30</td><td>—</td><td>—</td><td>—</td><td>84%</td><td>17.88</td></tr>
+    <tr><td><strong>densematch</strong></td><td><strong>206</strong></td><td><strong>1,235</strong></td><td><strong>6.00</strong></td><td><strong>28.2%</strong></td><td><strong>84%</strong></td><td><strong>17.24</strong></td></tr>
+  </tbody>
+</table>
+
+<p><strong>试金石——全-<code>Supported</code> 平凡分数。</strong>最具诊断价值的单项检验，是对每个句子均预测 <code>Supported</code> 所得到的分数。在 raw 验证集上为 <code>42.37</code>（PEM ~65），明确处于有利于抑制的机制中。在 densematch 上为 <code>17.24</code>，与 testp1 的 <code>18.85</code> 在噪声范围内吻合。重塑成功地将评测台从"奖励抑制"翻转为"惩罚抑制"，与 testp1 的召回关键机制相匹配。</p>
+
+<blockquote class='key'>全-<code>Supported</code> 平凡分数是机制试金石：一个评测台仅在该平凡分数接近 19 而非接近 43 时，才是有效的 testp1 代理。</blockquote>
+
+<h3>秩相关验证（Phase B）</h3>
+
+<p>Phase B 对 501 条记录的图像不相交验证集运行了 8 个 Qwen adapter 的推理，随后合成了 4 种并集变体和 4 种后处理变体，共得到 16 个锚点，每个锚点均有已知的 testp1 分数。<code>scripts/rankcorr_meta.py</code> 计算了各 gold 变体的验证集分数与已知 testp1 分数之间的 Spearman 秩相关。</p>
+
+<table class='data'>
+  <thead>
+    <tr><th>Gold 变体</th><th>记录数</th><th>Spearman(验证集分数, testp1)</th><th>Spearman(验证集 MF1)</th><th>Spearman(验证集 PEM)</th><th>决策</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>raw（traindev 形状）</td><td>501</td><td>−0.016</td><td>+0.222</td><td>−0.141</td><td>废弃</td></tr>
+    <tr><td>reshaped（≥8 句 &amp; 84%）</td><td>30</td><td>+0.222</td><td>+0.432</td><td>+0.191</td><td>废弃</td></tr>
+    <tr><td><strong>densematch（84% 密度）</strong></td><td><strong>206</strong></td><td><strong>+0.590</strong></td><td>+0.590</td><td>+0.541</td><td>弱嗅觉测试</td></tr>
+  </tbody>
+</table>
+
+<p>raw（−0.02）→ reshaped（+0.22）→ densematch（+0.59）的单调递进验证了 testp1 形状重塑方向的正确性：恢复少数类密度能恢复真实信号。尽管如此，没有任何变体达到预先设定的 0.80 可信阈值。其瓶颈可由<strong>记忆泄漏</strong>解释：所有 16 个 Phase B 锚点最初均在完整 train-dev 集上训练，该集合<em>包含</em>新切出的 dev'。它们在验证集上的分数被压缩在 90–98 区间内——过拟合最严重的模型在有泄漏的验证集上得分最高，而泛化至 testp1 时最差。最极端的案例是 s10（逐类 2 轮训练，过拟合最严重）：验证集分数 <code>97.51</code>（最高），testp1 分数 <code>41.70</code>（接近最差）。反观 testp1 冠军 s15（<code>50.26</code>），其在 densematch 上仅得 <code>92.74</code>——因为其额外的并集成员贡献了不在记忆化 dev 模式中的正确少数类，在压低有泄漏验证集分数的同时提升了 testp1 分数。因此，+0.59 的 densematch Spearman 是一个<strong>下界</strong>；泄漏抑制了它。</p>
+
+<h3>三个干净校准点</h3>
+
+<p>Phase C 将三个候选模型完全在 <code>data/devbench/train_sft.jsonl</code>（图像不相交的 train'，从不见 dev'）上训练，并将每个模型提交至 Codabench，产生了首批无泄漏的（densematch，testp1）配对。</p>
+
+<figure id="fig-zh-calibration">
+<div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman','Source Han Serif SC','Noto Serif CJK SC','Songti SC',STSong,SimSun,serif">
+  <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
+  <!-- Title -->
+  <text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">离线 densematch 对干净模型排序正确，但无法给出 testp1 绝对分数</text>
+
+  <!-- Plot area: x∈[78,724], y∈[64,408] -->
+  <!-- X axis range: densematch 76–95, Y axis range: testp1 32–46 -->
+  <!-- X scale: (v-76)/(95-76) * (724-78) + 78 -->
+  <!-- Y scale: 408 - (v-32)/(46-32) * (408-64) -->
+
+  <!-- Gridlines (horizontal) -->
+  <line x1="78" y1="408" x2="724" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="358.3" x2="724" y2="358.3" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="308.6" x2="724" y2="308.6" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="258.9" x2="724" y2="258.9" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="209.1" x2="724" y2="209.1" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="159.4" x2="724" y2="159.4" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="109.7" x2="724" y2="109.7" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="64" x2="724" y2="64" stroke="#e7e7e7" stroke-width="1"/>
+
+  <!-- Axes -->
+  <line x1="78" y1="64" x2="78" y2="408" stroke="#333" stroke-width="1"/>
+  <line x1="78" y1="408" x2="724" y2="408" stroke="#333" stroke-width="1"/>
+
+  <!-- X ticks: 76,78,80,82,84,86,88,90,92,94 -->
+  <line x1="78" y1="408" x2="78" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="78" y="425" text-anchor="middle" font-size="12" fill="#333">76</text>
+  <line x1="146.1" y1="408" x2="146.1" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="146.1" y="425" text-anchor="middle" font-size="12" fill="#333">78</text>
+  <line x1="214.1" y1="408" x2="214.1" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="214.1" y="425" text-anchor="middle" font-size="12" fill="#333">80</text>
+  <line x1="282.1" y1="408" x2="282.1" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="282.1" y="425" text-anchor="middle" font-size="12" fill="#333">82</text>
+  <line x1="350.2" y1="408" x2="350.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="350.2" y="425" text-anchor="middle" font-size="12" fill="#333">84</text>
+  <line x1="418.2" y1="408" x2="418.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="418.2" y="425" text-anchor="middle" font-size="12" fill="#333">86</text>
+  <line x1="486.2" y1="408" x2="486.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="486.2" y="425" text-anchor="middle" font-size="12" fill="#333">88</text>
+  <line x1="554.2" y1="408" x2="554.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="554.2" y="425" text-anchor="middle" font-size="12" fill="#333">90</text>
+  <line x1="622.3" y1="408" x2="622.3" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="622.3" y="425" text-anchor="middle" font-size="12" fill="#333">92</text>
+  <line x1="690.3" y1="408" x2="690.3" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="690.3" y="425" text-anchor="middle" font-size="12" fill="#333">94</text>
+
+  <!-- Y ticks: 32,34,36,38,40,42,44,46 -->
+  <line x1="78" y1="408" x2="73" y2="408" stroke="#333" stroke-width="1"/>
+  <text x="68" y="412" text-anchor="end" font-size="12" fill="#333">32</text>
+  <line x1="78" y1="358.3" x2="73" y2="358.3" stroke="#333" stroke-width="1"/>
+  <text x="68" y="362" text-anchor="end" font-size="12" fill="#333">34</text>
+  <line x1="78" y1="308.6" x2="73" y2="308.6" stroke="#333" stroke-width="1"/>
+  <text x="68" y="312" text-anchor="end" font-size="12" fill="#333">36</text>
+  <line x1="78" y1="258.9" x2="73" y2="258.9" stroke="#333" stroke-width="1"/>
+  <text x="68" y="262" text-anchor="end" font-size="12" fill="#333">38</text>
+  <line x1="78" y1="209.1" x2="73" y2="209.1" stroke="#333" stroke-width="1"/>
+  <text x="68" y="213" text-anchor="end" font-size="12" fill="#333">40</text>
+  <line x1="78" y1="159.4" x2="73" y2="159.4" stroke="#333" stroke-width="1"/>
+  <text x="68" y="163" text-anchor="end" font-size="12" fill="#333">42</text>
+  <line x1="78" y1="109.7" x2="73" y2="109.7" stroke="#333" stroke-width="1"/>
+  <text x="68" y="113" text-anchor="end" font-size="12" fill="#333">44</text>
+  <line x1="78" y1="64" x2="73" y2="64" stroke="#333" stroke-width="1"/>
+  <text x="68" y="68" text-anchor="end" font-size="12" fill="#333">46</text>
+
+  <!-- Axis titles -->
+  <text x="401" y="455" text-anchor="middle" font-size="13" fill="#222">离线 densematch 分数</text>
+  <text transform="translate(22,236) rotate(-90)" text-anchor="middle" font-size="13" fill="#222">testp1 分数</text>
+
+  <!-- Connecting line through clean points -->
+  <polyline points="178.9,353.7 252.4,243.9 346.6,116.9" fill="none" stroke="#4a6fa5" stroke-width="1.5" stroke-dasharray="none" opacity="0.6"/>
+
+  <!-- A0 softmin (single model, steel) -->
+  <circle cx="178.9" cy="353.7" r="5" fill="#4a6fa5" stroke="#00000022" stroke-width="1"/>
+  <text x="190" y="350" font-size="11" fill="#4a6fa5">A0 softmin</text>
+  <text x="190" y="363" font-size="11" fill="#4a6fa5">(78.97, 34.21)</text>
+
+  <!-- A1 plain-CE (single model, steel) -->
+  <circle cx="252.4" cy="243.9" r="5" fill="#4a6fa5" stroke="#00000022" stroke-width="1"/>
+  <text x="264" y="240" font-size="11" fill="#4a6fa5">A1 plain-CE</text>
+  <text x="264" y="253" font-size="11" fill="#4a6fa5">(81.13, 38.68)</text>
+
+  <!-- U3 clean union (ensemble/union, teal) -->
+  <circle cx="346.6" cy="116.9" r="5" fill="#2a9d8f" stroke="#00000022" stroke-width="1"/>
+  <text x="358" y="113" font-size="11" fill="#2a9d8f">U3 干净并集 / s30</text>
+  <text x="358" y="126" font-size="11" fill="#2a9d8f">(83.90, 43.85)</text>
+
+  <!-- Leaky s15 at dm=92.76 (gray, no real y — visual placeholder near mid) -->
+  <circle cx="647.5" cy="209" r="5" fill="#b3b3b3" stroke="#00000022" stroke-width="1" stroke-dasharray="3 2"/>
+  <!-- Dashed vertical line to indicate no valid y-mapping -->
+  <line x1="647.5" y1="64" x2="647.5" y2="408" stroke="#8a8a8a" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="651" y="188" font-size="11" fill="#8a8a8a">有泄漏 s15</text>
+  <text x="651" y="201" font-size="11" fill="#8a8a8a">(dm≈92.76)</text>
+  <text x="651" y="214" font-size="11" fill="#8a8a8a">不可比</text>
+
+  <!-- Annotation box -->
+  <rect x="82" y="68" width="430" height="42" rx="4" fill="#f8f8f0" stroke="#cccc88" stroke-width="1" opacity="0.92"/>
+  <text x="297" y="84" text-anchor="middle" font-size="11" fill="#444">排序保持单调，但偏移约 40 分；</text>
+  <text x="297" y="100" text-anchor="middle" font-size="11" fill="#444">无法跨训练设置进行绝对分数外推</text>
+
+  <!-- Legend -->
+  <rect x="530" y="330" width="186" height="68" rx="4" fill="#f9f9f9" stroke="#cccccc" stroke-width="1"/>
+  <circle cx="547" cy="348" r="5" fill="#4a6fa5"/>
+  <text x="558" y="352" font-size="12" fill="#333">单模型（干净）</text>
+  <circle cx="547" cy="368" r="5" fill="#2a9d8f"/>
+  <text x="558" y="372" font-size="12" fill="#333">并集集成（干净）</text>
+  <circle cx="547" cy="388" r="5" fill="#b3b3b3"/>
+  <text x="558" y="392" font-size="12" fill="#333">有泄漏（不可比）</text>
+</svg></div>
+<figcaption><b>图 4.</b> 离线 densematch 分数对干净模型的排序与 testp1 单调一致，但约 40 分的偏移量使得跨训练设置的绝对分数外推不可行。</figcaption>
+</figure>
+
+<table class='data'>
+  <thead>
+    <tr><th>模型</th><th>类型</th><th>densematch 分数</th><th>testp1 分数</th><th>testp1 MF1</th><th>testp1 PEM</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>s31 — softmin 单模型（A0）</td><td>m</td><td>78.97</td><td>34.21</td><td>39.57</td><td>28.84</td></tr>
+    <tr><td>s32 — plain-CE 单模型（A1）</td><td>m</td><td>81.13</td><td>38.68</td><td>43.57</td><td>33.79</td></tr>
+    <tr><td>s30 — 三模型并集（U3）</td><td>u</td><td>83.90</td><td>43.85</td><td>48.61</td><td>39.08</td></tr>
+  </tbody>
+</table>
+
+<p>排名顺序在两个评测台上完全一致：densematch 上 softmin &lt; plain-CE &lt; 并集（<code>78.97 &lt; 81.13 &lt; 83.90</code>），testp1 上同样如此（<code>34.21 &lt; 38.68 &lt; 43.85</code>）。评测台能够正确区分相同条件下模型的优劣。</p>
+
+<p>然而，两种外推失败同样值得关注。其一，<strong>绝对分数不可迁移</strong>：densematch 分数比 testp1 高约 40 分（偏移量 ≈ 40），排除了用该评测台预测原始 testp1 性能的任何可能。其二，<strong>评测台无法跨训练机制外推</strong>。干净并集 s30 在 densematch 上得 <code>83.90</code>（高于所有单模型），densematch 也能正确识别同机制内的并集成员排序；然而在 testp1 上，s30 仅得 <code>43.85</code>——远低于冠军 s15（<code>50.26</code>）。根本原因在于 s30 在 train'（90% 数据，无过采样）上训练，处于与 s15（完整 train-dev，有过采样）结构性不同的机制中。densematch 在干净 train' 机制内将 s30 评为最优，却无法预见"完整 traindev + 过采样"机制将额外带来约 6–7 分的提升。s30 并集中的联合格式成员进一步压低了 testp1 PEM（39.08 vs s01 的 42.83），这一失败模式对 densematch 而言不可见。</p>
+
+<h3>认识论：同条件排序器，而非选择器</h3>
+
+<p>GATE-B 的持久教训是对离线评测台在该场景下能力边界的精确刻画：</p>
+
+<ul>
+  <li><strong>能做到：</strong>对相同条件下训练的模型排序（相同数据、相同损失、相同过采样机制）——三个干净的 Phase C 校准点确认了这一点；<em>离线淘汰大的坏方向</em>（更高图像分辨率、少数类抑制、2 轮过拟合均在 densematch 上大幅下降，每项均可节省一次 Codabench 提交）。</li>
+  <li><strong>做不到：</strong>预测绝对 testp1 分数（偏移量约 40 分）；跨机制外推（train' vs 完整 traindev、有无过采样、联合格式 vs 逐句格式）；在榜单顶端排序（500 条记录的评测台对榜首 0.3–0.5 分的差距缺乏足够统计功效）。</li>
+</ul>
+
+<blockquote class='key'>基于图像不相交、testp1 形状数据构建的离线评测台是一个同条件排序器。它能以低成本淘汰坏方向，并确认固定机制内的相对排序，但在跨训练机制比较候选模型或解决榜首次半分差距时，它不能替代真实排行榜评测。</blockquote>
+
+<p>累积协议（Phase C）是干净的长期解决方案：每个新候选模型均在图像不相交的 train' 上训练，离线在 densematch 上打分，同时提交至 Codabench。每组这样的配对都在无泄漏的前提下收紧了秩相关估计，且首个密度匹配模型同时充当突破性候选（P1）。评测台的可信度随干净校准点数量的增加而提升，而不依赖于事后无法去泄漏的遗留 adapter。</p>
+</section>
+
+<section>
+<h2><span class="secno">4</span> 符号反转：损失函数比较中的机制颠覆</h2>
+<p>
+本研究过程中反复出现一种危险的<em>符号反转</em>现象：在某一条件下得出的实验结论，当单个上游变量改变时便会完全翻转。softmin-PEM 损失与普通交叉熵（plain-CE）之间的对比提供了最典型的案例——在三个清晰分离的训练设置下，结论方向发生了三次反转。
+</p>
+
+<h3>背景：两种损失函数</h3>
+<p>
+自定义的 <em>softmin-PEM</em> 损失（已集成进 ms-swift 4.2.3）在逐词元 CE 目标上额外添加了段落级瓶颈项。其设计意图是惩罚模型在原本预测正确的段落中产生<em>任何</em>假阳性少数类预测，从而保护 PEM（段落精确匹配）。Plain-CE 则是标准的逐词元交叉熵，不含任何段落感知的正则化机制。
+</p>
+
+<h3>反转一——图像不相交 train'，无过采样（GATE-B PHASE C 评测台）</h3>
+<p>
+在 PHASE C 中，两种损失均在 <code>data/devbench/train_sft.jsonl</code> 上训练：该数据集是 train-dev 的图像不相交 85% 划分（<em>train'</em>），<strong>未进行少数类过采样</strong>。在 densematch 离线评测台上，plain-CE 模型（A1）得分 81.13，softmin 模型（A0）得分 78.97，plain-CE 领先 +2.16。同样的排序在 testp1 上得到印证（s32 plain-CE 38.68 vs. s31 softmin 34.21，<strong>+4.47</strong>），确认了评测台的方向一致性。无过采样时，plain-CE 胜出。
+</p>
+
+<h3>反转二——完整 train-dev 加过采样（真实训练方案）</h3>
+<p>
+在干净模型上确认 <em>plain-CE &gt; softmin</em> 之后，下一步自然是将 s15 的逐句子成员以 plain-CE 在完整 train-dev 加过采样条件下重新训练（s01 方案：<code>--minority-oversample 3.0 --supported-downsample 0.6</code>）。结果完全反转：
+</p>
+
+<table class='data'>
+  <thead>
+    <tr>
+      <th>系统</th><th>损失</th><th>过采样</th><th>分数</th><th>Macro-F1</th><th>PEM</th><th>#少数类</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>s01（grid）</td><td>softmin</td><td>3× + ds 0.6</td>
+      <td><strong>47.80</strong></td><td>52.77</td><td>42.83</td><td>253</td>
+    </tr>
+    <tr>
+      <td>s33（grid plain-CE）</td><td>plain-CE</td><td>3× + ds 0.6</td>
+      <td>42.87</td><td>48.72</td><td>37.03</td><td>245</td>
+    </tr>
+    <tr>
+      <td>s15（5-Qwen 并集）</td><td>softmin 成员</td><td>3× + ds 0.6</td>
+      <td><strong>50.26</strong></td><td>57.17</td><td>43.34</td><td>382</td>
+    </tr>
+    <tr>
+      <td>s37（5-Qwen plain-CE 并集）</td><td>plain-CE 成员</td><td>3× + ds 0.6</td>
+      <td>48.54</td><td>55.62</td><td>41.47</td><td>390</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+差距在两个层面上均发生反转：单模型层面 softmin 领先 <strong>+4.93</strong>（s01 47.80 vs. s33 42.87），并集层面 softmin 领先 <strong>+1.72</strong>（s15 50.26 vs. s37 48.54）。值得注意的是，s37 的 plain-CE 并集触发了<em>更多</em>少数类预测（390 vs. 382），分数却更低——额外的预测均为假阳性，而非真正的召回。
+</p>
+
+<figure id="fig-zh-regime-reversal">
+<div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman','Source Han Serif SC','Noto Serif CJK SC','Songti SC',STSong,SimSun,serif">
+  <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
+  <text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">softmin &#x21C4; plain-CE：符号随过采样翻转</text>
+  <rect x="280" y="39" width="200" height="23" rx="3" fill="white" stroke="#ccc" stroke-width="0.7"/>
+  <rect x="288" y="44" width="13" height="12" fill="#c1432f"/>
+  <text x="306" y="55" font-size="12" fill="#333">softmin</text>
+  <rect x="366" y="44" width="13" height="12" fill="#3d6da8"/>
+  <text x="384" y="55" font-size="12" fill="#333">plain-CE</text>
+  <line x1="80" y1="408.0" x2="724" y2="408.0" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="373.6" x2="724" y2="373.6" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="339.2" x2="724" y2="339.2" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="304.8" x2="724" y2="304.8" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="270.4" x2="724" y2="270.4" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="236.0" x2="724" y2="236.0" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="201.6" x2="724" y2="201.6" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="167.2" x2="724" y2="167.2" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="132.8" x2="724" y2="132.8" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="98.4" x2="724" y2="98.4" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="64.0" x2="724" y2="64.0" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="64" x2="80" y2="408" stroke="#333" stroke-width="1.5"/>
+  <line x1="80" y1="408" x2="724" y2="408" stroke="#333" stroke-width="1.5"/>
+  <line x1="75" y1="408.0" x2="80" y2="408.0" stroke="#333" stroke-width="1"/>
+  <text x="70" y="412.0" text-anchor="end" font-size="12" fill="#333">30</text>
+  <line x1="75" y1="373.6" x2="80" y2="373.6" stroke="#333" stroke-width="1"/>
+  <text x="70" y="377.6" text-anchor="end" font-size="12" fill="#333">32</text>
+  <line x1="75" y1="339.2" x2="80" y2="339.2" stroke="#333" stroke-width="1"/>
+  <text x="70" y="343.2" text-anchor="end" font-size="12" fill="#333">34</text>
+  <line x1="75" y1="304.8" x2="80" y2="304.8" stroke="#333" stroke-width="1"/>
+  <text x="70" y="308.8" text-anchor="end" font-size="12" fill="#333">36</text>
+  <line x1="75" y1="270.4" x2="80" y2="270.4" stroke="#333" stroke-width="1"/>
+  <text x="70" y="274.4" text-anchor="end" font-size="12" fill="#333">38</text>
+  <line x1="75" y1="236.0" x2="80" y2="236.0" stroke="#333" stroke-width="1"/>
+  <text x="70" y="240.0" text-anchor="end" font-size="12" fill="#333">40</text>
+  <line x1="75" y1="201.6" x2="80" y2="201.6" stroke="#333" stroke-width="1"/>
+  <text x="70" y="205.6" text-anchor="end" font-size="12" fill="#333">42</text>
+  <line x1="75" y1="167.2" x2="80" y2="167.2" stroke="#333" stroke-width="1"/>
+  <text x="70" y="171.2" text-anchor="end" font-size="12" fill="#333">44</text>
+  <line x1="75" y1="132.8" x2="80" y2="132.8" stroke="#333" stroke-width="1"/>
+  <text x="70" y="136.8" text-anchor="end" font-size="12" fill="#333">46</text>
+  <line x1="75" y1="98.4" x2="80" y2="98.4" stroke="#333" stroke-width="1"/>
+  <text x="70" y="102.4" text-anchor="end" font-size="12" fill="#333">48</text>
+  <line x1="75" y1="64.0" x2="80" y2="64.0" stroke="#333" stroke-width="1"/>
+  <text x="70" y="68.0" text-anchor="end" font-size="12" fill="#333">50</text>
+  <text x="22" y="236" text-anchor="middle" font-size="13" fill="#333" transform="rotate(-90,22,236)">testp1 分数</text>
+  <rect x="169.0" y="335.6" width="65" height="72.4" fill="#c1432f"/>
+  <rect x="248.0" y="258.7" width="65" height="149.3" fill="#3d6da8"/>
+  <rect x="491.0" y="101.8" width="65" height="306.2" fill="#c1432f"/>
+  <rect x="570.0" y="186.6" width="65" height="221.4" fill="#3d6da8"/>
+  <text x="201.5" y="329.6" text-anchor="middle" font-size="11" fill="#333">34.21</text>
+  <text x="280.5" y="252.7" text-anchor="middle" font-size="11" fill="#333">38.68</text>
+  <text x="523.5" y="95.8" text-anchor="middle" font-size="11" fill="#333">47.80</text>
+  <text x="602.5" y="180.6" text-anchor="middle" font-size="11" fill="#333">42.87</text>
+  <text x="241.0" y="236.7" text-anchor="middle" font-size="11" fill="#3d6da8">plain-CE 胜（+4.47）</text>
+  <text x="563.0" y="79.8" text-anchor="middle" font-size="11" fill="#c1432f">softmin 胜（+4.93）</text>
+  <text x="241.0" y="428" text-anchor="middle" font-size="12" fill="#333">无过采样（train&#x2032;）</text>
+  <text x="563.0" y="428" text-anchor="middle" font-size="12" fill="#333">有过采样（完整 train-dev，真实配方）</text>
+  <text x="402" y="455" text-anchor="middle" font-size="13" fill="#333">训练设置</text>
+</svg></div>
+<figcaption><b>图 5.</b> softmin 与 plain-CE 损失在两种训练设置下的分组柱状图对比：在无少数类过采样时 plain-CE 占优（+4.47），而在使用完整真实配方（含过采样）时 softmin 占优（+4.93），呈现完整的符号翻转现象。</figcaption>
+</figure>
+
+<h3>反转三——架构交互（Gemma-4-26B）</h3>
+<p>
+在另一架构上出现了幅度更大的第三次反转。Gemma-4-26B 使用 softmin 训练得分 44.69（s26）；同一架构改用 plain-CE 重新训练仅得 21.40（s36），仅预测出 46 个少数类句子，性能几乎退化至 trivial 水平。Qwen3-VL 在过采样下使用 plain-CE 会对少数类<em>过度触发</em>，而 Gemma 使用 plain-CE 则灾难性地<em>严重不触发</em>——这表明损失函数×模型架构×过采样之间的交互关系无法跨架构外推。
+</p>
+
+<h3>机制：为何 softmin 仅在过采样下才有收益</h3>
+<p>
+过采样将少数类句子复制 3–6 倍，从而系统性地将梯度信号偏向少数类。在 plain-CE 下，这种偏置在推理时直接转化为少数类激活率的提升：模型大量触发少数类预测，产生假阳性，导致原本正确的段落被打碎，PEM 崩溃。softmin-PEM 损失恰好抑制了这一效应：其段落级惩罚压制了过采样引入的假阳性冗余，在保留真正少数类召回的同时恢复 PEM。当<em>没有</em>过采样时（PHASE C 的 train' 模型），少数类频率低，假阳性风险低，瓶颈惩罚项只是额外开销——因此 plain-CE 胜出。
+</p>
+
+<blockquote class='key'>
+当且仅当少数类过采样激活时，softmin 损失才物有所值。
+任何基于干净评测台或无过采样条件的两者比较结论，均是机制条件下的局部信号，
+必须在完整真实方案上重新验证后方可采纳。
+</blockquote>
+
+<h3>逐类召回瓶颈</h3>
+<p>
+即便是冠军 softmin 并集（s15），仍存在任何损失选择都无法消除的持续召回缺口。考察最优单模型（s01），其在 testp1 上的逐类召回如下：
+</p>
+
+<table class='data'>
+  <thead>
+    <tr><th>类别</th><th>近似召回</th><th>备注</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Supported</code></td><td>~99.5 %</td><td>近乎完美；几乎从不漏判</td></tr>
+    <tr><td><code>Unsupported Causal Mechanistic</code></td><td>~100 %</td><td>精度与召回均高</td></tr>
+    <tr><td><code>Unsupported Entity</code></td><td>~86 %</td><td>存在一定缺口</td></tr>
+    <tr><td><code>Scope Overgeneralization</code></td><td>~63 %</td><td>召回缺口显著</td></tr>
+    <tr><td><code>Contradiction</code></td><td>~22 %</td><td>召回严重不足；9 个 gold 实例中仅触发约 2–4 个</td></tr>
+  </tbody>
+</table>
+
+<figure id="fig-zh-per-class-recall">
+<div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman','Source Han Serif SC','Noto Serif CJK SC','Songti SC',STSong,SimSun,serif">
+  <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
+  <!-- Title -->
+  <text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">召回瓶颈：稀有类 Contradiction 与 SO</text>
+
+  <!-- Plot area: x∈[78,724], y∈[64,408] -->
+  <!-- Horizontal bar chart: 5 classes, y-axis = classes, x-axis = recall 0-100 -->
+  <!-- Bar slots: 5 bars, each ~60px tall, gap ~16px -->
+  <!-- Total slot height = (408-64)/5 = 68.8 each -->
+  <!-- Bar height = 48, gap between bars = 20.8 -->
+  <!-- Bars: y-center of slot i (0-indexed from top) = 64 + 34.4 + i*68.8 -->
+  <!-- i=0 Supported, i=1 UCM, i=2 UE, i=3 SO, i=4 Contradiction -->
+  <!-- Recall 0→78, 100→724: x = (v/100)*(724-78)+78 = v*6.46+78 -->
+
+  <!-- Gridlines (vertical) -->
+  <line x1="78" y1="64" x2="78" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="142.6" y1="64" x2="142.6" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="207.2" y1="64" x2="207.2" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="271.8" y1="64" x2="271.8" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="336.4" y1="64" x2="336.4" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="401" y1="64" x2="401" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="465.6" y1="64" x2="465.6" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="530.2" y1="64" x2="530.2" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="594.8" y1="64" x2="594.8" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="659.4" y1="64" x2="659.4" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="724" y1="64" x2="724" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+
+  <!-- Axes -->
+  <line x1="78" y1="64" x2="78" y2="408" stroke="#333" stroke-width="1"/>
+  <line x1="78" y1="408" x2="724" y2="408" stroke="#333" stroke-width="1"/>
+
+  <!-- X ticks: 0,10,20,...,100 -->
+  <line x1="78" y1="408" x2="78" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="78" y="426" text-anchor="middle" font-size="12" fill="#333">0</text>
+  <line x1="142.6" y1="408" x2="142.6" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="142.6" y="426" text-anchor="middle" font-size="12" fill="#333">10</text>
+  <line x1="207.2" y1="408" x2="207.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="207.2" y="426" text-anchor="middle" font-size="12" fill="#333">20</text>
+  <line x1="271.8" y1="408" x2="271.8" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="271.8" y="426" text-anchor="middle" font-size="12" fill="#333">30</text>
+  <line x1="336.4" y1="408" x2="336.4" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="336.4" y="426" text-anchor="middle" font-size="12" fill="#333">40</text>
+  <line x1="401" y1="408" x2="401" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="401" y="426" text-anchor="middle" font-size="12" fill="#333">50</text>
+  <line x1="465.6" y1="408" x2="465.6" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="465.6" y="426" text-anchor="middle" font-size="12" fill="#333">60</text>
+  <line x1="530.2" y1="408" x2="530.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="530.2" y="426" text-anchor="middle" font-size="12" fill="#333">70</text>
+  <line x1="594.8" y1="408" x2="594.8" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="594.8" y="426" text-anchor="middle" font-size="12" fill="#333">80</text>
+  <line x1="659.4" y1="408" x2="659.4" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="659.4" y="426" text-anchor="middle" font-size="12" fill="#333">90</text>
+  <line x1="724" y1="408" x2="724" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="724" y="426" text-anchor="middle" font-size="12" fill="#333">100</text>
+
+  <!-- Axis title -->
+  <text x="401" y="453" text-anchor="middle" font-size="13" fill="#222">召回率 (%)</text>
+  <text transform="translate(22,236) rotate(-90)" text-anchor="middle" font-size="13" fill="#222">类别</text>
+
+  <!-- Bars -->
+  <!-- Slot height = (408-64)/5 = 68.8; bar height = 44; each bar y-top = 64 + i*68.8 + (68.8-44)/2 = 64 + i*68.8 + 12.4 -->
+  <!-- i=0 Supported 99.5%: x_end=99.5*6.46+78=720.8; bar top y=76.4; bar bottom=120.4 -->
+  <!-- i=1 UCM 100.0%: x_end=724; y-top=145.2; bottom=189.2 -->
+  <!-- i=2 UE 85.9%: x_end=85.9*6.46+78=633.8; y-top=214; bottom=258 -->
+  <!-- i=3 SO 62.8%: x_end=62.8*6.46+78=483.5; y-top=282.8; bottom=326.8 -->
+  <!-- i=4 Contradiction 22.2%: x_end=22.2*6.46+78=221.4; y-top=351.6; bottom=395.6 -->
+
+  <!-- Supported (steel) -->
+  <rect x="78" y="76.4" width="642.8" height="44" fill="#4a6fa5" stroke="#00000022" stroke-width="0.8" rx="2"/>
+  <text x="728" y="103" font-size="11" fill="#4a6fa5" text-anchor="start">99.5%</text>
+
+  <!-- UCM (steel) -->
+  <rect x="78" y="145.2" width="646" height="44" fill="#4a6fa5" stroke="#00000022" stroke-width="0.8" rx="2"/>
+  <text x="728" y="172" font-size="11" fill="#4a6fa5" text-anchor="start">100.0%</text>
+
+  <!-- UE (steel) -->
+  <rect x="78" y="214" width="555.8" height="44" fill="#4a6fa5" stroke="#00000022" stroke-width="0.8" rx="2"/>
+  <text x="638" y="241" font-size="11" fill="#4a6fa5">85.9%</text>
+
+  <!-- SO (brick red, bottleneck) -->
+  <rect x="78" y="282.8" width="405.5" height="44" fill="#c1432f" stroke="#00000022" stroke-width="0.8" rx="2"/>
+  <text x="489" y="309.8" font-size="11" fill="#c1432f">62.8%</text>
+
+  <!-- Contradiction (brick red, bottleneck) -->
+  <rect x="78" y="351.6" width="143.4" height="44" fill="#c1432f" stroke="#00000022" stroke-width="0.8" rx="2"/>
+  <text x="228" y="378.6" font-size="11" fill="#c1432f">22.2%</text>
+
+  <!-- Y-axis class labels -->
+  <text x="73" y="103" text-anchor="end" font-size="12" fill="#333">Supported</text>
+  <text x="73" y="172" text-anchor="end" font-size="12" fill="#333">UCM</text>
+  <text x="73" y="241" text-anchor="end" font-size="12" fill="#333">UE</text>
+  <text x="73" y="309.8" text-anchor="end" font-size="12" fill="#c1432f" font-weight="bold">SO</text>
+  <text x="73" y="378.6" text-anchor="end" font-size="12" fill="#c1432f" font-weight="bold">Contradiction</text>
+
+  <!-- Annotation for Contradiction -->
+  <line x1="221.4" y1="373.6" x2="340" y2="340" stroke="#c1432f" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="340" y="322" width="234" height="30" rx="3" fill="#fff4f2" stroke="#c1432f" stroke-width="0.8"/>
+  <text x="457" y="341" text-anchor="middle" font-size="11" fill="#c1432f">约命中 9 个金标中的 2–4 个</text>
+
+  <!-- Legend -->
+  <rect x="530" y="68" width="186" height="56" rx="4" fill="#f9f9f9" stroke="#cccccc" stroke-width="1"/>
+  <rect x="544" y="82" width="14" height="14" fill="#4a6fa5" rx="2"/>
+  <text x="564" y="93" font-size="12" fill="#333">高召回（蓝色）</text>
+  <rect x="544" y="102" width="14" height="14" fill="#c1432f" rx="2"/>
+  <text x="564" y="113" font-size="12" fill="#333">瓶颈（红色）</text>
+</svg></div>
+<figcaption><b>图 6.</b> testp1 逐类召回率揭示了严重的瓶颈：Scope Overgeneralization（62.8%）和 Contradiction（22.2%）的召回率极低，共同制约了 Macro-F1 的进一步提升。</figcaption>
+</figure>
+
+<p>
+召回严重不足的两类——<code>Contradiction</code> 与 <code>Scope Overgeneralization</code>——无法用视觉或图表理解能力的缺陷来解释：对干净少数类漏判样本的事后审计显示，47% 来自图片、53% 来自表格，排除了单纯模态局限的解释。其根源归因于第 3 节所述的 train-dev 伪先验：3333 条训练记录中，仅有 8 条包含 ≥2 个少数类句子，而长段（≥6 句）中仅 0.46% 具有此特征。模型因此内化了一条隐式的"每段最多一个少数类"规则，系统性地压制了模型在 testp1 少数类密集长段上的召回。并集集成在一定程度上弥补了这一不足——s15 触发了 382 个少数类预测，而 s01 仅 253 个，PEM 与 Macro-F1 同步提升——但 Contradiction 召回瓶颈（~22%）在全部 38 个提交系统中始终存在。
+</p>
+
+<blockquote class='key'>
+根本性的召回瓶颈并非损失函数或过采样的产物，而是训练数据伪先验所致：
+train-dev 中多少数类段落的近乎缺失，使模型习得了近似确定性的"每段 ≤1 个少数类"启发规则，
+这一规则单凭任何损失函数均无法克服。
+</blockquote>
+</section>
+
+<section>
+<h2><span class="secno">5</span> 结论</h2>
+<h3>有效的方向</h3>
+
+<ul>
+  <li><strong>多样模型并集集成（召回累加）。</strong>将独立训练的 Qwen3-VL-8B 成员通过 <code>ensemble_union.py --min-votes 1</code> 合并，是<em>唯一</em>在每次新增成员时均能单调超越最优单模型的杠杆：<code>s01</code> 47.80（1 个成员）→ <code>s11</code> 48.22（3 个）→ <code>s14</code> 49.99（4 个）→ <code>s15</code> 50.26（5 个）。提升在 Macro-F1 和 PEM 上同步出现，原因在于 testp1 少数类密集段落中 PEM 是召回关键：捕获一个所有其他成员均遗漏的 gold 少数类句子，可将一个 PEM=0 的段落转变为 PEM=1 的候选。一致性投票（≥2 票，<code>s16</code>=47.29）始终表现更差，证实了抑制策略消除的正确召回多于其消除的假阳性。</li>
+  <li><strong>过采样下的 softmin-PEM 损失。</strong>在真实训练配方（少数类过采样 + Supported 下采样）下，自定义 softmin-PEM 瓶颈损失发挥了关键作用：它抑制了普通交叉熵因过采样引发的假阳性爆炸。在 full-traindev + 过采样设置下，softmin 在单模型层面比 plain-CE 高出 +4.93（<code>s01</code> 47.80 vs <code>s33</code> 42.87），在并集层面高出 +1.72（<code>s15</code> 50.26 vs <code>s37</code> 48.54）。其机制体现在 PEM 上：<code>s33</code> PEM=37.03 vs <code>s01</code> PEM=42.83——plain-CE 过度触发少数类，破坏了干净段落。</li>
+  <li><strong>召回关键训练配方。</strong>最大化<em>正确</em>少数类预测数量是单调优化目标。抑制扫描实验清晰地说明了这一点：将少数类强制归零得到全-<code>Supported</code> trivial（<code>s05</code>=18.85）；每逐步恢复正确的少数类预测，分数单调上升——46 个少数类→18.85，127 个→38.48，171 个→39.57，190 个→43.85，253 个→47.80。核心洞察在于：testp1 段落较长（均值 8.7 句，最长 31 句），少数类密集（约 84% 的段落至少包含一个 gold 少数类），因此提升 PEM 需要捕获这些少数类句子，而非通过抑制预测来保护干净段落。</li>
+</ul>
+
+<h3>失效的方向</h3>
+
+<table class='data'>
+  <thead>
+    <tr>
+      <th>方向</th>
+      <th>结果</th>
+      <th>失效原因</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>提高图像分辨率（802 816 px，<code>s02</code>）</td>
+      <td>44.47 vs baseline 47.80（−3.3）</td>
+      <td>更长的视觉序列增加了噪声与训练不稳定性，而未能增加可解码的数字信号；少数类遗漏并非受图像分辨率制约。</td>
+    </tr>
+    <tr>
+      <td>两轮训练（<code>s10</code>）</td>
+      <td>41.70——测试过的单模型中最差</td>
+      <td>对不均衡训练分布严重过拟合；testp1 上 PEM 崩溃。</td>
+    </tr>
+    <tr>
+      <td>过采样率调优（1.5×、4×、逐类；<code>s07–s09</code>）</td>
+      <td>40.91–45.10，均低于 <code>s01</code></td>
+      <td>改变过采样比例并不改变模型在 testp1 上的分布外逐类触发率；瓶颈在于模型的泛化能力，而非训练集比例。</td>
+    </tr>
+    <tr>
+      <td>所有抑制类后处理（<code>s03–s07</code>）：logprob 阈值、孤立少数类 veto、门控 veto</td>
+      <td>18.85–43.85，相对 baseline 单调下降</td>
+      <td>testp1 是召回关键：每一个被抑制的少数类预测在 Macro-F1 和 PEM 上的代价均大于其精度收益。最初「精度关键、保护 PEM」的框架源自 train-dev trivial（43.2），与 testp1 的训练设置不匹配。</td>
+    </tr>
+    <tr>
+      <td>更大模型：Gemma4-31B 单模型（<code>s27</code>）</td>
+      <td>29.28，仅 87 个少数类预测</td>
+      <td>在「每段 ≤1 个少数类」伪先验数据上训练的更大模型习得了更保守的先验；数据先验胜过模型规模。Gemma4-26B（<code>s26</code>=44.69）已揭示了下限；31B 进一步退步。</td>
+    </tr>
+    <tr>
+      <td>架构多样性并集成员：InternVL3-2B/8B（<code>s19–s21</code>），Gemma4-26B/31B（<code>s23, s28, s29</code>），Qwen3-VL-4B（<code>s18</code>）</td>
+      <td>均 ≤50.26；最优非 Qwen 并集 <code>s23</code>=49.83（−0.43 vs <code>s15</code>）</td>
+      <td>每个非 Qwen 成员均提升了 Macro-F1（更多少数类召回），但同时以更大幅度降低了 PEM——新增预测整体上是假阳性，破坏了干净段落。以 <code>s23</code> 为例：MF1 +0.50，但 PEM −1.36。较弱或误差相关成员的错误模式与噪声重叠，而非与遗漏的 gold 少数类重叠。<code>s15</code> 的 5-Qwen 并集已捕获了大多数真实少数类句子；额外成员主要贡献假阳性。</td>
+    </tr>
+    <tr>
+      <td>密度匹配：向训练集注入合成的 ≥2 少数类段落（Phase-C B1）</td>
+      <td>densematch 分数相比 baseline PEM −2.9</td>
+      <td>合成的多少数类段落训练模型过度触发少数类；产生的假阳性破坏了实际只含一个或零个少数类的段落的 PEM。</td>
+    </tr>
+    <tr>
+      <td>图表阅读 / OCR 数字通道（Phase-C D2）</td>
+      <td>在 testp1 之前终止（零 Codabench 成本）</td>
+      <td>对干净少数类遗漏案例的审查显示图像/表格各占 47%/53%——被遗漏的少数类句子并不集中于图像，因此专用 OCR 通道无法解决瓶颈。</td>
+    </tr>
+    <tr>
+      <td>full-traindev plain-CE 重训（<code>s33–s38</code>）</td>
+      <td>最优 plain-CE 并集 <code>s37</code>=48.54，最优单模型 <code>s33</code>=42.87——均低于 softmin 对应结果</td>
+      <td>在 full-traindev + 过采样下，plain-CE 过度触发少数类，PEM 崩溃（<code>s33</code> PEM 37.03 vs <code>s01</code> 42.83）。Phase-C 干净模型中「plain-CE &gt; softmin」的信号是无过采样训练设置下的假象。Gemma4-26B 配合 plain-CE（<code>s36</code>=21.40，仅 46 个少数类预测）进一步揭示：损失 × 模型 × 数据的交互效应跨架构不可移植——plain-CE 在 Gemma 上严重抑制触发，而在 Qwen 上则过度触发。</td>
+    </tr>
+    <tr>
+      <td>段落级联合模型上的自洽采样（Phase-C E1b）</td>
+      <td>densematch 分数低于联合单模型</td>
+      <td>带温度的自洽采样对整个标签<em>数组</em>联合采样；各句子间的方差相关，对多样数组取并集引入了系统性假阳性，而非独立的少数类召回。</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>持久性经验</h3>
+
+<blockquote class='key'>
+<strong>数据先验胜过模型规模。</strong>训练集中存在近确定性的「每段至多一个少数类」模式（99.54% 的长段落 ≤1 个少数类；完整 3333 条记录中仅 8 条含 ≥2 个少数类句子）。每个模型——无论大小或架构——都会习得这一先验。在相同数据上训练的 Gemma4-31B 比 8B 模型<em>更</em>保守，而非更少，仅产生 87 个少数类预测，得分 29.28。在不改变训练信号的前提下扩大模型容量无法突破召回上限。
+</blockquote>
+
+<blockquote class='key'>
+<strong>召回关键 PEM：抑制陷阱是指标特有的。</strong>PEM 仅在段落内所有句子标签均正确时才奖励整段。在 train-dev 上（短段落，trivial=43.2），PEM 由干净的全-<code>Supported</code> 段落主导——抑制少数类保护了这些段落并提升了 PEM。在 testp1 上（长段落，trivial≈18.85，约 84% 含少数类），同样的抑制策略破坏了 PEM，因为遗漏的少数类句子使段落永远无法达到 PEM=1。任何基于 train-dev 统计得出的 benchmark 或框架，都会为 testp1 给出错误的抑制建议。
+</blockquote>
+
+<ul>
+  <li><strong>离线评测台（densematch）是同条件排序器，而非选择器。</strong>图像不相交、testp1 形态的 dev 切分（GATE-B）能正确对相同条件下训练的模型进行排序：softmin &lt; plain-CE &lt; union 在 densematch（78.97 &lt; 81.13 &lt; 83.90）和 testp1（34.21 &lt; 38.68 &lt; 43.85）上均成立。然而它无法预测 testp1 的绝对分数（偏移约 40 分），且跨训练设置排名失准：它将联合锚定的干净并集（<code>s30</code>）评为最优候选，而该并集在 testp1 上仅得 43.85，低于 <code>s01</code> 的 47.80。偏移的解释是：full-traindev + 过采样相比 train'-only + 无过采样价值约 9–13 分，这一差距评测台无法建模。</li>
+  <li><strong>在真实配方上重新验证干净评测台的发现，再下结论。</strong>本次实验产生了三次符号反转：（1）veto/抑制在 train-dev 上有益 → 在 testp1 上有害；（2）在干净无过采样评测台上 plain-CE &gt; softmin → 在真实 full-traindev + 过采样配方上 softmin &gt; plain-CE（单模型 +4.93，并集 +1.72）；（3）联合格式在 densematch 上优于逐句格式 → 由联合成员引导的并集在 testp1 上表现不佳。每一个干净评测台的发现都应视为假设，需经 testp1 确认后方可投入训练资源。</li>
+</ul>
+
+<h3>当前最优与开放方向</h3>
+
+<p>永久性性能下限为：<code>s15</code>（5-Qwen 并集）<strong>50.26</strong>（MF1=57.17，PEM=43.34）和 <code>s01</code>（单模型，softmin grid）<strong>47.80</strong>（MF1=52.77，PEM=42.83），均在 full train-dev 上配合少数类过采样和 softmin-PEM 损失训练。这代表 38 次 Codabench 提交和 17 个 LoRA adapter。</p>
+
+<p>剩余的召回瓶颈具有类别特异性：<code>Supported</code> 召回 ≈99.5%，<code>Unsupported Causal Mechanistic</code> ≈100%，<code>Unsupported Entity</code> ≈86%，<code>Scope Overgeneralization</code> ≈63%，<code>Contradiction</code> ≈22%（约在 9 个 gold 实例中命中 2–4 个）。Contradiction 和 Scope Overgeneralization 是制约 Macro-F1 进而制约总分的核心瓶颈。</p>
+
+<p>以下两个方向尚未在 testp1 上测试，仍为开放选项：</p>
+<ul>
+  <li><strong>逐句 softmin 成员上的自洽采样。</strong>Phase-C 证明，自洽采样（温度采样 + 逐句并集）在干净无过采样评测台上可带来 +1.4 提升，且不引入相关假阳性。应用于现有 <code>s15</code> softmin 成员——其 PEM 已受控——这可能在不产生联合模型自洽采样所观察到的假阳性爆炸的情况下，为 Contradiction 和 Scope Overgeneralization 提供累加的少数类召回。</li>
+  <li><strong>更多种子多样化的 softmin Qwen 成员。</strong>从 <code>s01</code> 到 <code>s15</code> 的单调扩展，完全由五个 Qwen3-VL-8B softmin 模型驱动，这些模型使用不同的过采样配置（grid / os4 / per-class / joint-8B / joint-32B）训练。在保持 softmin-PEM 损失和 full-traindev 配方的同时，使用额外种子或过采样变体重新训练，可能延续这一扩展趋势——因为每个新成员在不引入较弱架构相关噪声的情况下，减少了 Contradiction 和 Scope Overgeneralization 的零召回实例。</li>
+</ul>
+
+<h3>Phase 2 展望</h3>
+
+<p>Phase 2（隐藏测试集，2026-06-11 放出，截止日期 2026-06-20）引入了方向未知的分布偏移。Phase 1 的经验——在 train-dev 上校准的 benchmark 为 testp1 给出了完全相反的抑制建议——有力地支持将鲁棒性置于进一步压榨 Phase 1 分数之上。并集策略在结构上具有鲁棒性：在不同条件下训练的并集成员覆盖不同的失效模式，而 <code>min-votes=1</code> 确保每个成员的召回是累加的。那些在 testp1 上仅略高于 <code>s15</code>、却依赖配置特异性调优（分辨率、过采样率、架构特定损失调度）的候选方案，其 Phase 2 风险高于通过正交召回达到相同分数的更宽泛、更多样的并集。</p>
+</section>
+<div class="footer">归档:17 个 LoRA adapter + 38 次提交 + 每条提交的复现配方已上传 Hugging Face
+(<code>winbeau/nlpcc2026-task10</code>,私有)。离线评测台、脚本与完整提交日志均纳入版本控制。
+图表以内联 SVG 呈现;正文统一使用 Times&nbsp;New&nbsp;Roman(汉字回退至宋体衬线)。</div>
+</div>
 </main>
+<script>
+function toggleLang(){
+  var zh = document.body.classList.toggle('lang-zh');
+  document.getElementById('doc-en').hidden = zh;
+  document.getElementById('doc-zh').hidden = !zh;
+  document.getElementById('langtoggle').textContent = zh ? 'EN' : '中文';
+  try{ localStorage.setItem('track1lang', zh ? 'zh' : 'en'); }catch(e){}
+  window.scrollTo(0,0);
+}
+(function(){ try{ if(localStorage.getItem('track1lang')==='zh') toggleLang(); }catch(e){} })();
+</script>
 </body>
 </html>
