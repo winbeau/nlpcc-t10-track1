@@ -123,7 +123,7 @@ nlpcc-t10-track1/
 ├── data/   (gitignored)  # 派生:train_sft.jsonl / split.json / dev_gold.jsonl
 └── outputs/(gitignored)  # LoRA adapter checkpoint / raw 预测
 ```
-- **模型/提交归档已上传 HF**:`winbeau/nlpcc2026-task10`(private;8 个 adapter + scripts + submissions + README)。新模型增量加 `models/sNN_*/` 重传。
+- **模型/提交归档已上传 HF**:`winbeau/nlpcc2026-task10`(private;**17 个 adapter**(s01/02/07/08/09/10/12/13/26 softmin + s33-s36 plain-CE + phaseC_A0/A1/B0/B1 devbench)+ **submissions s01–s38** + scripts + `SUBMISSIONS.md`(=notes/submissions_log.md,逐提交复现表)+ README)。**增量重传:`uv run python scripts/hf_push.py`(在服务器跑;只传 adapter_model.safetensors+configs,不传 optimizer;`--dry-run` 预览)。** 加新模型先把 ckpt 路径加进 `hf_push.py` 的 `ADAPTERS` dict。
 
 ## 7. 端到端流程（命令都在服务器上跑）
 
