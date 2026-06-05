@@ -14,9 +14,11 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 TAG=$1; GPU=$2; shift 2; BUILD_ARGS=("$@")
 M=Qwen/Qwen3-VL-8B-Instruct; MP=${MAX_PIXELS:-401408}; REF="$DATA_ROOT/data/testp1-track-1.jsonl"
 DD=data/full_$TAG; OUT=outputs/pce_$TAG
-trap 'touch $OUT/FAILED' ERR
 mkdir -p $OUT
 rm -f $OUT/DONE $OUT/FAILED
+# NOTE: no `trap ... ERR` — with pipefail the pre-train `ls checkpoint-*` (no match) returns non-zero
+# and would spuriously touch FAILED. Real completion = the testp1_pce_<tag>.jsonl + DONE at the end;
+# a real crash leaves NO DONE and a dead process (detectable by the poller).
 
 echo "### [$TAG] build full-traindev dataset (plain-CE, oversample) $(date) ###"
 PYTHONPATH=src uv run python -m nlpcc_t10.build_dataset --data-root "$DATA_ROOT" --out $DD "${BUILD_ARGS[@]}"
