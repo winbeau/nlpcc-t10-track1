@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NLPCC-2026 Task 10 / Track 1 — System Report</title>
+<style>
+:root{ --ink:#1a1a1a; --mut:#555; --rule:#cfc9bd; --gold:#b8860b; --teal:#2a9d8f; --brick:#c1432f;
+       --paper:#fbfaf7; --panel:#f4f1ea; --code:#efece4; }
+*{ box-sizing:border-box; }
+html{ -webkit-text-size-adjust:100%; }
+body{ font-family:"Times New Roman", Times, Georgia, serif; color:var(--ink); background:#e9e6df;
+      margin:0; line-height:1.58; font-size:17px; }
+.page{ max-width:860px; margin:36px auto; background:var(--paper); padding:64px 72px 80px;
+       box-shadow:0 1px 4px rgba(0,0,0,.14); }
+h1{ font-size:30px; line-height:1.2; text-align:center; margin:0 0 6px; font-weight:700; letter-spacing:.2px; }
+.subtitle{ text-align:center; font-size:18px; color:var(--mut); font-style:italic; margin:0 0 14px; }
+.byline{ text-align:center; font-size:14px; color:var(--mut); margin-bottom:26px; }
+.byline .sep{ color:#bbb; margin:0 8px; }
+.abstract{ background:var(--panel); border:1px solid var(--rule); border-radius:3px;
+           padding:18px 24px; margin:0 0 14px; font-size:15.5px; line-height:1.6; }
+.abstract .lab{ font-variant:small-caps; font-weight:700; letter-spacing:.6px; margin-right:8px; }
+hr.rule{ border:0; border-top:2px solid var(--ink); margin:30px 0 8px; }
+h2{ font-size:21px; margin:38px 0 10px; padding-bottom:5px; border-bottom:1px solid var(--rule); font-weight:700; }
+h2 .secno{ color:var(--gold); margin-right:10px; }
+h3{ font-size:17.5px; margin:22px 0 6px; font-weight:700; font-style:italic; color:#2a2a2a; }
+p{ margin:9px 0; text-align:justify; }
+ul{ margin:9px 0 9px 4px; padding-left:22px; }
+li{ margin:4px 0; }
+code{ font-family:"Times New Roman", Times, serif; background:var(--code); border:1px solid #e0dccf;
+      border-radius:2px; padding:0 4px; font-size:.96em; color:#403a2c; }
+table.data{ border-collapse:collapse; width:100%; margin:16px 0; font-size:14.5px; }
+table.data th, table.data td{ border:1px solid #d6d0c2; padding:6px 10px; text-align:left; vertical-align:top; }
+table.data thead th{ background:var(--panel); font-weight:700; }
+table.data tbody tr:nth-child(even){ background:#faf8f3; }
+blockquote.key{ margin:16px 0; padding:12px 18px; background:#fbf6ea; border-left:4px solid var(--gold);
+                border-radius:2px; font-size:15.5px; }
+blockquote.key::before{ content:"Key finding"; display:block; font-variant:small-caps; letter-spacing:.6px;
+                        font-weight:700; color:var(--gold); font-size:12.5px; margin-bottom:3px; }
+figure{ margin:24px 0; text-align:center; }
+.svgwrap{ background:#fff; border:1px solid var(--rule); border-radius:3px; padding:10px; }
+figure svg{ width:100%; height:auto; max-width:760px; display:block; margin:0 auto; }
+figcaption{ font-size:14px; color:var(--mut); margin-top:8px; text-align:center; line-height:1.45;
+            padding:0 18px; }
+strong,b{ font-weight:700; }
+.footer{ margin-top:46px; padding-top:14px; border-top:1px solid var(--rule); font-size:13px; color:var(--mut); }
+@media print{ body{ background:#fff; } .page{ box-shadow:none; margin:0; max-width:100%; padding:0; } }
+@media (max-width:680px){ .page{ padding:30px 22px; } body{ font-size:16px; } }
+</style>
+</head>
+<body>
+<main class="page">
+<h1>Claim-Level Faithfulness to Experimental Results</h1>
+<p class="subtitle">A System Report and Empirical Study &mdash; NLPCC&#8209;2026 Shared Task&nbsp;10, Track&nbsp;1</p>
+<p class="byline">Qwen3&#8209;VL&#8209;8B&nbsp;+&nbsp;LoRA diverse&#8209;model union<span class="sep">|</span>38 submissions<span class="sep">|</span>champion&nbsp;50.26<span class="sep">|</span>2026&#8209;06</p>
+<div class="abstract"><span class="lab">Abstract.</span>We document a systematic exploration of NLPCC&#8209;2026 Shared Task&nbsp;10, Track&nbsp;1
+(<em>claim&#8209;level faithfulness to experimental results</em>), comprising 38 Codabench submissions and a
+leakage&#8209;free offline evaluation bench. Our champion system &mdash; a five&#8209;member diverse&#8209;model union over
+Qwen3&#8209;VL&#8209;8B LoRA fine&#8209;tunes &mdash; reaches a Phase&#8209;1 score of <b>50.26</b> (best single model
+<b>47.80</b>). Three findings are of methodological interest. <b>(i)</b> The task is <em>recall&#8209;critical</em>,
+not precision&#8209;critical: score is monotone in the count of correctly recovered minority sentences, and every
+suppression heuristic hurts. <b>(ii)</b> The choice between a PEM&#8209;bottleneck (softmin) loss and plain
+cross&#8209;entropy <em>reverses sign with the oversampling regime</em> &mdash; plain&#8209;CE wins without
+oversampling, softmin wins with it &mdash; because softmin exists precisely to control the false positives that
+oversampling induces. <b>(iii)</b> An image&#8209;disjoint, distribution&#8209;reshaped offline bench can rank
+same&#8209;condition models in the correct order but cannot predict absolute test scores nor extrapolate across
+training regimes. We catalogue the directions that failed (larger models, architecture diversity,
+density&#8209;matched synthesis, suppression post&#8209;processing, plain&#8209;CE retraining) and distil the durable
+lessons, chief among them that <em>the data prior over paragraph structure dominates model scale</em>.</div>
+<hr class="rule">
+<section>
+<h2><span class="secno">1</span> Task, Data, and Method</h2>
+<h3>Introduction</h3>
+<p>We describe our system for NLPCC 2026 Shared Task 10, Track 1: <em>Claim-level Faithfulness to Experimental Results</em>. The task targets a fine-grained, sentence-level reliability problem in scientific communication: given a multi-sentence claim paragraph accompanied by figure/table evidence, each sentence must be assessed for how faithfully it reports what the evidence actually shows. Our system is based on Qwen3-VL-8B-Instruct fine-tuned with LoRA, trained with a custom softmin-PEM loss under minority oversampling, and assembled into a diverse-model union ensemble. Across 38 Phase-1 test (testp1) submissions on Codabench, the champion system (s15, five-member union) achieves a score of <strong>50.26</strong>; the best single model (s01, grid) scores <strong>47.80</strong>.</p>
+
+<h3>Task Definition</h3>
+<p>Each input record consists of: (1) a <em>claim paragraph</em> of pre-tokenised sentences (<code>claim_text</code> plus a sentence list), and (2) an <em>evidence bundle</em> of one or more figure or table items, each accompanied by a caption. The system must assign exactly one label per sentence, chosen from the following five categories:</p>
+
+<table class='data'>
+  <thead>
+    <tr><th>Label</th><th>Meaning</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Supported</code></td><td>The sentence is fully supported by the evidence.</td></tr>
+    <tr><td><code>Unsupported Causal Mechanistic</code></td><td>The sentence introduces a causal or mechanistic explanation that the evidence does not warrant.</td></tr>
+    <tr><td><code>Unsupported Entity</code></td><td>The sentence refers to a dataset, metric, model variant, or baseline not present in the evidence.</td></tr>
+    <tr><td><code>Scope Overgeneralization</code></td><td>The sentence projects the conclusion beyond the scope the evidence supports.</td></tr>
+    <tr><td><code>Contradiction</code></td><td>The sentence is directly contradicted by the evidence.</td></tr>
+  </tbody>
+</table>
+
+<p>Label strings must match exactly (including capitalisation and internal spaces). The submission format is JSONL: one object per record with fields <code>id</code> (copied verbatim from the test set) and <code>labels</code> (an ordered array whose length equals the sentence count for that record). Parse failures or out-of-vocabulary labels fall back to <code>Supported</code>.</p>
+
+<p>The official evaluation metric combines two components computed by <code>offline_eval/evaluate.py --track 1</code>:</p>
+<ul>
+  <li><strong>Sentence Macro-F1</strong>: five-class macro-averaged F1, weighting all classes equally.</li>
+  <li><strong>PEM (Paragraph Exact Match)</strong>: a paragraph scores 1 only when every sentence in it is correctly labelled.</li>
+  <li><strong>Final score = (Macro-F1 + PEM) / 2.</strong></li>
+</ul>
+<p>For multi-label sentences (those with multiple valid gold types), a prediction is correct if it matches <em>any</em> gold label; the matched label is used as the F1 reference, otherwise the primary label <code>types[0]</code> is used.</p>
+
+<h3>Data</h3>
+<p>The dataset comprises two splits released by the task organisers:</p>
+
+<table class='data'>
+  <thead>
+    <tr><th>Split</th><th>Records</th><th>Sentences</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>train-dev</td><td>3,333</td><td>17,547</td><td>gold labels available; used for training and local dev</td></tr>
+    <tr><td>Phase-1 test (testp1)</td><td>586</td><td>5,096</td><td>ids pre-assigned; no gold released; scored on Codabench</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Evidence modality.</strong> Every evidence item is a figure or a table — train-dev contains 2,017 image items and 1,979 table items, with <em>no</em> text-only evidence. Each item carries a caption (mean 276 characters), but critical numerical values and entity names are embedded in the rendered image. This is the principal motivation for using a vision-language model: caption text alone is insufficient to verify <code>Contradiction</code> or <code>Unsupported Entity</code> sentences. Records carry on average 1.2 evidence items (maximum 7); the median <code>claim_text</code> length is 671 characters.</p>
+
+<p><strong>Label distribution.</strong> The training data are severely imbalanced. Applying primary label <code>types[0]</code>, 93.7% of sentences are <code>Supported</code>; the four minority classes together account for only 1,109 sentences. An additional 527 sentences carry multiple valid gold labels.</p>
+
+<table class='data'>
+  <thead>
+    <tr><th>Label</th><th>Primary count</th><th>Any-of count</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Supported</code></td><td>16,438 (93.7%)</td><td>16,438</td></tr>
+    <tr><td><code>Scope Overgeneralization</code></td><td>540</td><td>605</td></tr>
+    <tr><td><code>Contradiction</code></td><td>216</td><td>216</td></tr>
+    <tr><td><code>Unsupported Entity</code></td><td>213</td><td>639</td></tr>
+    <tr><td><code>Unsupported Causal Mechanistic</code></td><td>140</td><td>276</td></tr>
+  </tbody>
+</table>
+
+<p><strong>testp1 distribution shift.</strong> The Phase-1 test set has a starkly different character from train-dev. Paragraphs are long (mean 8.7 sentences, maximum 31) and minority-dense: approximately 84% of testp1 paragraphs contain at least one gold minority sentence. The all-<code>Supported</code> trivial baseline on testp1 scores only <strong>18.85</strong> (measured as submission s05), compared to 43.2 on train-dev — a reflection of the fact that testp1's PEM is recall-limited, not precision-limited. Every minority sentence missed forfeits PEM on a long paragraph.</p>
+
+<p><strong>The "≤1 minority per paragraph" pseudo-prior.</strong> In train-dev, among all long paragraphs (≥6 sentences), only 0.46% contain two or more minority sentences; across the full 3,333-record set, only 8 records carry ≥2 minorities. A model trained on this distribution learns a near-deterministic prior: at most one minority per paragraph. On testp1's minority-dense paragraphs this prior produces systematic under-recall — the root cause of all single-model performance limitations identified in this campaign.</p>
+
+<h3>Method</h3>
+
+<p><strong>Base model.</strong> We fine-tune Qwen3-VL-8B-Instruct with LoRA (rank 16, alpha 32, all linear layers, ViT frozen) in bf16 precision using ms-swift 4.2.3. The image resolution is capped at <code>max_pixels = 401408</code>; increasing resolution to 802,816 was empirically harmful (s02: −3.3 points).</p>
+
+<p><strong>Training formats.</strong> We implement two input formats. In the <em>per-sentence</em> format, each training sample consists of a shared evidence/claim context plus a single TARGET sentence; the model outputs one label. The 3,333 records expand to ~17,547 per-sentence samples; at inference time, the shared prefix is KV-cache reused across the <em>n</em> sentences of the same record. In the <em>paragraph-joint</em> format, a single forward pass covers the full paragraph and the model outputs a JSON array of <em>n</em> labels; this is the only viable format for Qwen3-VL-32B-Instruct (per-sentence 32B repetition of image prefixes would require ~200 GiB VRAM). Per-sentence is the primary format for all union members.</p>
+
+<p><strong>Loss function.</strong> The per-sentence softmin-PEM loss (custom ms-swift integration) augments standard cross-entropy with a paragraph-level bottleneck: it up-weights the loss on the sentence within a paragraph that has the highest probability of being wrong, penalising configurations that would shatter PEM. Plain cross-entropy (plain-CE) is used for joint-format models and as an ablation. The two losses interact strongly with oversampling (see below).</p>
+
+<p><strong>Class-imbalance handling.</strong> Minority classes are oversampled and <code>Supported</code> is downsampled during dataset construction. The grid-optimal configuration (s01) uses minority oversample factor 3.0 and <code>Supported</code> downsample factor 0.6. For multi-label sentences the minority label is selected as the training target (preferring minority over <code>Supported</code>). Splits are made at the record level (9:1 stratified by minority presence) to prevent sentence-level leakage and preserve PEM validity on the dev set.</p>
+
+<p><strong>Ensemble strategy.</strong> The union ensemble (<code>scripts/ensemble_union.py --min-votes 1</code>) combines predictions from multiple independently trained models: a sentence receives a minority label if <em>any</em> member fires it. This is strictly recall-additive, simultaneously lifting both Macro-F1 and PEM when members are sufficiently diverse and individually competent. The champion system s15 combines five Qwen3-VL members trained with varied oversample rates and formats.</p>
+
+<blockquote class='key'>
+<strong>Key insight — softmin vs. plain-CE regime reversal:</strong> Without oversampling, plain-CE outperforms softmin (s32 38.68 &gt; s31 34.21, +4.47). With the real oversampling recipe (full train-dev, minority oversample 3×), softmin dominates at both the single-model level (s01 47.80 &gt; s33 42.87, +4.93) and the union level (s15 50.26 &gt; s37 48.54, +1.72). The mechanism: oversampling causes plain-CE to over-fire minority predictions, generating false positives that shatter PEM on long paragraphs; softmin's PEM-bottleneck loss suppresses exactly those oversampling-induced false positives. A finding from a no-oversample or reduced-data regime cannot be safely extrapolated to the full training recipe.
+</blockquote>
+
+<blockquote class='key'>
+<strong>Key insight — recall-critical inversion:</strong> The initial framing of the task as precision-critical (suppress minorities to protect PEM) was derived from the train-dev trivial score of 43.2 and was overturned by the first testp1 submissions. On testp1, every minority-suppression intervention (veto, confidence threshold, ≥2-vote consensus, reduced oversample) monotonically decreased the score. The suppression sweep measured on testp1 — 46 minority predictions → 18.85, 127 → 38.48, 171 → 39.57, 190 → 43.85, 253 → 47.80 — confirms that score is monotone in the count of <em>correctly</em> fired minority labels. PEM is recall-limited, not precision-limited, on the long minority-dense test paragraphs.
+</blockquote>
+</section>
+
+<section>
+<h2><span class="secno">2</span> Results: the Recall-Critical Inversion and the Union Lever</h2>
+<h3>The Recall-Critical Inversion</h3>
+
+<p>The initial experimental framing assumed testp1 was <em>precision-critical</em>: the train-dev trivial baseline (all-<code>Supported</code>) scores 43.2, suggesting that preserving clean paragraphs for PEM should take priority over minority-class recall. This framing was falsified on first contact with the leaderboard. The testp1 all-<code>Supported</code> trivial scores only <code>18.85</code> (s05), reflecting a fundamentally different distribution: paragraphs are long (mean 8.7 sentences, maximum 31), and approximately 84% of paragraphs contain at least one gold minority-class sentence. In this regime PEM is <em>recall-limited</em>, not precision-limited — a paragraph receives PEM=1 only when every gold minority label is correctly predicted, so missing even one minority label in a long paragraph guarantees PEM=0 for that paragraph.</p>
+
+<p>The suppression sweep makes the monotone relationship explicit. Starting from the best single model (s01, grid softmin), progressively suppressing minority predictions yields a strictly decreasing score trajectory:</p>
+
+<blockquote class='key'>Score is monotone in the count of correct minority predictions. Every suppression mechanism — veto, confidence threshold, lower oversampling ratio, or ≥2-vote consensus — monotonically hurts testp1 score.</blockquote>
+
+<figure id="fig-recall-inversion">
+<div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman', Times, serif"><rect x="0" y="0" width="760" height="470" fill="#ffffff"/><text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">testp1 is recall-critical: score rises with minority count</text><line x1="78" y1="64" x2="78" y2="408" stroke="#333" stroke-width="1"/><line x1="78" y1="408" x2="724" y2="408" stroke="#333" stroke-width="1"/><line x1="78" y1="359" x2="724" y2="359" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="310" x2="724" y2="310" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="261" x2="724" y2="261" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="212" x2="724" y2="212" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="163" x2="724" y2="163" stroke="#e7e7e7" stroke-width="1"/><line x1="78" y1="114" x2="724" y2="114" stroke="#e7e7e7" stroke-width="1"/><line x1="73" y1="408" x2="78" y2="408" stroke="#333" stroke-width="1"/><text x="66" y="412" text-anchor="end" font-size="12" fill="#333">15</text><line x1="73" y1="359" x2="78" y2="359" stroke="#333" stroke-width="1"/><text x="66" y="363" text-anchor="end" font-size="12" fill="#333">20</text><line x1="73" y1="310" x2="78" y2="310" stroke="#333" stroke-width="1"/><text x="66" y="314" text-anchor="end" font-size="12" fill="#333">25</text><line x1="73" y1="261" x2="78" y2="261" stroke="#333" stroke-width="1"/><text x="66" y="265" text-anchor="end" font-size="12" fill="#333">30</text><line x1="73" y1="212" x2="78" y2="212" stroke="#333" stroke-width="1"/><text x="66" y="216" text-anchor="end" font-size="12" fill="#333">35</text><line x1="73" y1="163" x2="78" y2="163" stroke="#333" stroke-width="1"/><text x="66" y="167" text-anchor="end" font-size="12" fill="#333">40</text><line x1="73" y1="114" x2="78" y2="114" stroke="#333" stroke-width="1"/><text x="66" y="118" text-anchor="end" font-size="12" fill="#333">45</text><line x1="73" y1="64" x2="78" y2="64" stroke="#333" stroke-width="1"/><text x="66" y="68" text-anchor="end" font-size="12" fill="#333">50</text><line x1="78" y1="413" x2="78" y2="408" stroke="#333" stroke-width="1"/><text x="78" y="425" text-anchor="middle" font-size="12" fill="#333">0</text><line x1="153" y1="413" x2="153" y2="408" stroke="#333" stroke-width="1"/><text x="153" y="425" text-anchor="middle" font-size="12" fill="#333">50</text><line x1="228" y1="413" x2="228" y2="408" stroke="#333" stroke-width="1"/><text x="228" y="425" text-anchor="middle" font-size="12" fill="#333">100</text><line x1="303" y1="413" x2="303" y2="408" stroke="#333" stroke-width="1"/><text x="303" y="425" text-anchor="middle" font-size="12" fill="#333">150</text><line x1="378" y1="413" x2="378" y2="408" stroke="#333" stroke-width="1"/><text x="378" y="425" text-anchor="middle" font-size="12" fill="#333">200</text><line x1="453" y1="413" x2="453" y2="408" stroke="#333" stroke-width="1"/><text x="453" y="425" text-anchor="middle" font-size="12" fill="#333">250</text><line x1="528" y1="413" x2="528" y2="408" stroke="#333" stroke-width="1"/><text x="528" y="425" text-anchor="middle" font-size="12" fill="#333">300</text><text x="401" y="455" text-anchor="middle" font-size="13" font-style="italic" fill="#222"># minority-class predictions</text><text x="24" y="236" text-anchor="middle" font-size="13" font-style="italic" fill="#222" transform="rotate(-90,24,236)">testp1 score</text><defs><marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#8a8a8a"/></marker></defs><polyline points="147,397 216,263 280,247 330,176 451,88" fill="none" stroke="#8a8a8a" stroke-width="1.5" stroke-dasharray="5,4" stroke-linecap="round" stroke-linejoin="round"/><path d="M 147,397 C 165,370 190,280 216,263 C 240,248 260,250 280,247 C 300,244 315,190 330,176 C 365,150 420,100 451,88" fill="none" stroke="#8a8a8a" stroke-width="2" stroke-dasharray="5,4" stroke-linecap="round"/><circle cx="147" cy="397" r="5" fill="#b3b3b3" stroke="#ffffff" stroke-width="1.5"/><circle cx="216" cy="263" r="5" fill="#4a6fa5" stroke="#ffffff" stroke-width="1.5"/><circle cx="280" cy="247" r="5" fill="#4a6fa5" stroke="#ffffff" stroke-width="1.5"/><circle cx="330" cy="175" r="5" fill="#4a6fa5" stroke="#ffffff" stroke-width="1.5"/><polygon points="451,72 456,85 470,85 459,93 463,107 451,98 439,107 443,93 432,85 446,85" fill="#b8860b" stroke="#8a6208" stroke-width="1"/><text x="160" y="390" text-anchor="start" font-size="11" fill="#b3b3b3">veto-all s05</text><text x="160" y="401" text-anchor="start" font-size="11" fill="#b3b3b3">(46, 18.85)</text><text x="195" y="250" text-anchor="start" font-size="11" fill="#4a6fa5">τ−0.03 s04</text><text x="195" y="261" text-anchor="start" font-size="11" fill="#4a6fa5">(127, 38.48)</text><text x="248" y="237" text-anchor="end" font-size="11" fill="#4a6fa5">veto-gated s06</text><text x="248" y="248" text-anchor="end" font-size="11" fill="#4a6fa5">(171, 39.57)</text><text x="340" y="164" text-anchor="start" font-size="11" fill="#4a6fa5">τ−0.20 s03</text><text x="340" y="175" text-anchor="start" font-size="11" fill="#4a6fa5">(190, 43.85)</text><text x="464" y="79" text-anchor="start" font-size="11" fill="#b8860b">grid s01 ★</text><text x="464" y="90" text-anchor="start" font-size="11" fill="#b8860b">(253, 47.80)</text><rect x="84" y="70" width="210" height="52" fill="#ffffff" stroke="#cccccc" stroke-width="0.8" rx="3"/><text x="92" y="86" font-size="12" fill="#1a1a1a" font-weight="bold">← suppress  ≡  move toward trivial</text><text x="92" y="102" font-size="11" fill="#555">every veto / threshold step cuts</text><text x="92" y="115" font-size="11" fill="#555">minority count and score together</text></svg></div>
+<figcaption><b>Figure 1.</b> Every suppression step moves down-left toward the all-Supported trivial (~19), refuting the precision-critical hypothesis: testp1 score rises monotonically with minority-class prediction count.</figcaption>
+</figure>
+
+<p>This inversion (suppression sweep: 46 minorities → <code>18.85</code>; 127 → <code>38.48</code>; 171 → <code>39.57</code>; 190 → <code>43.85</code>; 253 → <code>47.80</code>) establishes that the winning objective is maximizing <em>correct</em> minority recall, not controlling minority precision. The post-processing methods (s03–s07) were accordingly abandoned; all subsequent work focuses on increasing recall additively.</p>
+
+<h3>The Diverse-Union Lever</h3>
+
+<p>Given that recall is the binding constraint, the ensemble strategy is to take the <em>union</em> over independently trained models: a sentence is assigned a minority label if <em>any</em> member fires it. This is implemented via <code>ensemble_union.py --min-votes 1</code>. Adding diverse members is recall-additive: each new model that makes independent errors on different minority sentences increases the count of correctly recalled minorities, lifting both Macro-F1 and PEM simultaneously.</p>
+
+<p>The scaling from single model to five-member union is strictly monotone:</p>
+
+<ul>
+  <li>s01 — 1 member (grid softmin): <code>47.80</code> (best single; 253 minorities)</li>
+  <li>s11 — 3 Qwen members (s01 + s08 + s09): <code>48.22</code> (339 minorities)</li>
+  <li>s14 — 4 Qwen members (+ s13 joint-32B): <code>49.99</code> (365 minorities)</li>
+  <li>s15 — 5 Qwen members (+ s12 joint-8B): <code>50.26</code> ★ CHAMPION (382 minorities)</li>
+</ul>
+
+<p>Both Macro-F1 and PEM rise together at each step (MF1: 52.77 → 54.80 → 56.80 → 57.17; PEM: 42.83 → 41.64 → 43.17 → 43.34), confirming that the minority recalls being added are predominantly correct rather than spurious.</p>
+
+<figure id="fig-union-scaling">
+<div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman', Times, serif">
+  <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
+  <text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">The diverse-union lever scales monotonically</text>
+
+  <!-- Plot area: x∈[78,724], y∈[64,408] -->
+  <!-- y range: 47 to 51; y mapping: val → 408 - (val-47)/(51-47)*344 = 408 - (val-47)/4*344 -->
+  <!-- x axis: categorical 1,3,4,5 members → positions -->
+  <!-- x positions: 1→165, 3→325, 4→485, 5→645 (evenly spread in plot area) -->
+
+  <!-- Horizontal gridlines at y=47,47.5,48,48.5,49,49.5,50,50.5,51 -->
+  <!-- y=47: 408; y=47.5: 408-0.5/4*344=408-43=365; y=48: 322; y=48.5: 279; y=49: 236; y=49.5: 193; y=50: 150; y=50.5: 107; y=51: 64 -->
+  <line x1="78" y1="408" x2="724" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="365" x2="724" y2="365" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="322" x2="724" y2="322" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="279" x2="724" y2="279" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="236" x2="724" y2="236" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="193" x2="724" y2="193" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="150" x2="724" y2="150" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="107" x2="724" y2="107" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="64" x2="724" y2="64" stroke="#e7e7e7" stroke-width="1"/>
+
+  <!-- Axes -->
+  <line x1="78" y1="64" x2="78" y2="408" stroke="#333" stroke-width="1"/>
+  <line x1="78" y1="408" x2="724" y2="408" stroke="#333" stroke-width="1"/>
+
+  <!-- X-axis: categorical labels 1,3,4,5 -->
+  <!-- positions: 1→165, 3→325, 4→485, 5→645 -->
+  <line x1="165" y1="408" x2="165" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="165" y="427" text-anchor="middle" font-size="12" fill="#333">1</text>
+  <line x1="325" y1="408" x2="325" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="325" y="427" text-anchor="middle" font-size="12" fill="#333">3</text>
+  <line x1="485" y1="408" x2="485" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="485" y="427" text-anchor="middle" font-size="12" fill="#333">4</text>
+  <line x1="645" y1="408" x2="645" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="645" y="427" text-anchor="middle" font-size="12" fill="#333">5</text>
+
+  <!-- Y-axis ticks: 47,47.5,48,48.5,49,49.5,50,50.5,51 -->
+  <line x1="78" y1="408" x2="73" y2="408" stroke="#333" stroke-width="1"/>
+  <text x="70" y="412" text-anchor="end" font-size="12" fill="#333">47.0</text>
+  <line x1="78" y1="365" x2="73" y2="365" stroke="#333" stroke-width="1"/>
+  <text x="70" y="369" text-anchor="end" font-size="12" fill="#333">47.5</text>
+  <line x1="78" y1="322" x2="73" y2="322" stroke="#333" stroke-width="1"/>
+  <text x="70" y="326" text-anchor="end" font-size="12" fill="#333">48.0</text>
+  <line x1="78" y1="279" x2="73" y2="279" stroke="#333" stroke-width="1"/>
+  <text x="70" y="283" text-anchor="end" font-size="12" fill="#333">48.5</text>
+  <line x1="78" y1="236" x2="73" y2="236" stroke="#333" stroke-width="1"/>
+  <text x="70" y="240" text-anchor="end" font-size="12" fill="#333">49.0</text>
+  <line x1="78" y1="193" x2="73" y2="193" stroke="#333" stroke-width="1"/>
+  <text x="70" y="197" text-anchor="end" font-size="12" fill="#333">49.5</text>
+  <line x1="78" y1="150" x2="73" y2="150" stroke="#333" stroke-width="1"/>
+  <text x="70" y="154" text-anchor="end" font-size="12" fill="#333">50.0</text>
+  <line x1="78" y1="107" x2="73" y2="107" stroke="#333" stroke-width="1"/>
+  <text x="70" y="111" text-anchor="end" font-size="12" fill="#333">50.5</text>
+  <line x1="78" y1="64" x2="73" y2="64" stroke="#333" stroke-width="1"/>
+  <text x="70" y="68" text-anchor="end" font-size="12" fill="#333">51.0</text>
+
+  <!-- Axis titles -->
+  <text x="401" y="455" text-anchor="middle" font-size="13" font-style="italic" fill="#222"># union members</text>
+  <text x="18" y="236" text-anchor="middle" font-size="13" font-style="italic" fill="#222" transform="rotate(-90,18,236)">testp1 score</text>
+
+  <!-- DATA POINTS and LINE -->
+  <!-- Compute y coords: y = 408 - (score-47)/4*344 -->
+  <!-- s01 (1 member, 47.80): y = 408 - 0.80/4*344 = 408 - 68.8 = 339.2 -->
+  <!-- s11 (3 members, 48.22): y = 408 - 1.22/4*344 = 408 - 104.98 = 303.02 -->
+  <!-- s14 (4 members, 49.99): y = 408 - 2.99/4*344 = 408 - 257.14 = 150.86 -->
+  <!-- s15 (5 members, 50.26): y = 408 - 3.26/4*344 = 408 - 280.34 = 127.66 -->
+
+  <!-- Connecting line (teal) -->
+  <polyline points="165,339.2 325,303.02 485,150.86 645,127.66" fill="none" stroke="#2a9d8f" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- Area fill (very subtle) -->
+  <polygon points="165,339.2 325,303.02 485,150.86 645,127.66 645,408 165,408" fill="#2a9d8f" opacity="0.07"/>
+
+  <!-- s01 (1 member, 47.80) — champion single, gold marker -->
+  <circle cx="165" cy="339.2" r="7" fill="#b8860b" stroke="#00000033" stroke-width="1"/>
+  <text x="167" y="330" font-size="11" fill="#b8860b" font-weight="bold">s01 grid 47.80</text>
+
+  <!-- s11 (3 members, 48.22) -->
+  <circle cx="325" cy="303.02" r="5" fill="#2a9d8f" stroke="#00000022" stroke-width="1"/>
+  <text x="327" y="296" font-size="11" fill="#2a9d8f">s11  48.22</text>
+
+  <!-- s14 (4 members, 49.99) -->
+  <circle cx="485" cy="150.86" r="5" fill="#2a9d8f" stroke="#00000022" stroke-width="1"/>
+  <text x="487" y="145" font-size="11" fill="#2a9d8f">s14  49.99</text>
+
+  <!-- s15 (5 members, 50.26) — CHAMPION gold star -->
+  <polygon points="645,118.66 648.5,128.16 658.5,128.16 650.7,133.66 653.5,143.16 645,137.66 636.5,143.16 639.3,133.66 631.5,128.16 641.5,128.16" fill="#b8860b" stroke="#00000033" stroke-width="1"/>
+  <text x="648" y="113" font-size="11" fill="#b8860b" font-weight="bold">s15 union 50.26</text>
+
+  <!-- Annotation: +2.46 over best single -->
+  <!-- Arrow from s01 level to s15 level at x~700 -->
+  <line x1="700" y1="339.2" x2="700" y2="131.66" stroke="#555" stroke-width="1.2" marker-end="url(#arr)" marker-start="url(#arr2)"/>
+  <defs>
+    <marker id="arr" markerWidth="7" markerHeight="7" refX="3" refY="3.5" orient="auto">
+      <polygon points="0 0, 7 3.5, 0 7" fill="#555"/>
+    </marker>
+    <marker id="arr2" markerWidth="7" markerHeight="7" refX="4" refY="3.5" orient="auto-start-reverse">
+      <polygon points="0 0, 7 3.5, 0 7" fill="#555"/>
+    </marker>
+  </defs>
+  <text x="705" y="242" font-size="12" fill="#555" font-style="italic">+2.46</text>
+  <text x="705" y="257" font-size="11" fill="#555" font-style="italic">over best</text>
+  <text x="705" y="271" font-size="11" fill="#555" font-style="italic">single</text>
+
+  <!-- Legend inside top-left -->
+  <rect x="88" y="75" width="155" height="68" fill="#ffffff" stroke="#ccc" stroke-width="0.8" rx="3"/>
+  <text x="100" y="92" font-size="12" fill="#1a1a1a" font-weight="bold">Legend</text>
+  <circle cx="104" cy="106" r="5" fill="#2a9d8f" stroke="#00000022" stroke-width="1"/>
+  <text x="114" y="110" font-size="12" fill="#333">Union ensemble (teal)</text>
+  <circle cx="104" cy="127" r="7" fill="#b8860b" stroke="#00000033" stroke-width="1"/>
+  <text x="114" y="131" font-size="12" fill="#333">Champion / best single</text>
+</svg></div>
+<figcaption><b>Figure 2.</b> The diverse-union lever scales monotonically: adding heterogeneous Qwen model members to the ensemble yields consistent score gains, culminating in +2.46 points over the best single model at five members.</figcaption>
+</figure>
+
+<h3>Member-Quality and Correlation Caveat</h3>
+
+<p>The union benefit depends critically on both member quality and error independence. Experiments adding weaker or correlated members consistently show the same failure mode: Macro-F1 increases (more minorities fired) but PEM decreases (false-positive minorities shatter clean paragraphs), for a net score loss. Representative cases:</p>
+
+<ul>
+  <li>s18 (+Qwen3-VL-4B, same architecture, weaker): MF1 +0.11, PEM −1.19 → score <code>49.71</code> (−0.55 vs s15)</li>
+  <li>s20 (+InternVL3-8B, architecture-diverse): MF1 +0.57, PEM −1.36 → score <code>49.36</code></li>
+  <li>s23 (+Gemma4-26B, architecture-diverse, nearest miss): MF1 57.67 (+0.50 vs s15), PEM 41.98 (−1.36) → score <code>49.83</code></li>
+  <li>s27 (Gemma4-31B single): only 87 minorities fired → score <code>29.28</code>, confirming that model scale alone cannot overcome the training-data prior</li>
+</ul>
+
+<p>The consistent pattern — recall gain offset by PEM loss — indicates that the 5-Qwen union (s15) has already captured most of the recoverable true minorities; adding a sixth member whose errors are partially uncorrelated from those of s15 but also introduces a new set of false positives yields no net benefit. s15 at <code>50.26</code> represents the ceiling of naive union scaling with the current training recipe.</p>
+
+<figure id="fig-landscape">
+<div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman', Times, serif">
+  <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
+  <text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">Submission landscape: score vs. correct-minority count</text>
+  <line x1="80" y1="408.0" x2="724" y2="408.0" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="361.5" x2="724" y2="361.5" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="315.0" x2="724" y2="315.0" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="268.5" x2="724" y2="268.5" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="222.1" x2="724" y2="222.1" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="175.6" x2="724" y2="175.6" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="129.1" x2="724" y2="129.1" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="82.6" x2="724" y2="82.6" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="64" x2="80" y2="408" stroke="#333" stroke-width="1.5"/>
+  <line x1="80" y1="408" x2="724" y2="408" stroke="#333" stroke-width="1.5"/>
+  <line x1="75" y1="408.0" x2="80" y2="408.0" stroke="#333" stroke-width="1"/>
+  <text x="70" y="412.0" text-anchor="end" font-size="12" fill="#333">15</text>
+  <line x1="75" y1="361.5" x2="80" y2="361.5" stroke="#333" stroke-width="1"/>
+  <text x="70" y="365.5" text-anchor="end" font-size="12" fill="#333">20</text>
+  <line x1="75" y1="315.0" x2="80" y2="315.0" stroke="#333" stroke-width="1"/>
+  <text x="70" y="319.0" text-anchor="end" font-size="12" fill="#333">25</text>
+  <line x1="75" y1="268.5" x2="80" y2="268.5" stroke="#333" stroke-width="1"/>
+  <text x="70" y="272.5" text-anchor="end" font-size="12" fill="#333">30</text>
+  <line x1="75" y1="222.1" x2="80" y2="222.1" stroke="#333" stroke-width="1"/>
+  <text x="70" y="226.1" text-anchor="end" font-size="12" fill="#333">35</text>
+  <line x1="75" y1="175.6" x2="80" y2="175.6" stroke="#333" stroke-width="1"/>
+  <text x="70" y="179.6" text-anchor="end" font-size="12" fill="#333">40</text>
+  <line x1="75" y1="129.1" x2="80" y2="129.1" stroke="#333" stroke-width="1"/>
+  <text x="70" y="133.1" text-anchor="end" font-size="12" fill="#333">45</text>
+  <line x1="75" y1="82.6" x2="80" y2="82.6" stroke="#333" stroke-width="1"/>
+  <text x="70" y="86.6" text-anchor="end" font-size="12" fill="#333">50</text>
+  <line x1="80.0" y1="408" x2="80.0" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="80.0" y="426" text-anchor="middle" font-size="12" fill="#333">0</text>
+  <line x1="203.8" y1="408" x2="203.8" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="203.8" y="426" text-anchor="middle" font-size="12" fill="#333">100</text>
+  <line x1="327.7" y1="408" x2="327.7" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="327.7" y="426" text-anchor="middle" font-size="12" fill="#333">200</text>
+  <line x1="451.5" y1="408" x2="451.5" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="451.5" y="426" text-anchor="middle" font-size="12" fill="#333">300</text>
+  <line x1="575.4" y1="408" x2="575.4" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="575.4" y="426" text-anchor="middle" font-size="12" fill="#333">400</text>
+  <line x1="699.2" y1="408" x2="699.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="699.2" y="426" text-anchor="middle" font-size="12" fill="#333">500</text>
+  <text x="402" y="452" text-anchor="middle" font-size="13" font-style="italic" fill="#333"># correct minority predictions</text>
+  <text x="22" y="236" text-anchor="middle" font-size="13" font-style="italic" fill="#333" transform="rotate(-90,22,236)">testp1 score</text>
+  <line x1="80" y1="80.2" x2="724" y2="80.2" stroke="#8a8a8a" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <line x1="80" y1="103.0" x2="724" y2="103.0" stroke="#8a8a8a" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <text x="90" y="76.2" text-anchor="start" font-size="11" fill="#8a8a8a">s15 champion (50.26)</text>
+  <text x="90" y="99.0" text-anchor="start" font-size="11" fill="#8a8a8a">s01 best single (47.80)</text>
+  <circle cx="137.0" cy="372.2" r="5" fill="#b3b3b3" stroke="#999" stroke-width="0.7"/>
+  <circle cx="237.3" cy="189.7" r="5" fill="#b3b3b3" stroke="#999" stroke-width="0.7"/>
+  <circle cx="187.7" cy="275.2" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="383.4" cy="148.9" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="338.8" cy="144.6" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="411.9" cy="140.0" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="538.2" cy="132.0" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="371.0" cy="128.2" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="402.0" cy="134.0" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="499.8" cy="99.1" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="563.0" cy="96.2" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="532.0" cy="82.7" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="696.8" cy="84.2" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="580.3" cy="85.3" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="413.1" cy="139.8" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.8"/>
+  <circle cx="393.3" cy="103.0" r="6.5" fill="#b8860b" stroke="#7a5c00" stroke-width="0.9"/>
+  <path d="M 553.09,72.18 L 555.44,76.94 L 560.70,77.71 L 556.90,81.41 L 557.79,86.65 L 553.09,84.18 L 548.39,86.65 L 549.29,81.41 L 545.48,77.71 L 550.74,76.94 Z" fill="#b8860b" stroke="#7a5c00" stroke-width="0.9"/>
+  <text x="144.0" y="364.2" text-anchor="start" font-size="11" fill="#b3b3b3" font-weight="normal">s05 trivial&#x2248;19</text>
+  <text x="194.7" y="267.2" text-anchor="start" font-size="11" fill="#4a6fa5" font-weight="normal">s27</text>
+  <text x="244.3" y="181.7" text-anchor="start" font-size="11" fill="#b3b3b3" font-weight="normal">s04</text>
+  <text x="375.4" y="162.9" text-anchor="end" font-size="11" fill="#4a6fa5" font-weight="normal">s33</text>
+  <text x="330.8" y="136.6" text-anchor="end" font-size="11" fill="#4a6fa5" font-weight="normal">s12</text>
+  <text x="419.9" y="154.0" text-anchor="start" font-size="11" fill="#4a6fa5" font-weight="normal">s09</text>
+  <text x="546.2" y="124.0" text-anchor="start" font-size="11" fill="#4a6fa5" font-weight="normal">s26</text>
+  <text x="363.0" y="120.2" text-anchor="end" font-size="11" fill="#4a6fa5" font-weight="normal">s08</text>
+  <text x="410.0" y="126.0" text-anchor="start" font-size="11" fill="#4a6fa5" font-weight="normal">s02</text>
+  <text x="403.3" y="94.0" text-anchor="start" font-size="11" fill="#b8860b" font-weight="bold">s01 grid 47.80</text>
+  <text x="491.8" y="91.1" text-anchor="end" font-size="11" fill="#2a9d8f" font-weight="normal">s11</text>
+  <text x="571.0" y="88.2" text-anchor="start" font-size="11" fill="#2a9d8f" font-weight="normal">s37</text>
+  <text x="524.0" y="74.7" text-anchor="end" font-size="11" fill="#2a9d8f" font-weight="normal">s14</text>
+  <text x="564.1" y="71.2" text-anchor="start" font-size="11" fill="#b8860b" font-weight="bold">s15 union 50.26</text>
+  <text x="688.8" y="76.2" text-anchor="end" font-size="11" fill="#2a9d8f" font-weight="normal">s23</text>
+  <text x="588.3" y="95.3" text-anchor="start" font-size="11" fill="#2a9d8f" font-weight="normal">s18</text>
+  <text x="421.1" y="131.8" text-anchor="start" font-size="11" fill="#2a9d8f" font-weight="normal">s30</text>
+  <rect x="571" y="241" width="150" height="110" rx="3" fill="white" stroke="#ccc" stroke-width="0.8"/>
+  <circle cx="585" cy="252" r="5" fill="#4a6fa5" stroke="#fff" stroke-width="0.7"/>
+  <text x="597" y="256" font-size="12" fill="#333">Single model</text>
+  <circle cx="585" cy="277" r="5" fill="#2a9d8f" stroke="#fff" stroke-width="0.7"/>
+  <text x="597" y="281" font-size="12" fill="#333">Union ensemble</text>
+  <circle cx="585" cy="302" r="5" fill="#b3b3b3" stroke="#fff" stroke-width="0.7"/>
+  <text x="597" y="306" font-size="12" fill="#333">Post-proc / dead</text>
+  <circle cx="585" cy="327" r="5" fill="#b8860b" stroke="#fff" stroke-width="0.7"/>
+  <text x="597" y="331" font-size="12" fill="#333">Champion</text>
+</svg></div>
+<figcaption><b>Figure 3.</b> Scatter plot of all testp1 submissions by correct-minority-prediction count versus score, revealing a strong positive recall-score relationship and showing the union-ensemble strategy (s15, 50.26) as the performance frontier.</figcaption>
+</figure>
+
+<h3>Results Summary Table</h3>
+
+<table class='data'>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>testp1 Score</th>
+      <th>#Minorities</th>
+      <th>Key Takeaway</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>s05</code></td>
+      <td>post-proc</td>
+      <td>Lone-minority veto all (trivial anchor)</td>
+      <td>18.85</td>
+      <td>46</td>
+      <td>testp1 trivial; suppression is catastrophic</td>
+    </tr>
+    <tr>
+      <td><code>s27</code></td>
+      <td>single</td>
+      <td>Gemma4-31B LoRA (2-GPU ZeRO-3)</td>
+      <td>29.28</td>
+      <td>87</td>
+      <td>Larger model → more conservative; training prior dominates scale</td>
+    </tr>
+    <tr>
+      <td><code>s30</code></td>
+      <td>union</td>
+      <td>PHASE C clean union (train′, 90% data, no oversample)</td>
+      <td>43.85</td>
+      <td>269</td>
+      <td>No oversample −9 pts; densematch over-estimated; joint member drags</td>
+    </tr>
+    <tr>
+      <td><code>s33</code></td>
+      <td>single</td>
+      <td>Full-traindev plain-CE grid (os3.0/ds0.6)</td>
+      <td>42.87</td>
+      <td>245</td>
+      <td>Plain-CE + oversample over-fires → PEM 37.03 vs softmin 42.83</td>
+    </tr>
+    <tr>
+      <td><code>s12</code></td>
+      <td>single</td>
+      <td>Qwen3-VL-8B paragraph-joint plain-CE</td>
+      <td>43.33</td>
+      <td>209</td>
+      <td>Joint format single ≤ per-sentence grid</td>
+    </tr>
+    <tr>
+      <td><code>s09</code></td>
+      <td>single</td>
+      <td>Per-class oversample (Qwen3-VL-8B softmin)</td>
+      <td>43.83</td>
+      <td>268</td>
+      <td>More minorities fired but lower precision than grid; useful as union member</td>
+    </tr>
+    <tr>
+      <td><code>s26</code></td>
+      <td>single</td>
+      <td>Gemma4-26B LoRA single</td>
+      <td>44.69</td>
+      <td>370</td>
+      <td>Best non-Qwen single; still below grid; adding to union hurts PEM</td>
+    </tr>
+    <tr>
+      <td><code>s08</code></td>
+      <td>single</td>
+      <td>Qwen3-VL-8B uniform oversample 4× softmin</td>
+      <td>45.10</td>
+      <td>235</td>
+      <td>Alternate oversample regime; distinct errors make it a valuable union member</td>
+    </tr>
+    <tr>
+      <td><code>s01</code></td>
+      <td>single</td>
+      <td>Qwen3-VL-8B grid softmin ★ best single</td>
+      <td><strong>47.80</strong></td>
+      <td>253</td>
+      <td>Permanent floor; softmin + oversample optimal for single model</td>
+    </tr>
+    <tr>
+      <td><code>s11</code></td>
+      <td>union</td>
+      <td>3-Qwen union (s01 + s08 + s09)</td>
+      <td>48.22</td>
+      <td>339</td>
+      <td>First union step; both MF1 and PEM rise together</td>
+    </tr>
+    <tr>
+      <td><code>s37</code></td>
+      <td>union</td>
+      <td>5-Qwen plain-CE union (grid + os4 + perclass + joint-8B + joint-32B)</td>
+      <td>48.54</td>
+      <td>390</td>
+      <td>Plain-CE union −1.72 vs softmin union; more minorities but PEM 41.47 &lt; 43.34</td>
+    </tr>
+    <tr>
+      <td><code>s23</code></td>
+      <td>union</td>
+      <td>5-Qwen softmin + Gemma4-26B (6-member)</td>
+      <td>49.83</td>
+      <td>498</td>
+      <td>MF1 +0.50 vs s15 but PEM −1.36; nearest-miss architecture-diversity failure</td>
+    </tr>
+    <tr>
+      <td><code>s14</code></td>
+      <td>union</td>
+      <td>4-Qwen union (s01 + s08 + s09 + s13)</td>
+      <td>49.99</td>
+      <td>365</td>
+      <td>Penultimate step; MF1 56.80 / PEM 43.17</td>
+    </tr>
+    <tr>
+      <td><code>s15</code></td>
+      <td>union</td>
+      <td>5-Qwen softmin union ★ CHAMPION</td>
+      <td><strong>50.26</strong></td>
+      <td>382</td>
+      <td>Ceiling of naive-union with current recipe; MF1 57.17 / PEM 43.34</td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote class='key'>The decisive result of the campaign: (1) testp1 is recall-critical — the correct minority count is the primary driver of score, and every form of suppression strictly hurts; (2) diverse-union ensemble is the only mechanism found to beat the best single model, scaling monotonically from <code>47.80</code> (s01) to <code>50.26</code> (s15), but only while members are individually strong and error-uncorrelated — weak or correlated additions increase false positives and collapse PEM.</blockquote>
+</section>
+
+<section>
+<h2><span class="secno">3</span> GATE-B: Building (and Calibrating) a Leakage-Free Offline Bench</h2>
+<h3>Motivation: Why the Naive Dev Split Fails</h3>
+
+<p>Throughout the campaign each new idea consumed one Codabench submission (100-shot budget, Phase-1 test set). A reliable offline proxy would multiply iteration speed. The obvious candidate — a held-out slice of train-dev — fails on three independent counts.</p>
+
+<ul>
+  <li><strong>Image leakage (32%).</strong> A random 90/10 record split does not respect the fact that multiple records share the same evidence figure (identified by image SHA). Approximately 32% of dev records contain at least one image whose SHA also appears in the training split, so the model has already seen the visual evidence at training time. Scores on such a dev are inflated by memorization.</li>
+  <li><strong>Domain and size mismatch.</strong> The naive 88-record random dev used for early model selection was small and unrepresentative; more importantly, its paragraph distribution mirrors train-dev (mean 5.1 sentences, 34.5% of records containing any minority-label sentence) rather than testp1 (mean 8.7 sentences, ~84% minority-carrying paragraphs). A model evaluated in the train-dev regime receives misleading feedback.</li>
+  <li><strong>Wrong suppression regime — the suppression trap.</strong> The all-<code>Supported</code> trivial baseline on the raw image-disjoint dev scores <code>42.37</code> with PEM <code>~65</code>. In this regime, suppressing minority predictions <em>improves</em> the dev score, reinforcing a "precision-critical" framing that was already falsified on testp1 (all-<code>Supported</code> trivial ≈ <code>18.85</code>). Any dev that rewards minority suppression is anti-correlated with what actually matters on testp1.</li>
+</ul>
+
+<h3>Densematch Construction</h3>
+
+<p>GATE-B (Phase A) built a leakage-free offline bench through two steps applied in sequence.</p>
+
+<p><strong>Step 1 — Image-disjoint split.</strong> Records were partitioned using union-find over shared image SHAs (<code>build_dataset --split-mode component_aware --val-ratio 0.15 --seed 42</code>), ensuring that every image SHA in the dev partition is absent from the training partition. The result: 2,832 train records (<code>data/devbench/train_sft.jsonl</code>) and 501 dev records with zero SHA overlap — the zero-SHA assertion was verified programmatically.</p>
+
+<p><strong>Step 2 — Testp1-shape reshaping.</strong> The raw 501-record image-disjoint dev retains the train-dev shape and therefore the suppression trap. <code>scripts/reshape_devbench.py</code> produced three gold variants: <em>raw</em> (501 records, control), <em>reshaped</em> (records ≥8 sentences with ≥84% minority density, severely pool-limited to ~30 records), and <em>densematch</em> (206 records, minority density forced to exactly 84% without a hard length floor, balancing statistical power against shape fidelity). The table below summarises the resulting shapes.</p>
+
+<table class='data'>
+  <thead>
+    <tr><th>Variant</th><th>#Rec</th><th>#Sent</th><th>Mean len</th><th>%≥8 sent</th><th>%minor</th><th>Trivial all-<code>Supported</code></th></tr>
+  </thead>
+  <tbody>
+    <tr><td>testp1 (target)</td><td>586</td><td>5,096</td><td>8.70</td><td>53.1%</td><td>~84%</td><td>18.85 (s05)</td></tr>
+    <tr><td>raw</td><td>501</td><td>2,539</td><td>5.07</td><td>15.0%</td><td>34.5%</td><td>42.37</td></tr>
+    <tr><td>reshaped</td><td>~30</td><td>—</td><td>—</td><td>—</td><td>84%</td><td>17.88</td></tr>
+    <tr><td><strong>densematch</strong></td><td><strong>206</strong></td><td><strong>1,235</strong></td><td><strong>6.00</strong></td><td><strong>28.2%</strong></td><td><strong>84%</strong></td><td><strong>17.24</strong></td></tr>
+  </tbody>
+</table>
+
+<p><strong>Litmus test — trivial all-<code>Supported</code> score.</strong> The single most diagnostic check is the score obtained by predicting <code>Supported</code> for every sentence. On the raw dev this is <code>42.37</code> (PEM ~65), placing it firmly in the suppression-favoring regime. On densematch it is <code>17.24</code>, within noise of testp1's <code>18.85</code>. Reshaping successfully inverts the bench from "rewards suppression" to "punishes suppression," matching the recall-critical regime of testp1.</p>
+
+<blockquote class='key'>The trivial all-<code>Supported</code> score is the regime litmus: a bench is a valid testp1 proxy only if that trivial score is near 19, not near 43.</blockquote>
+
+<h3>Rank-Correlation Validation (Phase B)</h3>
+
+<p>Phase B ran inference for 8 Qwen adapters on the 501-record image-disjoint dev, then synthesized 4 union and 4 post-processing variants, yielding 16 anchors each with known testp1 scores. <code>scripts/rankcorr_meta.py</code> computed the Spearman rank correlation between each gold variant's dev score and the known testp1 scores.</p>
+
+<table class='data'>
+  <thead>
+    <tr><th>Gold variant</th><th>#Rec</th><th>Spearman(dev_score, testp1)</th><th>Spearman(dev_MF1)</th><th>Spearman(dev_PEM)</th><th>Decision</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>raw (traindev shape)</td><td>501</td><td>−0.016</td><td>+0.222</td><td>−0.141</td><td>Abandon</td></tr>
+    <tr><td>reshaped (≥8 &amp; 84%)</td><td>30</td><td>+0.222</td><td>+0.432</td><td>+0.191</td><td>Abandon</td></tr>
+    <tr><td><strong>densematch (84% density)</strong></td><td><strong>206</strong></td><td><strong>+0.590</strong></td><td>+0.590</td><td>+0.541</td><td>Weak smell-test</td></tr>
+  </tbody>
+</table>
+
+<p>The monotonic progression raw (−0.02) → reshaped (+0.22) → densematch (+0.59) validates the testp1-shaping direction: recovering minority density recovers real signal. Nevertheless, no variant reached the pre-specified trustworthy threshold of 0.80. The ceiling is explained by <strong>memorization leakage</strong>: all 16 Phase-B anchors were originally trained on the full train-dev set, which <em>includes</em> the newly carved dev'. Their dev scores are compressed into the 90–98 range — the model that overfit hardest scores highest on the leaky dev, while generalizing worst to testp1. The most extreme case is s10 (per-class 2-epoch, the most overfit): dev score <code>97.51</code> (highest), testp1 score <code>41.70</code> (near worst). Conversely s15, the testp1 champion at <code>50.26</code>, scores only <code>92.74</code> on densematch — because its additional union member contributes correct minorities that are not in the memorized dev pattern, lowering leaky-dev while raising testp1. The +0.59 densematch Spearman is therefore a <strong>lower bound</strong>; leakage suppresses it.</p>
+
+<h3>Three Clean Calibration Points</h3>
+
+<p>Phase C trained three candidates exclusively on <code>data/devbench/train_sft.jsonl</code> (the image-disjoint train', which never sees dev') and submitted each to Codabench, producing the first leakage-free (densematch, testp1) pairs.</p>
+
+<figure id="fig-calibration">
+<div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman', Times, serif">
+  <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
+  <!-- Title -->
+  <text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">Offline densematch ranks clean models correctly but cannot give absolute testp1</text>
+
+  <!-- Plot area: x∈[78,724], y∈[64,408] -->
+  <!-- X axis range: densematch 76–95, Y axis range: testp1 32–46 -->
+  <!-- X scale: (v-76)/(95-76) * (724-78) + 78 -->
+  <!-- Y scale: 408 - (v-32)/(46-32) * (408-64) -->
+
+  <!-- Gridlines (horizontal) -->
+  <!-- y=32 → 408, y=34 → 408-2/14*344=358.3, y=36 → 308.6, y=38 → 258.9, y=40 → 209.1, y=42 → 159.4, y=44 → 109.7, y=46 → 64 -->
+  <line x1="78" y1="408" x2="724" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="358.3" x2="724" y2="358.3" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="308.6" x2="724" y2="308.6" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="258.9" x2="724" y2="258.9" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="209.1" x2="724" y2="209.1" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="159.4" x2="724" y2="159.4" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="109.7" x2="724" y2="109.7" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="78" y1="64" x2="724" y2="64" stroke="#e7e7e7" stroke-width="1"/>
+
+  <!-- Axes -->
+  <line x1="78" y1="64" x2="78" y2="408" stroke="#333" stroke-width="1"/>
+  <line x1="78" y1="408" x2="724" y2="408" stroke="#333" stroke-width="1"/>
+
+  <!-- X ticks: 76,78,80,82,84,86,88,90,92,94 -->
+  <!-- xpos(v) = (v-76)/19*646 + 78 -->
+  <!-- v=76: 78, v=78: 78+2/19*646=146.1, v=80: 214.1, v=82: 282.1, v=84: 350.2, v=86: 418.2, v=88: 486.2, v=90: 554.2, v=92: 622.3, v=94: 690.3 -->
+  <line x1="78" y1="408" x2="78" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="78" y="425" text-anchor="middle" font-size="12" fill="#333">76</text>
+  <line x1="146.1" y1="408" x2="146.1" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="146.1" y="425" text-anchor="middle" font-size="12" fill="#333">78</text>
+  <line x1="214.1" y1="408" x2="214.1" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="214.1" y="425" text-anchor="middle" font-size="12" fill="#333">80</text>
+  <line x1="282.1" y1="408" x2="282.1" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="282.1" y="425" text-anchor="middle" font-size="12" fill="#333">82</text>
+  <line x1="350.2" y1="408" x2="350.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="350.2" y="425" text-anchor="middle" font-size="12" fill="#333">84</text>
+  <line x1="418.2" y1="408" x2="418.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="418.2" y="425" text-anchor="middle" font-size="12" fill="#333">86</text>
+  <line x1="486.2" y1="408" x2="486.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="486.2" y="425" text-anchor="middle" font-size="12" fill="#333">88</text>
+  <line x1="554.2" y1="408" x2="554.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="554.2" y="425" text-anchor="middle" font-size="12" fill="#333">90</text>
+  <line x1="622.3" y1="408" x2="622.3" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="622.3" y="425" text-anchor="middle" font-size="12" fill="#333">92</text>
+  <line x1="690.3" y1="408" x2="690.3" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="690.3" y="425" text-anchor="middle" font-size="12" fill="#333">94</text>
+
+  <!-- Y ticks: 32,34,36,38,40,42,44,46 -->
+  <line x1="78" y1="408" x2="73" y2="408" stroke="#333" stroke-width="1"/>
+  <text x="68" y="412" text-anchor="end" font-size="12" fill="#333">32</text>
+  <line x1="78" y1="358.3" x2="73" y2="358.3" stroke="#333" stroke-width="1"/>
+  <text x="68" y="362" text-anchor="end" font-size="12" fill="#333">34</text>
+  <line x1="78" y1="308.6" x2="73" y2="308.6" stroke="#333" stroke-width="1"/>
+  <text x="68" y="312" text-anchor="end" font-size="12" fill="#333">36</text>
+  <line x1="78" y1="258.9" x2="73" y2="258.9" stroke="#333" stroke-width="1"/>
+  <text x="68" y="262" text-anchor="end" font-size="12" fill="#333">38</text>
+  <line x1="78" y1="209.1" x2="73" y2="209.1" stroke="#333" stroke-width="1"/>
+  <text x="68" y="213" text-anchor="end" font-size="12" fill="#333">40</text>
+  <line x1="78" y1="159.4" x2="73" y2="159.4" stroke="#333" stroke-width="1"/>
+  <text x="68" y="163" text-anchor="end" font-size="12" fill="#333">42</text>
+  <line x1="78" y1="109.7" x2="73" y2="109.7" stroke="#333" stroke-width="1"/>
+  <text x="68" y="113" text-anchor="end" font-size="12" fill="#333">44</text>
+  <line x1="78" y1="64" x2="73" y2="64" stroke="#333" stroke-width="1"/>
+  <text x="68" y="68" text-anchor="end" font-size="12" fill="#333">46</text>
+
+  <!-- Axis titles -->
+  <text x="401" y="455" text-anchor="middle" font-size="13" font-style="italic" fill="#222">Offline densematch score</text>
+  <text transform="translate(22,236) rotate(-90)" text-anchor="middle" font-size="13" font-style="italic" fill="#222">testp1 score</text>
+
+  <!-- Data point coordinates -->
+  <!-- A0 softmin: dm=78.97 → x=(78.97-76)/19*646+78 = 2.97/19*646+78 = 100.94+78 = 178.9; testp1=34.21 → y=408-(34.21-32)/14*344=408-2.21/14*344=408-54.3=353.7 -->
+  <!-- A1 plain-CE: dm=81.13 → x=(81.13-76)/19*646+78=5.13/19*646+78=174.4+78=252.4; testp1=38.68 → y=408-(38.68-32)/14*344=408-6.68/14*344=408-164.1=243.9 -->
+  <!-- U3 union: dm=83.90 → x=(83.90-76)/19*646+78=7.90/19*646+78=268.6+78=346.6; testp1=43.85 → y=408-(43.85-32)/14*344=408-11.85/14*344=408-291.1=116.9 -->
+  <!-- leaky s15: dm=92.76 → x=(92.76-76)/19*646+78=16.76/19*646+78=569.5+78=647.5; y=no real value, place visually around mid ~240 -->
+
+  <!-- Connecting line through clean points -->
+  <polyline points="178.9,353.7 252.4,243.9 346.6,116.9" fill="none" stroke="#4a6fa5" stroke-width="1.5" stroke-dasharray="none" opacity="0.6"/>
+
+  <!-- A0 softmin (single model, steel) -->
+  <circle cx="178.9" cy="353.7" r="5" fill="#4a6fa5" stroke="#00000022" stroke-width="1"/>
+  <text x="190" y="350" font-size="11" fill="#4a6fa5">A0 softmin</text>
+  <text x="190" y="363" font-size="11" fill="#4a6fa5">(78.97, 34.21)</text>
+
+  <!-- A1 plain-CE (single model, steel) -->
+  <circle cx="252.4" cy="243.9" r="5" fill="#4a6fa5" stroke="#00000022" stroke-width="1"/>
+  <text x="264" y="240" font-size="11" fill="#4a6fa5">A1 plain-CE</text>
+  <text x="264" y="253" font-size="11" fill="#4a6fa5">(81.13, 38.68)</text>
+
+  <!-- U3 clean union (ensemble/union, teal) -->
+  <circle cx="346.6" cy="116.9" r="5" fill="#2a9d8f" stroke="#00000022" stroke-width="1"/>
+  <text x="358" y="113" font-size="11" fill="#2a9d8f">U3 clean-union / s30</text>
+  <text x="358" y="126" font-size="11" fill="#2a9d8f">(83.90, 43.85)</text>
+
+  <!-- Leaky s15 at dm=92.76 (gray, no real y — visual placeholder near mid) -->
+  <!-- Place marker at x=647.5, y=209 (visual, not data-real) -->
+  <circle cx="647.5" cy="209" r="5" fill="#b3b3b3" stroke="#00000022" stroke-width="1" stroke-dasharray="3 2"/>
+  <!-- Dashed vertical line to indicate no valid y-mapping -->
+  <line x1="647.5" y1="64" x2="647.5" y2="408" stroke="#8a8a8a" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="651" y="188" font-size="11" fill="#8a8a8a">leaky s15</text>
+  <text x="651" y="201" font-size="11" fill="#8a8a8a">(dm≈92.76)</text>
+  <text x="651" y="214" font-size="11" fill="#8a8a8a">not comparable</text>
+
+  <!-- Annotation box -->
+  <rect x="82" y="68" width="430" height="42" rx="4" fill="#f8f8f0" stroke="#cccc88" stroke-width="1" opacity="0.92"/>
+  <text x="297" y="84" text-anchor="middle" font-size="11" fill="#444">ranking preserved (monotone) but offset ~40 pts;</text>
+  <text x="297" y="100" text-anchor="middle" font-size="11" fill="#444">cannot extrapolate across training regimes</text>
+
+  <!-- Legend -->
+  <rect x="530" y="330" width="186" height="68" rx="4" fill="#f9f9f9" stroke="#cccccc" stroke-width="1"/>
+  <circle cx="547" cy="348" r="5" fill="#4a6fa5"/>
+  <text x="558" y="352" font-size="12" fill="#333">single model (clean)</text>
+  <circle cx="547" cy="368" r="5" fill="#2a9d8f"/>
+  <text x="558" y="372" font-size="12" fill="#333">union ensemble (clean)</text>
+  <circle cx="547" cy="388" r="5" fill="#b3b3b3"/>
+  <text x="558" y="392" font-size="12" fill="#333">leaky (not comparable)</text>
+</svg></div>
+<figcaption><b>Figure 4.</b> Offline densematch scores rank clean models monotonically with testp1, but the ~40-point offset prevents absolute score extrapolation across training regimes.</figcaption>
+</figure>
+
+<table class='data'>
+  <thead>
+    <tr><th>Model</th><th>Type</th><th>densematch score</th><th>testp1 score</th><th>testp1 MF1</th><th>testp1 PEM</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>s31 — softmin single (A0)</td><td>m</td><td>78.97</td><td>34.21</td><td>39.57</td><td>28.84</td></tr>
+    <tr><td>s32 — plain-CE single (A1)</td><td>m</td><td>81.13</td><td>38.68</td><td>43.57</td><td>33.79</td></tr>
+    <tr><td>s30 — union of three (U3)</td><td>u</td><td>83.90</td><td>43.85</td><td>48.61</td><td>39.08</td></tr>
+  </tbody>
+</table>
+
+<p>The rank order is identical on both benches: softmin &lt; plain-CE &lt; union on densematch (<code>78.97 &lt; 81.13 &lt; 83.90</code>) and on testp1 (<code>34.21 &lt; 38.68 &lt; 43.85</code>). The bench ranks same-condition models correctly.</p>
+
+<p>However, two extrapolation failures are equally instructive. First, <strong>absolute scores are not transferable</strong>: densematch scores run ~40 points higher than testp1 (offset ≈ 40), ruling out any use of the bench for predicting raw testp1 performance. Second, <strong>the bench cannot extrapolate across training regimes</strong>. The clean union s30 scores <code>83.90</code> on densematch (above all single models), and densematch correctly identifies the union member ordering for within-regime comparisons; yet on testp1, s30 scores only <code>43.85</code> — far below the champion s15 (<code>50.26</code>). The root cause is that s30 was trained on train' (90% of data, no oversampling), placing it in a structurally different regime from s15 (full train-dev, oversampled). Densematch rated s30 high within the clean-train' regime, but could not foresee that the full-traindev + oversample regime would add ~6–7 points. The joint-format members in s30's union further depress testp1 PEM (39.08 vs s01's 42.83), a failure mode invisible to densematch.</p>
+
+<h3>Epistemics: A Same-Condition Ranker, Not a Selector</h3>
+
+<p>The durable lesson from GATE-B is a precise characterisation of what offline benches can and cannot do in this setting:</p>
+
+<ul>
+  <li><strong>Can do:</strong> rank models trained under the same conditions (same data, same loss, same oversample regime) — the three clean Phase-C points confirm this; <em>kill large bad directions</em> offline (higher image resolution, minority suppression, 2-epoch overfit all tank densematch and would have saved one Codabench shot each).</li>
+  <li><strong>Cannot do:</strong> predict absolute testp1 scores (offset ~40 pts); extrapolate across regimes (train' vs full-traindev, oversampled vs not, joint vs per-sentence format); rank the union top (500-record bench is underpowered for the 0.3–0.5 pt differences at the leaderboard apex).</li>
+</ul>
+
+<blockquote class='key'>An offline bench built on image-disjoint, testp1-shaped data is a same-condition ranker. It can kill bad directions cheaply and confirm relative ordering within a fixed regime, but it cannot substitute for real leaderboard evaluation when comparing candidates across training regimes or when resolving sub-half-point differences at the top.</blockquote>
+
+<p>The cumulative protocol (Phase C) is the clean long-term resolution: every new candidate is trained on the image-disjoint train', scored on densematch offline, and simultaneously submitted to Codabench. Each such pair tightens the rank-correlation estimate without leakage, and the first density-matched model simultaneously serves as the breakthrough candidate (P1). The bench's trustworthiness grows with the number of clean calibration points rather than depending on legacy adapters that cannot be de-leaked after the fact.</p>
+</section>
+
+<section>
+<h2><span class="secno">4</span> The softmin ⇄ plain-CE Regime Reversal</h2>
+<p>
+A recurring hazard in this campaign was the <em>sign-reversal</em>: an experimental conclusion
+reached under one set of conditions flipped when a single upstream variable changed. The
+softmin-PEM loss vs. plain cross-entropy (plain-CE) comparison delivered the sharpest instance,
+reversing direction three times across three cleanly separated regimes.
+</p>
+
+<h3>Background: the two losses</h3>
+<p>
+The custom <em>softmin-PEM</em> loss (integrated into ms-swift 4.2.3) adds a paragraph-level
+bottleneck term to the per-token CE objective. Its design intent is to penalise the model for
+producing <em>any</em> false-positive minority prediction in an otherwise-correct paragraph,
+thereby protecting Paragraph Exact Match (PEM). Plain-CE is the standard per-token cross-entropy
+with no such paragraph-aware regularisation.
+</p>
+
+<h3>Reversal 1 — image-disjoint train', no oversampling (GATE-B PHASE C bench)</h3>
+<p>
+In PHASE C, both losses were trained on <code>data/devbench/train_sft.jsonl</code>: an
+image-disjoint 85 % split of train-dev (<em>train'</em>) with <strong>no minority
+oversampling</strong>. On the densematch offline bench the plain-CE model (A1) scored 81.13
+vs. softmin (A0) 78.97 — a +2.16 gap favouring plain-CE. The same ordering held on testp1
+(s32 plain-CE 38.68 vs. s31 softmin 34.21, <strong>+4.47</strong>), confirming the bench
+direction. Without oversampling, plain-CE wins.
+</p>
+
+<h3>Reversal 2 — full train-dev with oversampling (the real recipe)</h3>
+<p>
+Having confirmed <em>plain-CE &gt; softmin</em> on clean models, the natural next step was to
+retrain s15's per-sentence members as plain-CE on the full train-dev with oversampling
+(s01 recipe: <code>--minority-oversample 3.0 --supported-downsample 0.6</code>). The result
+reversed completely:
+</p>
+
+<table class='data'>
+  <thead>
+    <tr>
+      <th>System</th><th>Loss</th><th>Oversample</th><th>Score</th><th>Macro-F1</th><th>PEM</th><th>#Minority</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>s01 (grid)</td><td>softmin</td><td>3× + ds 0.6</td>
+      <td><strong>47.80</strong></td><td>52.77</td><td>42.83</td><td>253</td>
+    </tr>
+    <tr>
+      <td>s33 (grid plain-CE)</td><td>plain-CE</td><td>3× + ds 0.6</td>
+      <td>42.87</td><td>48.72</td><td>37.03</td><td>245</td>
+    </tr>
+    <tr>
+      <td>s15 (5-Qwen union)</td><td>softmin members</td><td>3× + ds 0.6</td>
+      <td><strong>50.26</strong></td><td>57.17</td><td>43.34</td><td>382</td>
+    </tr>
+    <tr>
+      <td>s37 (5-Qwen plain-CE union)</td><td>plain-CE members</td><td>3× + ds 0.6</td>
+      <td>48.54</td><td>55.62</td><td>41.47</td><td>390</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+The gap reverses at both levels: <strong>+4.93</strong> in favour of softmin at the single-model
+level (s01 47.80 vs. s33 42.87) and <strong>+1.72</strong> at the union level (s15 50.26 vs.
+s37 48.54). Notably, s37's plain-CE union fires <em>more</em> minorities (390 vs. 382) yet
+scores lower — the additional predictions are false positives, not true recalls.
+</p>
+
+<figure id="fig-regime-reversal">
+<div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman', Times, serif">
+  <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
+  <text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">softmin &#x21C4; plain-CE: the sign flips with oversampling</text>
+  <rect x="280" y="39" width="200" height="23" rx="3" fill="white" stroke="#ccc" stroke-width="0.7"/>
+  <rect x="288" y="44" width="13" height="12" fill="#c1432f"/>
+  <text x="306" y="55" font-size="12" fill="#333">softmin</text>
+  <rect x="366" y="44" width="13" height="12" fill="#3d6da8"/>
+  <text x="384" y="55" font-size="12" fill="#333">plain-CE</text>
+  <line x1="80" y1="408.0" x2="724" y2="408.0" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="373.6" x2="724" y2="373.6" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="339.2" x2="724" y2="339.2" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="304.8" x2="724" y2="304.8" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="270.4" x2="724" y2="270.4" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="236.0" x2="724" y2="236.0" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="201.6" x2="724" y2="201.6" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="167.2" x2="724" y2="167.2" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="132.8" x2="724" y2="132.8" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="98.4" x2="724" y2="98.4" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="64.0" x2="724" y2="64.0" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="80" y1="64" x2="80" y2="408" stroke="#333" stroke-width="1.5"/>
+  <line x1="80" y1="408" x2="724" y2="408" stroke="#333" stroke-width="1.5"/>
+  <line x1="75" y1="408.0" x2="80" y2="408.0" stroke="#333" stroke-width="1"/>
+  <text x="70" y="412.0" text-anchor="end" font-size="12" fill="#333">30</text>
+  <line x1="75" y1="373.6" x2="80" y2="373.6" stroke="#333" stroke-width="1"/>
+  <text x="70" y="377.6" text-anchor="end" font-size="12" fill="#333">32</text>
+  <line x1="75" y1="339.2" x2="80" y2="339.2" stroke="#333" stroke-width="1"/>
+  <text x="70" y="343.2" text-anchor="end" font-size="12" fill="#333">34</text>
+  <line x1="75" y1="304.8" x2="80" y2="304.8" stroke="#333" stroke-width="1"/>
+  <text x="70" y="308.8" text-anchor="end" font-size="12" fill="#333">36</text>
+  <line x1="75" y1="270.4" x2="80" y2="270.4" stroke="#333" stroke-width="1"/>
+  <text x="70" y="274.4" text-anchor="end" font-size="12" fill="#333">38</text>
+  <line x1="75" y1="236.0" x2="80" y2="236.0" stroke="#333" stroke-width="1"/>
+  <text x="70" y="240.0" text-anchor="end" font-size="12" fill="#333">40</text>
+  <line x1="75" y1="201.6" x2="80" y2="201.6" stroke="#333" stroke-width="1"/>
+  <text x="70" y="205.6" text-anchor="end" font-size="12" fill="#333">42</text>
+  <line x1="75" y1="167.2" x2="80" y2="167.2" stroke="#333" stroke-width="1"/>
+  <text x="70" y="171.2" text-anchor="end" font-size="12" fill="#333">44</text>
+  <line x1="75" y1="132.8" x2="80" y2="132.8" stroke="#333" stroke-width="1"/>
+  <text x="70" y="136.8" text-anchor="end" font-size="12" fill="#333">46</text>
+  <line x1="75" y1="98.4" x2="80" y2="98.4" stroke="#333" stroke-width="1"/>
+  <text x="70" y="102.4" text-anchor="end" font-size="12" fill="#333">48</text>
+  <line x1="75" y1="64.0" x2="80" y2="64.0" stroke="#333" stroke-width="1"/>
+  <text x="70" y="68.0" text-anchor="end" font-size="12" fill="#333">50</text>
+  <text x="22" y="236" text-anchor="middle" font-size="13" font-style="italic" fill="#333" transform="rotate(-90,22,236)">testp1 score</text>
+  <rect x="169.0" y="335.6" width="65" height="72.4" fill="#c1432f"/>
+  <rect x="248.0" y="258.7" width="65" height="149.3" fill="#3d6da8"/>
+  <rect x="491.0" y="101.8" width="65" height="306.2" fill="#c1432f"/>
+  <rect x="570.0" y="186.6" width="65" height="221.4" fill="#3d6da8"/>
+  <text x="201.5" y="329.6" text-anchor="middle" font-size="11" fill="#333">34.21</text>
+  <text x="280.5" y="252.7" text-anchor="middle" font-size="11" fill="#333">38.68</text>
+  <text x="523.5" y="95.8" text-anchor="middle" font-size="11" fill="#333">47.80</text>
+  <text x="602.5" y="180.6" text-anchor="middle" font-size="11" fill="#333">42.87</text>
+  <text x="241.0" y="236.7" text-anchor="middle" font-size="11" font-style="italic" fill="#3d6da8">plain-CE wins (+4.47)</text>
+  <text x="563.0" y="79.8" text-anchor="middle" font-size="11" font-style="italic" fill="#c1432f">softmin wins (+4.93)</text>
+  <text x="241.0" y="428" text-anchor="middle" font-size="12" fill="#333">No oversample (train&#x2032;)</text>
+  <text x="563.0" y="428" text-anchor="middle" font-size="12" fill="#333">With oversample (full train-dev, real recipe)</text>
+  <text x="402" y="455" text-anchor="middle" font-size="13" font-style="italic" fill="#333">Training regime</text>
+</svg></div>
+<figcaption><b>Figure 5.</b> Grouped bar comparison of softmin and plain-CE losses under two training regimes showing that plain-CE dominates without minority oversampling (+4.47) while softmin dominates under the full real recipe with oversampling (+4.93), demonstrating a complete sign reversal.</figcaption>
+</figure>
+
+<h3>Reversal 3 — architecture interaction (Gemma-4-26B)</h3>
+<p>
+A third, even larger reversal emerged for a different architecture. Gemma-4-26B trained with
+softmin scored 44.69 (s26). The same architecture retrained with plain-CE produced only 21.40
+(s36), predicting just 46 minority sentences and collapsing to near-trivial performance. Whereas
+Qwen3-VL plain-CE <em>over-fires</em> minorities under oversampling, Gemma plain-CE
+catastrophically <em>under-fires</em> them — demonstrating that the loss × model × oversampling
+interaction cannot be extrapolated across architectures.
+</p>
+
+<h3>Mechanism: why softmin only pays off under oversampling</h3>
+<p>
+Oversampling duplicates minority sentences by a factor of 3–6×, which systematically biases the
+gradient signal toward minority classes. In plain-CE this bias translates directly into an
+elevated minority-class activation rate at inference time: the model fires minorities liberally,
+producing false positives that shatter otherwise-correct paragraphs and collapse PEM. The
+softmin-PEM loss counters exactly this effect: its paragraph-level penalty suppresses the
+oversampling-induced FP surplus, recovering PEM while preserving true-positive minority recall.
+When there is <em>no</em> oversampling (PHASE C train' models), minority frequency is low, FP
+risk is low, and the bottleneck penalty is unnecessary overhead — hence plain-CE wins.
+</p>
+
+<blockquote class='key'>
+The softmin loss earns its keep if and only if minority oversampling is active.
+Any clean-bench or no-oversample finding about the two losses is a regime-conditioned signal
+and must be re-validated on the full real recipe before acting on it.
+</blockquote>
+
+<h3>Per-class recall bottleneck</h3>
+<p>
+Even the champion softmin union (s15) leaves a persistent recall deficit that no loss choice
+resolves. Examining the best single model (s01), per-class recall on testp1 is:
+</p>
+
+<table class='data'>
+  <thead>
+    <tr><th>Class</th><th>Approx. recall</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Supported</code></td><td>~99.5 %</td><td>Near-perfect; almost never missed</td></tr>
+    <tr><td><code>Unsupported Causal Mechanistic</code></td><td>~100 %</td><td>High precision and recall</td></tr>
+    <tr><td><code>Unsupported Entity</code></td><td>~86 %</td><td>Moderate gap</td></tr>
+    <tr><td><code>Scope Overgeneralization</code></td><td>~63 %</td><td>Substantial recall deficit</td></tr>
+    <tr><td><code>Contradiction</code></td><td>~22 %</td><td>Severely recall-starved; fires ~2–4 of 9 gold instances</td></tr>
+  </tbody>
+</table>
+
+<figure id="fig-per-class-recall">
+<div class="svgwrap"><svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" font-family="'Times New Roman', Times, serif">
+  <rect x="0" y="0" width="760" height="470" fill="#ffffff"/>
+  <!-- Title -->
+  <text x="380" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">The recall bottleneck: rare classes Contradiction &amp; SO</text>
+
+  <!-- Plot area: x∈[78,724], y∈[64,408] -->
+  <!-- Horizontal bar chart: 5 classes, y-axis = classes, x-axis = recall 0-100 -->
+  <!-- Bar slots: 5 bars, each ~60px tall, gap ~16px -->
+  <!-- Total slot height = (408-64)/5 = 68.8 each -->
+  <!-- Bar height = 48, gap between bars = 20.8 -->
+  <!-- Bars: y-center of slot i (0-indexed from top) = 64 + 34.4 + i*68.8 -->
+  <!-- i=0 Supported, i=1 UCM, i=2 UE, i=3 SO, i=4 Contradiction -->
+  <!-- Recall 0→78, 100→724: x = (v/100)*(724-78)+78 = v*6.46+78 -->
+
+  <!-- Gridlines (vertical) -->
+  <line x1="78" y1="64" x2="78" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="142.6" y1="64" x2="142.6" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="207.2" y1="64" x2="207.2" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="271.8" y1="64" x2="271.8" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="336.4" y1="64" x2="336.4" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="401" y1="64" x2="401" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="465.6" y1="64" x2="465.6" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="530.2" y1="64" x2="530.2" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="594.8" y1="64" x2="594.8" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="659.4" y1="64" x2="659.4" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+  <line x1="724" y1="64" x2="724" y2="408" stroke="#e7e7e7" stroke-width="1"/>
+
+  <!-- Axes -->
+  <line x1="78" y1="64" x2="78" y2="408" stroke="#333" stroke-width="1"/>
+  <line x1="78" y1="408" x2="724" y2="408" stroke="#333" stroke-width="1"/>
+
+  <!-- X ticks: 0,10,20,...,100 -->
+  <line x1="78" y1="408" x2="78" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="78" y="426" text-anchor="middle" font-size="12" fill="#333">0</text>
+  <line x1="142.6" y1="408" x2="142.6" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="142.6" y="426" text-anchor="middle" font-size="12" fill="#333">10</text>
+  <line x1="207.2" y1="408" x2="207.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="207.2" y="426" text-anchor="middle" font-size="12" fill="#333">20</text>
+  <line x1="271.8" y1="408" x2="271.8" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="271.8" y="426" text-anchor="middle" font-size="12" fill="#333">30</text>
+  <line x1="336.4" y1="408" x2="336.4" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="336.4" y="426" text-anchor="middle" font-size="12" fill="#333">40</text>
+  <line x1="401" y1="408" x2="401" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="401" y="426" text-anchor="middle" font-size="12" fill="#333">50</text>
+  <line x1="465.6" y1="408" x2="465.6" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="465.6" y="426" text-anchor="middle" font-size="12" fill="#333">60</text>
+  <line x1="530.2" y1="408" x2="530.2" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="530.2" y="426" text-anchor="middle" font-size="12" fill="#333">70</text>
+  <line x1="594.8" y1="408" x2="594.8" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="594.8" y="426" text-anchor="middle" font-size="12" fill="#333">80</text>
+  <line x1="659.4" y1="408" x2="659.4" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="659.4" y="426" text-anchor="middle" font-size="12" fill="#333">90</text>
+  <line x1="724" y1="408" x2="724" y2="413" stroke="#333" stroke-width="1"/>
+  <text x="724" y="426" text-anchor="middle" font-size="12" fill="#333">100</text>
+
+  <!-- Axis title -->
+  <text x="401" y="453" text-anchor="middle" font-size="13" font-style="italic" fill="#222">Recall (%)</text>
+  <text transform="translate(22,236) rotate(-90)" text-anchor="middle" font-size="13" font-style="italic" fill="#222">Class</text>
+
+  <!-- Bars -->
+  <!-- Slot height = (408-64)/5 = 68.8; bar height = 44; each bar y-top = 64 + i*68.8 + (68.8-44)/2 = 64 + i*68.8 + 12.4 -->
+  <!-- i=0 Supported 99.5%: x_end=99.5*6.46+78=720.8; bar top y=76.4; bar bottom=120.4 -->
+  <!-- i=1 UCM 100.0%: x_end=724; y-top=145.2; bottom=189.2 -->
+  <!-- i=2 UE 85.9%: x_end=85.9*6.46+78=633.8; y-top=214; bottom=258 -->
+  <!-- i=3 SO 62.8%: x_end=62.8*6.46+78=483.5; y-top=282.8; bottom=326.8 -->
+  <!-- i=4 Contradiction 22.2%: x_end=22.2*6.46+78=221.4; y-top=351.6; bottom=395.6 -->
+
+  <!-- Supported (steel) -->
+  <rect x="78" y="76.4" width="642.8" height="44" fill="#4a6fa5" stroke="#00000022" stroke-width="0.8" rx="2"/>
+  <text x="728" y="103" font-size="11" fill="#4a6fa5" text-anchor="start">99.5%</text>
+
+  <!-- UCM (steel) -->
+  <rect x="78" y="145.2" width="646" height="44" fill="#4a6fa5" stroke="#00000022" stroke-width="0.8" rx="2"/>
+  <text x="728" y="172" font-size="11" fill="#4a6fa5" text-anchor="start">100.0%</text>
+
+  <!-- UE (steel) -->
+  <rect x="78" y="214" width="555.8" height="44" fill="#4a6fa5" stroke="#00000022" stroke-width="0.8" rx="2"/>
+  <text x="638" y="241" font-size="11" fill="#4a6fa5">85.9%</text>
+
+  <!-- SO (brick red, bottleneck) -->
+  <rect x="78" y="282.8" width="405.5" height="44" fill="#c1432f" stroke="#00000022" stroke-width="0.8" rx="2"/>
+  <text x="489" y="309.8" font-size="11" fill="#c1432f">62.8%</text>
+
+  <!-- Contradiction (brick red, bottleneck) -->
+  <rect x="78" y="351.6" width="143.4" height="44" fill="#c1432f" stroke="#00000022" stroke-width="0.8" rx="2"/>
+  <text x="228" y="378.6" font-size="11" fill="#c1432f">22.2%</text>
+
+  <!-- Y-axis class labels -->
+  <text x="73" y="103" text-anchor="end" font-size="12" fill="#333">Supported</text>
+  <text x="73" y="172" text-anchor="end" font-size="12" fill="#333">UCM</text>
+  <text x="73" y="241" text-anchor="end" font-size="12" fill="#333">UE</text>
+  <text x="73" y="309.8" text-anchor="end" font-size="12" fill="#c1432f" font-weight="bold">SO</text>
+  <text x="73" y="378.6" text-anchor="end" font-size="12" fill="#c1432f" font-weight="bold">Contradiction</text>
+
+  <!-- Annotation for Contradiction -->
+  <line x1="221.4" y1="373.6" x2="340" y2="340" stroke="#c1432f" stroke-width="1" stroke-dasharray="3 2"/>
+  <rect x="340" y="322" width="234" height="30" rx="3" fill="#fff4f2" stroke="#c1432f" stroke-width="0.8"/>
+  <text x="457" y="341" text-anchor="middle" font-size="11" fill="#c1432f">fires ~2–4 of 9 gold instances</text>
+
+  <!-- Legend -->
+  <rect x="530" y="68" width="186" height="56" rx="4" fill="#f9f9f9" stroke="#cccccc" stroke-width="1"/>
+  <rect x="544" y="82" width="14" height="14" fill="#4a6fa5" rx="2"/>
+  <text x="564" y="93" font-size="12" fill="#333">high recall (steel)</text>
+  <rect x="544" y="102" width="14" height="14" fill="#c1432f" rx="2"/>
+  <text x="564" y="113" font-size="12" fill="#333">bottleneck (brick red)</text>
+</svg></div>
+<figcaption><b>Figure 6.</b> Per-class recall on testp1 reveals a severe bottleneck in Scope Overgeneralization (62.8%) and Contradiction (22.2%), which together cap Macro-F1 improvement.</figcaption>
+</figure>
+
+<p>
+The two recall-starved classes — <code>Contradiction</code> and <code>Scope Overgeneralization</code>
+— are not explained by a vision or chart-reading deficiency: a post-hoc audit of clean minority
+misses split 47 % image-sourced / 53 % table-sourced, ruling out a purely modality-bound
+explanation. The shortfall is instead attributed to the train-dev pseudo-prior discussed in
+Section 3: of the 3333 training records, only 8 carry ≥2 minority sentences, and of long
+paragraphs (≥6 sentences) only 0.46 % do. The model internalises an implicit
+"at most one minority per paragraph" rule, which systematically suppresses recall in testp1's
+minority-dense long paragraphs. The union ensemble partially compensates — s15 fires 382
+minority predictions vs. s01's 253, lifting PEM and Macro-F1 simultaneously — but the
+Contradiction recall bottleneck (~22 %) persists across all 38 submitted systems.
+</p>
+
+<blockquote class='key'>
+The fundamental recall bottleneck is not a loss or oversampling artefact but a
+training-data prior: the near-absence of multi-minority paragraphs in train-dev
+teaches a near-deterministic "≤1 minority per paragraph" heuristic that no
+loss function alone can overcome.
+</blockquote>
+</section>
+
+<section>
+<h2><span class="secno">5</span> What Died, What Worked, and Open Levers</h2>
+<h3>What Worked</h3>
+
+<ul>
+  <li><strong>Diverse-model union ensemble (recall-additive).</strong> Combining independently trained Qwen3-VL-8B members with <code>ensemble_union.py --min-votes 1</code> is the <em>only</em> lever that has monotonically improved over the best single model across every addition: <code>s01</code> 47.80 (1 member) → <code>s11</code> 48.22 (3) → <code>s14</code> 49.99 (4) → <code>s15</code> 50.26 (5). The gain is simultaneous in Macro-F1 and PEM because on testp1's minority-dense paragraphs PEM is recall-limited: catching a gold minority sentence that was missed by all other members turns a zero-PEM paragraph into a candidate for PEM=1. Consensus (≥2 votes, <code>s16</code>=47.29) consistently underperforms, confirming that suppression destroys more correct recalls than it eliminates false positives.</li>
+  <li><strong>Softmin-PEM loss under oversampling.</strong> The custom softmin-PEM bottleneck loss earns its keep precisely under the real training recipe (minority oversampling + Supported downsampling): it controls the oversampling-induced false-positive explosion that plain cross-entropy produces. With full-traindev + oversampling, softmin beats plain-CE by +4.93 at single-model level (<code>s01</code> 47.80 vs <code>s33</code> 42.87) and +1.72 at union level (<code>s15</code> 50.26 vs <code>s37</code> 48.54). The mechanism is PEM: <code>s33</code> PEM=37.03 vs <code>s01</code> PEM=42.83 — plain-CE over-fires minorities and shatters clean paragraphs.</li>
+  <li><strong>The recall-critical recipe.</strong> Maximising the count of <em>correct</em> minority predictions is the monotone objective. The suppression sweep makes this concrete: forcing minorities to zero yields the all-<code>Supported</code> trivial (<code>s05</code>=18.85); every incremental restoration of correct minority calls raises score monotonically — 46 minorities→18.85, 127→38.48, 171→39.57, 190→43.85, 253→47.80. The key insight is that testp1 paragraphs are long (mean 8.7 sentences, max 31) and minority-dense (~84% of paragraphs carry at least one gold minority), so PEM improvement requires catching those minorities, not protecting clean paragraphs by suppressing predictions.</li>
+</ul>
+
+<h3>What Died</h3>
+
+<table class='data'>
+  <thead>
+    <tr>
+      <th>Direction</th>
+      <th>Result</th>
+      <th>Why it failed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Higher image resolution (802 816 px, <code>s02</code>)</td>
+      <td>44.47 vs 47.80 baseline (−3.3)</td>
+      <td>Longer visual sequences increase noise and training instability without adding decodable numeric signal; minority misses are not image-resolution-bound.</td>
+    </tr>
+    <tr>
+      <td>Two-epoch training (<code>s10</code>)</td>
+      <td>41.70 — worst single model tested</td>
+      <td>Severe overfitting to the imbalanced training distribution; PEM on testp1 collapses.</td>
+    </tr>
+    <tr>
+      <td>Oversample-rate tuning (1.5×, 4×, per-class; <code>s07–s09</code>)</td>
+      <td>40.91–45.10, all below <code>s01</code></td>
+      <td>Changing the oversample ratio does not change the out-of-distribution per-class firing rate on testp1; the bottleneck is model capacity to generalise, not training-set ratio.</td>
+    </tr>
+    <tr>
+      <td>All suppression post-processing (<code>s03–s07</code>): logprob threshold, lone-minority veto, gated veto</td>
+      <td>18.85–43.85, monotone decrease from baseline</td>
+      <td>testp1 is recall-critical: every suppressed minority prediction costs more in Macro-F1 and PEM than it gains in precision. The initial "precision-critical, protect PEM" framing was derived from the train-dev trivial (43.2), which does not match testp1's regime.</td>
+    </tr>
+    <tr>
+      <td>Bigger models: Gemma4-31B single (<code>s27</code>)</td>
+      <td>29.28, only 87 minority predictions</td>
+      <td>A larger model trained on data with the "≤1 minority per paragraph" pseudo-prior learns an even more conservative prior; the data prior beats model scale. Gemma4-26B (<code>s26</code>=44.69) already illustrated the floor; 31B regresses further.</td>
+    </tr>
+    <tr>
+      <td>Architecture-diversity union members: InternVL3-2B/8B (<code>s19–s21</code>), Gemma4-26B/31B (<code>s23, s28, s29</code>), Qwen3-VL-4B (<code>s18</code>)</td>
+      <td>All ≤50.26; best non-Qwen union <code>s23</code>=49.83 (−0.43 vs <code>s15</code>)</td>
+      <td>Each non-Qwen member raises Macro-F1 (more minority recall) but simultaneously drops PEM by a larger margin — added predictions are net false positives that shatter clean paragraphs. <code>s23</code> example: MF1 +0.50 but PEM −1.36. The error patterns of weaker or error-correlated members overlap with noise, not with missed gold minorities. <code>s15</code>'s 5-Qwen union already captures most true minority sentences; additional members add mainly false positives.</td>
+    </tr>
+    <tr>
+      <td>Density-matching: synthetic ≥2-minority paragraphs injected into training (Phase-C B1)</td>
+      <td>densematch score −2.9 PEM vs baseline</td>
+      <td>Synthetic multi-minority paragraphs teach over-firing of minorities; the resulting false positives destroy PEM in paragraphs that actually have only one or zero minorities.</td>
+    </tr>
+    <tr>
+      <td>Chart-reading / OCR numeric channel (Phase-C D2)</td>
+      <td>Killed before testp1 (zero Codabench cost)</td>
+      <td>Auditing clean minority misses showed a 47%/53% image/table split — missed minority sentences are not disproportionately image-bound, so a dedicated OCR channel would not address the bottleneck.</td>
+    </tr>
+    <tr>
+      <td>Full-traindev plain-CE retrain (<code>s33–s38</code>)</td>
+      <td>Best plain-CE union <code>s37</code>=48.54, best single <code>s33</code>=42.87 — both below softmin counterparts</td>
+      <td>Under full-traindev + oversampling, plain-CE over-fires minorities, PEM collapses (<code>s33</code> PEM 37.03 vs <code>s01</code> 42.83). The "plain-CE > softmin" signal from Phase-C clean models was a no-oversampling-regime artifact. Gemma4-26B with plain-CE (<code>s36</code>=21.40, only 46 minority predictions) additionally revealed that the loss × model × data interaction is not portable across architectures: plain-CE catastrophically under-fires on Gemma where it over-fires on Qwen.</td>
+    </tr>
+    <tr>
+      <td>Self-consistency on a joint (paragraph-level) model (Phase-C E1b)</td>
+      <td>densematch score drops vs the joint single</td>
+      <td>Self-consistency with temperature samples the entire label <em>array</em> jointly; the variance is correlated across sentences, and union of diverse arrays adds systematic false positives rather than independent minority recalls.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Durable Lessons</h3>
+
+<blockquote class='key'>
+<strong>The data prior beats model scale.</strong> The training set contains a near-deterministic "at most one minority per paragraph" pattern (≤1 minority in 99.54% of long paragraphs; the full 3333-record set has only 8 records with ≥2 minority sentences). Every model — regardless of size or architecture — learns this prior. A Gemma4-31B trained on the same data is <em>more</em> conservative than an 8B model, not less, producing only 87 minority predictions and scoring 29.28. Scaling model capacity without changing the training signal cannot break the recall ceiling.
+</blockquote>
+
+<blockquote class='key'>
+<strong>Recall-critical PEM: the suppression trap is metric-specific.</strong> PEM rewards entire paragraphs only when every sentence label is correct. On train-dev (short paragraphs, trivial=43.2) PEM is dominated by clean all-<code>Supported</code> paragraphs — suppressing minorities protects those paragraphs and raises PEM. On testp1 (long paragraphs, trivial≈18.85, ~84% minority-carrying) the same suppression destroys PEM because the missed minority sentences prevent the paragraph from ever reaching PEM=1. Any benchmark or framing derived from train-dev statistics will produce the wrong suppression recommendation for testp1.
+</blockquote>
+
+<ul>
+  <li><strong>The offline benchmark (densematch) is a same-condition ranker, not a selector.</strong> The image-disjoint, testp1-shaped dev split (GATE-B) correctly ranks models trained under identical conditions: softmin &lt; plain-CE &lt; union on both densematch (78.97 &lt; 81.13 &lt; 83.90) and testp1 (34.21 &lt; 38.68 &lt; 43.85). However it cannot predict absolute testp1 scores (offset ~40 points), and it mis-ranks across training regimes: it rated the joint-anchored clean union (<code>s30</code>) as the top candidate; on testp1 that union scored 43.85, below <code>s01</code>'s 47.80. The offset is explained by full-traindev + oversampling being worth ~9–13 points over train'-only + no-oversample, a gap the bench does not model.</li>
+  <li><strong>Re-validate clean-bench findings on the real recipe before concluding.</strong> The campaign produced three sign-reversals: (1) veto/suppression helpful on train-dev → harmful on testp1; (2) plain-CE &gt; softmin on the clean no-oversampling bench → softmin &gt; plain-CE on the real full-traindev + oversampling recipe (+4.93 single, +1.72 union); (3) the joint format beating per-sentence on densematch → the union led by a joint member underperforming on testp1. Every clean-bench finding should be treated as a hypothesis requiring testp1 confirmation before committing training resources.</li>
+</ul>
+
+<h3>Standing Best and Open Levers</h3>
+
+<p>The permanent performance floors are <code>s15</code> (5-Qwen union) at <strong>50.26</strong> (MF1=57.17, PEM=43.34) and <code>s01</code> (single model, softmin grid) at <strong>47.80</strong> (MF1=52.77, PEM=42.83), both trained on full train-dev with minority oversampling and the softmin-PEM loss. These represent 38 Codabench submissions and 17 LoRA adapters.</p>
+
+<p>The remaining recall bottleneck is class-specific: <code>Supported</code> recall ≈99.5%, <code>Unsupported Causal Mechanistic</code> ≈100%, <code>Unsupported Entity</code> ≈86%, <code>Scope Overgeneralization</code> ≈63%, <code>Contradiction</code> ≈22% (firing on roughly 2–4 of 9 gold instances). Contradiction and Scope Overgeneralization are the binding constraints on Macro-F1 and, consequently, on score.</p>
+
+<p>Two directions have not been tested against testp1 and remain live:</p>
+<ul>
+  <li><strong>Self-consistency on per-sentence softmin members.</strong> Phase-C demonstrated that self-consistency (temperature sampling + per-sentence union) adds +1.4 on the clean no-oversampling bench without adding correlated false positives. Applied to the existing <code>s15</code> softmin members — which already have controlled PEM — this could provide additive minority recall, particularly for Contradiction and SO, without the false-positive explosion observed when applying self-consistency to joint models.</li>
+  <li><strong>Additional seed-diverse softmin Qwen members.</strong> The monotone scaling from <code>s01</code> to <code>s15</code> was driven entirely by five Qwen3-VL-8B softmin models trained with different oversample configurations (grid / os4 / per-class / joint-8B / joint-32B). Retraining with additional seeds or oversample variants while keeping the softmin-PEM loss and full-traindev recipe may extend the scaling, given that each new member reduces the zero-recall instances for Contradiction and SO without adding the correlated noise of weaker architectures.</li>
+</ul>
+
+<h3>Forward Note</h3>
+
+<p>Phase 2 (hidden test set, released 2026-06-11, deadline 2026-06-20) introduces a distribution shift of unknown direction. The prior Phase-1 experience — where a benchmark calibrated on train-dev produced exactly the wrong suppression recommendation for testp1 — is a strong argument for prioritising robustness over further squeezing of Phase-1 score. The ensemble strategy is structurally robust: union members trained under different conditions cover different failure modes, and <code>min-votes=1</code> ensures that each member's recall is additive. Candidates that score only marginally above <code>s15</code> on testp1 but rely on configuration-specific tuning (resolution, oversample rate, architecture-specific loss schedules) carry higher Phase-2 risk than a wider, more diverse union that reaches the same score through orthogonal recalls.</p>
+</section>
+<div class="footer">Archive: 17 LoRA adapters + 38 submissions + per&#8209;submission reproduction recipes on Hugging Face
+(<code>winbeau/nlpcc2026-task10</code>, private). Offline bench, scripts, and the full submission log are version&#8209;controlled.
+This report was synthesised from the project notes (<code>notes/</code>) and submission log. Figures rendered as inline SVG; all type set in Times&nbsp;New&nbsp;Roman.</div>
+</main>
+</body>
+</html>
