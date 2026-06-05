@@ -68,13 +68,19 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 > - **根因(echo s18/q4b 教训)**:s30 只有 **2 个真正不同的模型**(A1 与 E1 同基座=相关;B0 联合)+ **train' 仅 90% 数据** + **联合-heavy** → B0 联合(testp1 历史 ~43)拖着整个并集到联合档(43.85≈s12/s13 的 43-44)。对比 s15 = **5 个真异构 full-traindev 成员**。**densematch 高估了联合成员 + 把相关成员当多样。**
 > - **结论**:s30 **不是**新最优;**s15(50.26)仍是天花板,s01(47.80)仍是单模最优**。**PHASE C 评测台(densematch)尚不可信**,需更多校准点(单交一个干净的纯句级 A1 会很有信息量——它没被单独测过)。复现:`scripts/phaseC_package_testp1.sh`。详见 `notes/phaseC/CAMPAIGN_SUMMARY.md`。
 
-| s31 | m | PHASE C 干净 softmin 单模(train' 句级,= A0) | `s31_m_clean-softmin` | **待交** | — | — | 164 (57/85/9/13) |
-| s32 | m | PHASE C 干净 plain-CE 单模(train' 句级,= A1) | `s32_m_clean-plainCE` | **待交** | — | — | 166 (78/56/19/13) |
+| s31 | m | PHASE C 干净 softmin 单模(train' 句级,= A0) | `s31_m_clean-softmin` | **34.21** | 39.57 | 28.84 | 164 (57/85/9/13) |
+| s32 | m | PHASE C 干净 plain-CE 单模(train' 句级,= A1) | `s32_m_clean-plainCE` | **38.68** | 43.57 | 33.79 | 166 (78/56/19/13) |
 
-> **s31/s32 = 把 PHASE C 的两个干净句级单模直接交 testp1**(成员都只在 train' 训、从不见 dev')。回答两件事:
-> - **s31(softmin)vs s32(plain-CE)= 唯一一次干净·同条件的 softmin↔plain-CE 对照**(都 train' 句级、无过采样)。densematch 上 plain-CE 81.13 > softmin 78.97 判「softmin 死」,但那是 densematch 判的、testp1 没验过;softmin 在 testp1 的唯一证据是正面的(s01=47.80 就是 softmin)。**两个分一出就知道 plain-CE 是否真比 softmin 好。**
-> - **s32(纯句级 A1)vs s30(联合 union 43.85)= 钉死 s30 归因**。若 **s32 > 43.85 → 联合成员 B0 拖累了并集(union 反伤,echo s18)**;若 s32 ≈ 43.85 → 是 train' 让步的锅。
-> - ⚠️ 两者少数类都只 ~165(< s01 的 253、s30 的 269)—— **train' 90% 数据 + 无过采样 → 偏保守**,预期都 ≤ s01 47.80(少数类越少分越低)。复现:`scripts/phaseC_package_singles.sh`。
+> **s31/s32 实测 → 大翻案:densematch 的「干净同条件」排序在 testp1 上成立,我之前的悲观结论是错的。** 三个干净 PHASE C 模型在两台子上**同序**:
+> | 模型 | densematch | testp1 |
+> |---|--:|--:|
+> | s31 softmin (A0) | 78.97 | 34.21 |
+> | s32 plain-CE (A1) | 81.13 | 38.68 |
+> | s30 union (U3) | 83.90 | 43.85 |
+> 1. **plain-CE > softmin testp1 坐实**:38.68 > 34.21 = **+4.47**(比 densematch 的 +2.16 还大)。**「softmin 死」在 testp1 上确认**(无过采样档)。
+> 2. **union 有用,我之前「B0 联合拖累 union」的判断错了**:s30 union 43.85 > s32 单模 38.68 = **+5.17**,并集正常加召回。
+> 3. **densematch 没那么废**:它把干净同条件模型排对了(softmin<plainCE<union 两台同序),只是①压缩了幅度②给不了绝对分③**不能跨 regime 外推**。s30=43.85 的「失手」根因 = **train'(90%数据)+ 无过采样的让步(~9-13 分)**,不是台子/union 的错 —— s01(47.80)是 full-traindev + 过采样。
+> **⇒ 行动路线明确**:PHASE C 配方(plain-CE > softmin、union、自洽)已被 testp1 验证;**要破 s15(50.26)就把它搬到 full-traindev**:s15 的句级成员全是 softmin(grid/os4/perclass),**把它们换成 plain-CE 重训 full-traindev 再 union**,有望 > 50.26。复现:`scripts/phaseC_package_singles.sh`。
 
 **当前最优 = s15 u_q5(50.26),仍是天花板。** 结论:
 - **union(召回叠加)是唯一超 grid 的方向**(s11→s14→s15 单调涨,但仅限**同家族 Qwen 成员**);单模都 ≤grid;后处理(s03-s07)单调掉分(testp1 召回-critical)。
