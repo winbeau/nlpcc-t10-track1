@@ -85,9 +85,11 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | s33 | m | full-traindev plain-CE 单模 grid(os3.0/ds0.6) | `s33_m_grid-plainCE` | **42.87** | 48.72 | 37.03 | 245 (92/108/21/24) |
 | s34 | m | full-traindev plain-CE 单模 os4(os4.0/ds0.66) | `s34_m_os4-plainCE` | 待交 | — | — | 219 (88/89/23/19) |
 | s35 | m | full-traindev plain-CE 单模 perclass(逐类) | `s35_m_perclass-plainCE` | 待交 | — | — | 283 (115/116/32/20) |
-| s36 | m | full-traindev plain-CE 单模 gemma26b | `s36_m_gemma26b-plainCE` | 待交 | — | — | 46 (15/21/7/3) |
+| s36 | m | full-traindev plain-CE 单模 gemma26b | `s36_m_gemma26b-plainCE` | **21.40** | 24.88 | 17.92 | 46 (15/21/7/3) |
 | **s37** | u | 5-Qwen plain-CE 并集(grid+os4+perclass plainCE + joint8b + joint32b) | `s37_u_q5-plainCE` | **48.54** | 55.62 | 41.47 | 390 (132/169/50/39) |
-| s38 | u | s37 + gemma26b plain-CE | `s38_u_q5-plainCE-gemma` | 待交 | — | — | 405 (135/176/53/41) |
+| s38 | u | s37 + gemma26b plain-CE | `s38_u_q5-plainCE-gemma` | **48.58** | 55.69 | 41.47 | 405 (135/176/53/41) |
+
+> **🏁 plain-CE 批次终局(s33-s38 全部出分,无一破 s15):** 最佳 = s38/s37 ≈ **48.5 < s15 50.26**;最差 = s36 gemma plain-CE **21.40**(只 46 少数类,塌成近-trivial;vs gemma softmin s26=44.69,**−23**!gemma 上 plain-CE 灾难性欠拟合,与 Qwen 上的「过度开火」相反 —— loss×模型×数据交互不可外推)。**s38(+gemma)48.58 ≈ s37 48.54:gemma 加进 union 净增益 ~0**(印证 s23 的 gemma-没用)。**结论钉死:full-traindev+过采样下 softmin>plain-CE;gemma 不进 union;s01(47.80)/s15(50.26)是天花板,plain-CE 路彻底关闭。**
 
 > **🔴 大翻转(2026-06-05):full-traindev + 过采样这个真实配方下,softmin > plain-CE,plain-CE 重训全军覆没。**
 > - **s37(plain-CE 并集)48.54 < s15(softmin 并集)50.26,−1.72**;**s33(grid plain-CE 单模)42.87 << s01(grid softmin 单模)47.80,−4.93**。单模、并集两级都确认。
