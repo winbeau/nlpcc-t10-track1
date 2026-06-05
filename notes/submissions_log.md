@@ -60,10 +60,13 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | s27 | m | gemma31b 单模 Gemma4-31B(2卡zero3,极保守) | `s27_m_gemma31b` | 29.27701 | 33.98063 | 24.57338 | 87 (45/23/13/6) |
 | s28 | u | 5Q+gemma31b | `s28_u_q5-gemma31b` | 待测 | — | — | 397 (145/161/54/37) |
 | s29 | u | 5Q+gemma26b+gemma31b | `s29_u_q5-gemma26b31b` | 待测 | — | — | 507 (153/243/66/45) |
-| **s30** | u | **PHASE C 干净并集**(train' 训:B0联合+A1句级+E1自洽) | `s30_u_cleanunion` | **待交** | — | — | 269 (108/111/28/22) |
+| s30 | u | PHASE C 干净并集(train':B0联合+A1句级+E1自洽) | `s30_u_cleanunion` | **43.85** | 48.61 | 39.08 | 269 (108/111/28/22) |
 
-> **s30 = PHASE C 第一个「干净」候选**(成员只在 image-disjoint train' 训、从不见 dev')。**densematch 离线 = 83.90 / MF1 80.42 / PEM 87.38**(= U3 union(B0 joint + A1 per-sentence + E1 self-consist-of-A1))。
-> **预估 testp1 ≈ 47–50**(很可能 ~48,**大概率 ≤ s15 50.26**):少数类仅 269 < s15 的 382(只 3 成员 + train' 90% 数据让步)。⚠️**重要警告**:densematch 上「joint B0 > 句级 A1」与 testp1 历史相反(joint8b 43.33 < grid 47.80),PHASE B rank-corr 仅 +0.59 → joint-vs-句级这条轴可能不迁移;但**并集结构 = s15 赢家结构**,成员多样(联合/句级/自洽,误差不相关)。**交了它最大的价值 = 拿到第一个干净 (densematch, testp1) 校准点**,让评测台从此可信(PHASE C 累积协议起点）。复现:`scripts/phaseC_package_testp1.sh`。
+> **s30 = PHASE C 第一个「干净」候选,实测 testp1 = 43.85 / 48.61 / 39.08 —— 低于 s01(47.80),远低于 s15(50.26)。预估(~47–50)错了,负结果。**
+> **★第一个干净 (densematch, testp1) 校准点 = (83.90, 43.85)。** 这一发就证伪了 PHASE C 评测台对这类候选的可信度:
+> - **densematch 把 s30 排到 83.90(高于所有单模),实测 testp1 只 43.85**;densematch 上「联合 union 升 PEM(87.38>B0 86.41)」,testp1 上 **PEM 反崩到 39.08 < s01 42.83** —— 并集在 testp1 加的是**假阳性**,与 densematch 判断相反。PHASE B 早警告的「rho 仅 +0.59、joint-vs-句级不迁移」**重度兑现**。
+> - **根因(echo s18/q4b 教训)**:s30 只有 **2 个真正不同的模型**(A1 与 E1 同基座=相关;B0 联合)+ **train' 仅 90% 数据** + **联合-heavy** → B0 联合(testp1 历史 ~43)拖着整个并集到联合档(43.85≈s12/s13 的 43-44)。对比 s15 = **5 个真异构 full-traindev 成员**。**densematch 高估了联合成员 + 把相关成员当多样。**
+> - **结论**:s30 **不是**新最优;**s15(50.26)仍是天花板,s01(47.80)仍是单模最优**。**PHASE C 评测台(densematch)尚不可信**,需更多校准点(单交一个干净的纯句级 A1 会很有信息量——它没被单独测过)。复现:`scripts/phaseC_package_testp1.sh`。详见 `notes/phaseC/CAMPAIGN_SUMMARY.md`。
 
 **当前最优 = s15 u_q5(50.26),仍是天花板。** 结论:
 - **union(召回叠加)是唯一超 grid 的方向**(s11→s14→s15 单调涨,但仅限**同家族 Qwen 成员**);单模都 ≤grid;后处理(s03-s07)单调掉分(testp1 召回-critical)。

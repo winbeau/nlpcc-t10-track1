@@ -36,13 +36,26 @@ ever burning a Codabench submission. Every result below is leakage-free.
 Rare-class **recall** persists even in the best single: Contradiction R≈22% (fires ~4 of 9, P≈100%),
 SO R≈63%. The union lifts it via diverse-member recall; it is NOT a vision/chart problem.
 
-## Deliverable: s30 (first CLEAN candidate)
-`submissions/testp1_s30_u_cleanunion.{zip,jsonl}` = U3 on testp1 (269 minorities). densematch 83.90.
-**Predicted testp1 ≈ 47–50, likely ≤ s15 (50.26)** (only 3 members + train'-only; 269 min < s15's 382).
-⚠️ densematch's "joint > per-sentence" may not transfer (testp1 history: joint8b 43.33 < grid 47.80;
-PHASE B rho only +0.59) — so this is NOT claimed as a break past s15. **The real value: submitting s30
-yields the FIRST clean (densematch, testp1) calibration point** → makes the bench trustworthy and starts
-the cumulative protocol.
+## Deliverable: s30 (first CLEAN candidate) — SUBMITTED, and the bench MIS-PREDICTED it
+`submissions/testp1_s30_u_cleanunion` = U3 on testp1. densematch 83.90 (predicted ~47–50).
+**ACTUAL testp1 = 43.85 / 48.61 / 39.08 — BELOW s01 (47.80), far below s15 (50.26). A negative result.**
+
+**First clean (densematch, testp1) calibration point = (83.90, 43.85).** It immediately falsifies the
+densematch bench for this candidate class:
+- densematch ranked U3 #1 (above every single) and said union LIFTS PEM (87.38>86.41); on testp1 the
+  union's added minorities were **false positives → PEM collapsed to 39.08 < s01's 42.83**. The PHASE-B
+  warning (rho +0.59, joint-vs-per-sentence may not transfer) materialized hard.
+- Root cause (echoes s18/q4b): s30 had only **2 truly-distinct models** (A1 & E1 share a base; B0 joint)
+  + **train'-only (90% data)** + **joint-heavy** → B0 joint (testp1 ~43) dragged the union to the joint
+  tier (43.85 ≈ joint8b/joint32b 43–44). vs s15 = 5 genuinely diverse full-traindev members.
+
+## Honest takeaway
+The PHASE-C bench-driven conclusions are **only as trustworthy as densematch — which this point shows is
+NOT reliable for the joint-vs-per-sentence / union-composition axis.** Several "kills" (softmin, B1
+density, D2) were judged on densematch and should be treated as provisional, not settled. **s15 (50.26)
+remains the champion; s01 (47.80) the single-model best.** What's genuinely banked: a real calibration
+point + the tooling. Most informative cheap next test = submit the pure per-sentence **A1 alone** on
+testp1 (never tested standalone) — if A1 > 43.85, the joint B0 member was the drag (union HURT, like s18).
 
 ## If resumed (remaining levers)
 - More **diverse union members** (the proven lever scales): e.g. a 2nd per-sentence model (different
