@@ -124,6 +124,7 @@ nlpcc-t10-track1/
 └── outputs/(gitignored)  # LoRA adapter checkpoint / raw 预测
 ```
 - **模型/提交归档已上传 HF**:`winbeau/nlpcc2026-task10`(private;**17 个 adapter**(s01/02/07/08/09/10/12/13/26 softmin + s33-s36 plain-CE + phaseC_A0/A1/B0/B1 devbench)+ **submissions s01–s38** + scripts + `SUBMISSIONS.md`(=notes/submissions_log.md,逐提交复现表)+ README)。**增量重传:`uv run python scripts/hf_push.py`(在服务器跑;只传 adapter_model.safetensors+configs,不传 optimizer;`--dry-run` 预览)。** 加新模型先把 ckpt 路径加进 `hf_push.py` 的 `ADAPTERS` dict。
+- **HF 数据链路(2026-06-10 起,已建)**:同名 **dataset 仓** `winbeau/nlpcc2026-task10`(private,与 model 仓并存)作跨服务器**数据中转仓**——处理可在任意机器,中间产物 push,算力服务器 pull 后训练。**一律进 `track1/` 前缀**:`track1/raw/`(官方 track-1 jsonl,已传)+ `track1/processed/{devbench,cot}/`(devbench 已传;本地 `data/devbench|cot/` 一一对应)。同步:`uv run --no-project --with huggingface_hub python scripts/hf_data.py push|pull --what raw devbench cot`(token 在 `~/.cache/huggingface/token`)。🔴 images 不进 HF(各机器从官方 git lfs 拉;脚本自动跳过 LFS 指针)。详见 `notes/cot_distill_plan.md` §1.5。
 
 ## 7. 端到端流程（命令都在服务器上跑）
 
