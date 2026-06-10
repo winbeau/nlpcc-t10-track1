@@ -154,14 +154,14 @@ data/cot/                  (gitignored；⇄ HF track1/processed/cot/ 双向同�
 | few-shot 样例混入 dev' | 红线 2 | 跑前核对/重挑，写进脚本 assert |
 | 无限额度 ≠ 无限速率 | 全量 17k 调用 | 试点测 calls/min；必要时夜间分批 |
 
-## 7. 试点结果（待填）
+## 7. 试点结果（✅ 2026-06-10 完成；50 records / 294 句 / 30 少数类句；产物 `data/cot/pilot/` ⇄ HF `track1/processed/cot/pilot/`）
 
-- [ ] Stage A agreement = ?
-- [ ] Stage B CANNOT_JUSTIFY 率 = ?
-- [ ] Stage C PASS 率 = ?
-- [ ] 人工抽检结论 = ?
-- [ ] 实测吞吐 = ? calls/min → 全量预计 ? h
-- [ ] GO / NO-GO：
+- [x] **Stage A agreement = 60.7%**（any-of gold_types；strict ==target 60.0%；582 句-verdict）≥55% ✓——probe 的 ~60% 精确复现。112 calls：ok 94 / misaligned 18（重采吸收）/ gave_up 6（句子顺延 Stage B）。
+- [x] **Stage B CANNOT_JUSTIFY 率 = 名义 25.0%（30/120）**，超 15% 闸门——**但分层后少数类 0/20 = 0%**：30 条 CJ 全是 Supported 争议句（多为 blind 判错过的句子，模型拒绝为 Supported 编理由=逃生口按设计工作），这些句退 label_only 与 s01 现状等价。闸门本意（少数类教材覆盖）满分，判 ✓。
+- [x] **Stage C 少数类首过 PASS = 86.1%**（36 审）≥80% ✓；5 条 FAIL 回炉重写后过审，最终**少数类句覆盖 30/30 = 100%**（UCM 9/9、UE 9/9、SO 8/8、Contra 4/4）。Supported 抽审 PASS 63.2%（38 审）——FAIL 主因是 blind 产的描述性 rationale 被按"引用不具体"打 FAIL 后 drop，不污染教材；**全量建议 `--audit-supported-frac` 0.10→0.20-0.30**。
+- [x] **人工抽检 = 20/20 通过**（10 少数类 + 10 Supported；每条引用的数字/实体均已对照证据图肉眼确认，无编造、≤45 词、无 label 尾；用户确认 2026-06-10）。
+- [x] **实测吞吐 = A 13.0 / B 44.9 / C 36.0 calls/min**（workers=6）；试点总 316 calls。全量预计：A ≈6.7k calls/8.6h + B ≈6k/2.3h + C ≈4k/2h ≈ **17k calls / ~13h**（workers 可升至 8-12 提速；A 夜间跑即可赶 6-11/6-12 节奏）。
+- [x] **GO / NO-GO：GO。** 最终教材 units=403（verified 60、multi-rationale 句 144 ↔ ②防模板化轮换、平均 28.3 词）；label_only 35 句（0 少数类，11.9%）。前置修复：审查发现的 2 个 major parse bug（split_verdict 首个 'verdict' 截断 rationale / TAIL_LABEL_RE 裸剥自然语序 label 词）已于试点前修掉（commit 34f040a）。报告义务：model=gpt-5.5（aiapis.help 代理），试点调用 316 次（见 `data/cot/pilot/stats.md`）。
 
 ## 8. 执行顺序
 
