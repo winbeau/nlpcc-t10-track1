@@ -410,13 +410,23 @@ def _extract_text_and_logprob(resp) -> tuple[str, dict[str, float | int | None]]
     if isinstance(lp, dict):
         content = lp.get("content")
         if content:
-            lps = [float(c["logprob"]) for c in content
-                   if isinstance(c, dict) and isinstance(c.get("logprob"), (int, float))]
-            if lps:
+            toks = [(str(c.get("token", "")), float(c["logprob"])) for c in content
+                    if isinstance(c, dict) and isinstance(c.get("logprob"), (int, float))]
+            if toks:
+                lps = [v for _, v in toks]
                 conf["first_logprob"] = lps[0]
-                conf["min_logprob"] = min(lps)
-                conf["sum_logprob"] = float(sum(lps))
                 conf["n_tokens"] = len(lps)
+                # min_logprob/sum_logprob over the LABEL-JSON span only (last token containing
+                # '{' .. end), so the confidence signal reflects the LABEL, not the <analysis>
+                # prose (E1 CoT). For s01 plain `{"label":X}` the span is the whole response
+                # (the only '{' is at the start) -> identical to the old behavior.
+                start = 0
+                for j, (t, _v) in enumerate(toks):
+                    if "{" in t:
+                        start = j  # last '{' token = JSON open of {"label": X}
+                span = lps[start:] or lps
+                conf["min_logprob"] = min(span)
+                conf["sum_logprob"] = float(sum(span))
     return text, conf
 
 

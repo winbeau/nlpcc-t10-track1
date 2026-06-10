@@ -251,6 +251,97 @@ def test_use_logits_to_keep_equivalence():
           f"(full == prepare_logits_to_keep trailing-K window)")
 
 
+def test_label_span_bottleneck():
+    """T7 (E1 CoT): the soft-min bottleneck must track LABEL uncertainty, NOT <analysis>
+    perplexity. Build a 2-sentence paragraph where:
+      A: HIGH analysis-token CE (badly-modeled rationale) but CONFIDENT, correct label.
+      B: LOW analysis-token CE but UNCERTAIN label.
+    With label-span restriction, the bottleneck gradient must land on B's label token; the
+    naive full-response soft-min would (wrongly) route it to A's analysis token. Also assert
+    the (1-lambda) mean-CE FLOOR still flows gradient into A's analysis tokens (so analysis is
+    still learned). Span detection uses brace token id == BRACE.
+    """
+    from nlpcc_t10.swift_softmin.loss import _label_span_mask
+
+    V = VOCAB
+    BRACE = 7          # pretend token id 7's piece contains '{'
+    LBL_A, LBL_B = 3, 4
+    ANALYSIS_TOK = 5
+    # layout per row (T=5): [analysis, analysis, '{', label, <pad-to-shift>]
+    # response tokens (labels != -100): positions 0..3 are analysis/json; we mask prefix none here.
+    def row(analysis_conf, label_tok, label_conf):
+        T = 5
+        logits = torch.zeros(T, V)
+        labels = torch.full((T,), IGNORE, dtype=torch.long)
+        # response = positions 1..4 (position 0 is a 'prompt' anchor, masked)
+        # tokens predicted at t from logits[t-1]; put confidences on the preceding position.
+        labels[1] = ANALYSIS_TOK; logits[0, ANALYSIS_TOK] = analysis_conf
+        labels[2] = ANALYSIS_TOK; logits[1, ANALYSIS_TOK] = analysis_conf
+        labels[3] = BRACE;        logits[2, BRACE] = 8.0          # '{' always confident
+        labels[4] = label_tok;    logits[3, label_tok] = label_conf
+        return logits, labels
+
+    # A: analysis_conf LOW (=0 -> high CE) but label_conf HIGH; B: analysis HIGH, label LOW.
+    a = row(analysis_conf=0.0, label_tok=LBL_A, label_conf=10.0)
+    b = row(analysis_conf=10.0, label_tok=LBL_B, label_conf=0.0)
+    logits, labels = stack_batch([a, b])
+
+    restrict = _label_span_mask(labels, {BRACE})
+    # span must start at the '{' (pos 3) for both rows -> covers pos 3,4 only
+    assert restrict[0].tolist() == [False, False, False, True, True], restrict[0].tolist()
+
+    label_ce = _per_sentence_ce(make_outputs(logits), labels, restrict=restrict)
+    full_ce = _per_sentence_ce(make_outputs(logits), labels)
+    # label-span: B (uncertain label) must be the worse sentence; full-response: A (bad analysis) is.
+    assert label_ce[1] > label_ce[0], (label_ce.tolist())
+    assert full_ce[0] > full_ce[1], (full_ce.tolist())
+
+    # bottleneck gradient with label-span lands on B's label token (logits row 1, pos 3, LBL_B).
+    logits2 = logits.detach().clone().requires_grad_(True)
+    restrict2 = _label_span_mask(labels, {BRACE})
+    lce = _per_sentence_ce(make_outputs(logits2), labels, restrict=restrict2).float()
+    import math as _m
+    s_p = (torch.logsumexp(5.0 * lce, dim=0) - _m.log(2)) / 5.0
+    s_p.backward()
+    g_label_B = logits2.grad[1, 3].abs().sum().item()   # B label token
+    g_label_A = logits2.grad[0, 3].abs().sum().item()   # A label token
+    g_analysis_A = logits2.grad[0, :2].abs().sum().item()  # A analysis tokens
+    assert g_label_B > g_label_A, (g_label_B, g_label_A)
+    assert g_analysis_A < 1e-9, f"analysis got soft-min gradient ({g_analysis_A}); span leaked"
+
+    # FLOOR check: full-response mean-CE DOES flow gradient into A's analysis tokens.
+    logits3 = logits.detach().clone().requires_grad_(True)
+    floor = _per_sentence_ce(make_outputs(logits3), labels).float().mean()
+    floor.backward()
+    assert logits3.grad[0, :2].abs().sum().item() > 1e-6, "floor must teach analysis tokens"
+    print(f"  [T7] label-span bottleneck: g_labelB={g_label_B:.4f} > g_labelA={g_label_A:.4f}; "
+          f"analysis soft-min grad={g_analysis_A:.2e} (~0); floor teaches analysis OK")
+
+
+def test_label_span_fallback_equals_plain():
+    """T8: empty brace_ids (no tokenizer) OR label-only data (first response token is '{') ->
+    label-span == full response, so the objective is bit-identical to the pre-CoT s01 loss."""
+    V = VOCAB
+    # label-only style row: response = ['{', label] (first response token is the brace)
+    def row(label_tok, conf):
+        T = 4
+        logits = torch.zeros(T, V); labels = torch.full((T,), IGNORE, dtype=torch.long)
+        labels[2] = 7; logits[1, 7] = 8.0          # '{'
+        labels[3] = label_tok; logits[2, label_tok] = conf
+        return logits, labels
+    logits, labels = stack_batch([row(3, 1.0), row(4, 5.0)])
+    full = _per_sentence_ce(make_outputs(logits), labels)
+    span = _per_sentence_ce(make_outputs(logits), labels,
+                            restrict=__import__("nlpcc_t10.swift_softmin.loss", fromlist=["_label_span_mask"])._label_span_mask(labels, {7}))
+    # first response token IS the brace -> span covers the whole response -> identical CE
+    assert torch.allclose(full, span), (full.tolist(), span.tolist())
+    # empty brace_ids -> whole response too
+    span_empty = _per_sentence_ce(make_outputs(logits), labels,
+                                  restrict=__import__("nlpcc_t10.swift_softmin.loss", fromlist=["_label_span_mask"])._label_span_mask(labels, set()))
+    assert torch.allclose(full, span_empty)
+    print("  [T8] label-span fallback == plain full-response CE (E0/label-only & no-tokenizer)")
+
+
 def main():
     torch.manual_seed(0)
     print("Running SoftMin PEM loss torch tests...")
@@ -261,6 +352,8 @@ def main():
     test_singleton_identity()
     test_graceful_degrade()
     test_use_logits_to_keep_equivalence()
+    test_label_span_bottleneck()
+    test_label_span_fallback_equals_plain()
     print("ALL SOFTMIN TORCH TESTS PASSED")
 
 

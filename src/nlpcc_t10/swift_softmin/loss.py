@@ -117,6 +117,22 @@ def group_indices(paragraph_ids):
     return groups
 
 
+def first_brace_response_index(row, brace_ids):
+    """Pure-python: index of the FIRST response token (label != -100) whose id is in
+    ``brace_ids`` (the JSON-open ``{`` of the ``{"label": X}`` suffix). Returns None if
+    no brace token among the response tokens.
+
+    E1 targets are ``<analysis>...</analysis>\\n{"label": X}`` with braces STRIPPED from the
+    rationale (build_dataset.sanitize_rationale), so the first response ``{`` is exactly the
+    label-JSON start. For s01 plain targets the first response token already IS ``{`` -> the
+    span is the whole response (label-span == full response, so behavior is unchanged).
+    """
+    for p, tid in enumerate(row):
+        if tid != -100 and tid in brace_ids:
+            return p
+    return None
+
+
 # ---------------------------------------------------------------------------------------
 # Defaults (overridable per-run via env, so the grid sweep needs no code edits).
 # ---------------------------------------------------------------------------------------
@@ -124,7 +140,28 @@ _DEFAULT_BETA = 5.0      # temperature; larger -> sharper bottleneck (one-hot on
 _DEFAULT_LAMBDA = 0.5    # softmin mix weight; keep <= 0.7 so the CE floor (1 - lambda) > 0
 
 
-def _per_sentence_ce(outputs, labels):
+def _label_span_mask(labels, brace_ids):
+    """Bool mask [B, T] over ``labels``: True on the label-JSON span (first response ``{``
+    token .. end of response) of each row. Rows with no brace token -> whole response True
+    (graceful fallback == plain behavior). ``brace_ids`` empty -> whole response True.
+    """
+    import torch
+
+    resp = labels != -100
+    if not brace_ids:
+        return resp
+    mask = torch.zeros_like(labels, dtype=torch.bool)
+    rows = labels.tolist()
+    for b, row in enumerate(rows):
+        start = first_brace_response_index(row, brace_ids)
+        if start is None:
+            mask[b] = resp[b]  # no brace (e.g. degenerate target) -> whole response
+        else:
+            mask[b, start:] = resp[b, start:]
+    return mask
+
+
+def _per_sentence_ce(outputs, labels, restrict=None):
     """Length-normalized, response-only per-sentence cross-entropy. Returns 1-D tensor [B].
 
     Mirrors ms-swift's default causal shift + ``ignore_index=-100`` masking (prompt tokens
@@ -133,6 +170,12 @@ def _per_sentence_ce(outputs, labels):
     i.e. ``p_i = exp(-l_i)`` is the geometric-mean correct-label probability. This per-token
     normalization is what makes ``l_i`` a single comparable scalar per sentence regardless of
     sentence length, so the soft-min is not dominated by long sentences via token count alone.
+
+    ``restrict`` (optional bool mask [B, T] aligned to ``labels``): when given, only tokens
+    that are BOTH response (label != -100) AND restrict==True count toward ``l_i``. This is
+    how the soft-min bottleneck is computed over ONLY the end-of-response ``{"label": X}``
+    span for E1 CoT targets, while the ``<analysis>`` tokens are excluded from the bottleneck
+    (they still get gradient via the (1 - lambda) mean-CE floor, which uses restrict=None).
     """
     import torch
     from torch.nn import CrossEntropyLoss
@@ -147,6 +190,9 @@ def _per_sentence_ce(outputs, labels):
         shift_labels.view(-1),
     ).view(shift_labels.shape)  # [B, T-1]
     valid = shift_labels != -100
+    if restrict is not None:
+        valid = valid & restrict[..., 1:].to(valid.device)
+        per_token = per_token * valid  # zero out tokens outside the restricted span
     # clamp(min=1): an all-masked / empty sample must never divide by zero.
     tok_counts = valid.sum(dim=-1).clamp(min=1).to(per_token.dtype)  # [B]
     per_sentence = per_token.sum(dim=-1) / tok_counts  # [B]
@@ -257,7 +303,34 @@ def make_softmin_loss_cls():
     from swift.loss import BaseLoss
 
     class SoftMinPEMLoss(BaseLoss):
+        _brace_ids = None  # lazily computed token-id set for tokens containing '{'
+
+        def _get_brace_ids(self):
+            """Token ids whose piece contains '{' (the label-JSON open). Computed once from the
+            tokenizer; the soft-min bottleneck then restricts to the {"label": X} span. Returns
+            an empty set if the tokenizer is unreachable -> graceful fallback to full-response
+            soft-min (== s01 behavior; correct for label-only/E0 data, slightly looser for E1)."""
+            if self._brace_ids is not None:
+                return self._brace_ids
+            tok = getattr(self.trainer, "tokenizer", None)
+            if tok is None:
+                tmpl = getattr(self.trainer, "template", None)
+                tok = getattr(tmpl, "tokenizer", None)
+            ids = set()
+            try:
+                for piece, tid in tok.get_vocab().items():
+                    if "{" in piece:
+                        ids.add(tid)
+            except Exception:  # noqa: BLE001  (no tokenizer -> empty -> safe fallback)
+                ids = set()
+            if os.environ.get("RANK", "0") in ("0", ""):
+                print(f"[softmin] label-span brace tokens: {len(ids)} ids "
+                      f"({'OK' if ids else 'EMPTY -> full-response fallback'})")
+            self._brace_ids = ids
+            return ids
+
         def __call__(self, outputs, labels, *, num_items_in_batch=None, loss_scale=None, **kwargs):
+            # FLOOR: full-response per-sentence CE -> teaches BOTH <analysis> and label tokens.
             per_sentence = _per_sentence_ce(outputs, labels).float()  # [B], float32 stable LSE
             mean_ce = per_sentence.mean()
 
@@ -271,10 +344,15 @@ def make_softmin_loss_cls():
             # Eval / lambda disabled / singleton batch -> plain mean-CE (no spurious soft-min).
             if (not training) or lam <= 0.0 or n < 2:
                 return mean_ce
+            # BOTTLENECK: soft-min over the LABEL-JSON span only (the PEM signal is label
+            # correctness, not analysis perplexity). For E0/label-only data the span == the
+            # whole response, so this reduces to the original objective bit-for-bit.
+            restrict = _label_span_mask(labels, self._get_brace_ids())
+            label_ce = _per_sentence_ce(outputs, labels, restrict=restrict).float()  # [B]
             # TRAIN: ParagraphGroupSampler guarantees the whole batch == ONE paragraph.
             # Normalized LSE soft-max-over-losses; -log n is constant in l so the gradient is
             # softmax(beta*l), peaked on the worst sentence (see module docstring + unit test).
-            s_p = (torch.logsumexp(bet * per_sentence, dim=0) - math.log(n)) / bet
+            s_p = (torch.logsumexp(bet * label_ce, dim=0) - math.log(n)) / bet
             return (1.0 - lam) * mean_ce + lam * s_p
 
     return SoftMinPEMLoss

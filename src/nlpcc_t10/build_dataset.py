@@ -57,6 +57,7 @@ import json
 import math
 import os
 import random
+import re
 from collections import Counter
 from pathlib import Path
 from typing import Any, Iterator
@@ -384,6 +385,35 @@ def build_user_content(
 # SAMPLE CONSTRUCTION
 # ──────────────────────────────────────────────────────────────────────────────
 
+# ──────────────────────────────────────────────────────────────────────────────
+# CoT teaching units (E1: s01 recipe + <analysis>) — cot_sft_plan.md §1
+# ──────────────────────────────────────────────────────────────────────────────
+
+def sanitize_rationale(text: str) -> str:
+    """Make a teaching rationale safe to embed in the <analysis> block.
+
+    Guarantees (1) no braces `{`/`}` — the softmin label-span detector uses the FIRST
+    `{` token of the response as the JSON-start sentinel, so the rationale must contain
+    none; (2) no <analysis> tags; (3) collapsed whitespace. Pure presentation cleanup —
+    the rationale text itself (numbers/entities) is preserved.
+    """
+    t = re.sub(r"</?analysis>", "", str(text), flags=re.IGNORECASE)
+    t = t.replace("{", "(").replace("}", ")")
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def label_json(label: str) -> str:
+    """The end-of-response label JSON — IDENTICAL to s01's whole target. The softmin loss
+    span and the inference parser both key on this being the response suffix."""
+    return json.dumps({"label": label}, ensure_ascii=False)
+
+
+def cot_assistant_content(rationale: str, label: str) -> str:
+    """E1 assistant target: `<analysis>{rationale}</analysis>\\n{"label": X}`.
+    Last line == s01's exact JSON (parser/aggregator/min_logprob just take the last line)."""
+    return f"<analysis>{sanitize_rationale(rationale)}</analysis>\n{label_json(label)}"
+
+
 def make_sample(
     record_id: str,
     channel: str,
@@ -392,15 +422,26 @@ def make_sample(
     target_label: str,
     evidence_bundle: list[dict[str, Any]],
     data_root: Path,
+    cot_rationales: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Build one ms-swift sentence-level sample in messages format."""
+    """Build one ms-swift sentence-level sample in messages format.
+
+    When cot_rationales is given (non-empty), the assistant target becomes the E1
+    `<analysis>...</analysis>\\n{"label"}` form using rationales[0]; the full list rides
+    on a private `_cot` key so resample_train can ROTATE rationales across oversampled
+    copies (anti-templating, cot_sft_plan §3). Without it, the target is s01's plain JSON.
+    """
     user_text, image_paths = build_user_content(
         claim_text, target_sentence, evidence_bundle, data_root
     )
+    if cot_rationales:
+        assistant = cot_assistant_content(cot_rationales[0], target_label)
+    else:
+        assistant = label_json(target_label)
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user_text},
-        {"role": "assistant", "content": json.dumps({"label": target_label}, ensure_ascii=False)},
+        {"role": "assistant", "content": assistant},
     ]
     sample: dict[str, Any] = {
         "messages": messages,
@@ -408,6 +449,8 @@ def make_sample(
     }
     if image_paths:
         sample["images"] = image_paths
+    if cot_rationales:
+        sample["_cot"] = {"label": target_label, "rationales": cot_rationales}
     return sample
 
 
@@ -416,19 +459,25 @@ def expand_record(
     record_idx: int,
     label_freq: Counter,
     data_root: Path,
+    cot_map: dict[tuple[str, int], list[str]] | None = None,
 ) -> list[dict[str, Any]]:
     """Expand one record into per-sentence samples. All get the same channel (paragraph_id).
-    Returns list of (sample, label) tuples — label used downstream for resampling."""
+    Returns list of (sample, label) tuples — label used downstream for resampling.
+
+    cot_map (E1 only): {(paragraph_id, sent_idx) -> [rationale, ...]}. A sentence with an
+    entry gets the <analysis> target; sentences not covered (label_only bucket) keep s01's
+    plain JSON. Pass cot_map ONLY for train records — never dev (red line: dev' has no CoT)."""
     paragraph_id = f"track1-{record_idx:06d}"
     claim_text = rec.get("claim_text", "")
     evidence_bundle = rec.get("evidence_bundle", [])
     sentence_labels = rec.get("sentence_label", [])
 
     samples = []
-    for sent_item in sentence_labels:
+    for sent_idx, sent_item in enumerate(sentence_labels):
         sentence = sent_item.get("sentence", "")
         types = sent_item.get("types", [])
         target_label = pick_rarest_label(types, label_freq)
+        cot_rationales = cot_map.get((paragraph_id, sent_idx)) if cot_map else None
         sample = make_sample(
             record_id=paragraph_id,
             channel=paragraph_id,
@@ -437,9 +486,38 @@ def expand_record(
             target_label=target_label,
             evidence_bundle=evidence_bundle,
             data_root=data_root,
+            cot_rationales=cot_rationales,
         )
         samples.append((sample, target_label))
     return samples
+
+
+def load_cot_units(path: Path, label_freq: Counter) -> dict[tuple[str, int], list[str]]:
+    """Load CoT teaching units -> {(record_id, sent_idx) -> [rationale, ...]}.
+
+    Keeps ONLY units whose stored target_label matches the builder's own
+    pick_rarest_label for that sentence's gold_types under THIS split's label_freq — so a
+    rationale can never be paired with a different training target than the one it argues
+    (guards against split/label drift). De-dups identical rationale text per sentence."""
+    units = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
+    out: dict[tuple[str, int], list[str]] = {}
+    kept = skipped_mismatch = 0
+    for u in units:
+        rat = sanitize_rationale(u.get("rationale", ""))
+        if not rat:
+            continue
+        expect = pick_rarest_label(u.get("gold_types", []) or [u["target_label"]], label_freq)
+        if u["target_label"] != expect:
+            skipped_mismatch += 1
+            continue
+        key = (u["record_id"], u["sent_idx"])
+        bucket = out.setdefault(key, [])
+        if rat not in bucket:
+            bucket.append(rat)
+            kept += 1
+    print(f"CoT units: loaded {len(units)} rows -> {kept} rationales over {len(out)} sentences "
+          f"({skipped_mismatch} skipped on label/split mismatch)")
+    return out
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -628,7 +706,8 @@ def resample_train(
             n_extra_full = int(math.floor(n_extra_float))
             frac = n_extra_float - n_extra_full
             n_extra = n_extra_full + (1 if rng.random() < frac else 0)
-            for _ in range(n_extra):
+            cot = sample.get("_cot")
+            for j in range(n_extra):
                 k = aug_counter.get(orig_channel, 0)
                 aug_counter[orig_channel] = k + 1
                 # Deep-copy the nested lists so a downstream in-place collator edit
@@ -638,10 +717,23 @@ def resample_train(
                 if "images" in sample:
                     aug_sample["images"] = list(sample["images"])
                 aug_sample["channel"] = f"{orig_channel}#aug{k}"
+                # CoT rotation: aug copies cycle through the remaining rationales so an
+                # oversampled minority sentence does not repeat one identical <analysis>.
+                if cot and len(cot["rationales"]) > 1:
+                    rat = cot["rationales"][(j + 1) % len(cot["rationales"])]
+                    aug_sample["messages"][2] = dict(aug_sample["messages"][2])
+                    aug_sample["messages"][2]["content"] = cot_assistant_content(rat, cot["label"])
                 result.append(aug_sample)
 
     rng.shuffle(result)
     return result
+
+
+def finalize_samples(samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Strip private bookkeeping keys (`_cot`) before writing to disk."""
+    for s in samples:
+        s.pop("_cot", None)
+    return samples
 
 
 def downsample_supported_records(
@@ -701,6 +793,7 @@ def build_dataset(
     limit: int | None = None,
     per_class_oversample: dict[str, float] | None = None,
     split_mode: str = "random",
+    cot_path: Path | None = None,
 ) -> dict[str, Any]:
     """Full pipeline: load, split, expand, resample, write. Returns summary dict."""
     data_path = data_root / "data" / "traindev-track-1.jsonl"
@@ -748,14 +841,17 @@ def build_dataset(
         print(f"Supported downsample: dropped {n_dropped} all-Supported train records "
               f"-> {len(train_use_idx)}/{len(train_idx)} kept")
 
+    # 3.5) CoT teaching units (E1): load once; applied to TRAIN only (red line: dev' no CoT).
+    cot_map = load_cot_units(cot_path, label_freq) if cot_path else None
+
     # 4) Expand: sentence-level samples
     train_pairs: list[tuple[dict[str, Any], str]] = []
     for i in train_use_idx:
-        train_pairs.extend(expand_record(records[i], i, label_freq, data_root))
+        train_pairs.extend(expand_record(records[i], i, label_freq, data_root, cot_map=cot_map))
 
     dev_pairs: list[tuple[dict[str, Any], str]] = []
     for i in dev_idx:
-        dev_pairs.extend(expand_record(records[i], i, label_freq, data_root))
+        dev_pairs.extend(expand_record(records[i], i, label_freq, data_root))  # dev: never CoT
 
     print(f"Expanded: {len(train_pairs)} train sentences / {len(dev_pairs)} dev sentences")
 
@@ -774,9 +870,26 @@ def build_dataset(
     train_samples = resample_train(train_pairs, minority_oversample, rng, per_class_oversample)
     print(f"After resampling: {len(train_samples)} train samples")
 
-    # Label distribution after resampling
+    # CoT coverage report (before stripping _cot): how many train rows carry an <analysis>.
+    cot_summary: dict[str, Any] = {}
+    if cot_map is not None:
+        n_cot = sum(1 for s in train_samples if s.get("_cot"))
+        per_class_cov: Counter = Counter()
+        for s in train_samples:
+            if s.get("_cot"):
+                per_class_cov[s["_cot"]["label"]] += 1
+        print(f"CoT coverage: {n_cot}/{len(train_samples)} train rows have <analysis> "
+              f"({n_cot / len(train_samples):.1%}); label_only rows = {len(train_samples) - n_cot}")
+        for lbl in TRACK1_LABELS:
+            print(f"  {lbl}: {per_class_cov[lbl]} rows w/ analysis")
+        cot_summary = {"rows_with_analysis": n_cot, "rows_label_only": len(train_samples) - n_cot,
+                       "per_class_rows_with_analysis": dict(per_class_cov)}
+    finalize_samples(train_samples)
+
+    # Label distribution after resampling (parse the LAST line == the {"label"} JSON, so this
+    # works for both s01 plain-JSON targets and E1 <analysis>...\n{"label"} targets).
     resampled_counter: Counter = Counter(
-        json.loads(s["messages"][2]["content"])["label"] for s in train_samples
+        json.loads(s["messages"][2]["content"].splitlines()[-1])["label"] for s in train_samples
     )
     print("Train label distribution (after resampling):")
     for lbl in TRACK1_LABELS:
@@ -814,6 +927,7 @@ def build_dataset(
         "n_dev_gold_records": len(dev_gold),
         "train_label_freq_before": dict(train_label_counter),
         "train_label_freq_after": dict(resampled_counter),
+        "cot": cot_summary,
     }
 
 
@@ -900,6 +1014,14 @@ def build_arg_parser() -> argparse.ArgumentParser:
              "(fresh channel id) to lift the minority fraction. 1.0 = no oversample.",
     )
     p.add_argument(
+        "--cot",
+        default=None,
+        help="Path to CoT teaching units (data/cot/units.jsonl). When set, train sentences with "
+             "a unit get the E1 `<analysis>...</analysis>\\n{\"label\"}` target (rationales rotate "
+             "across oversampled copies); uncovered sentences keep s01's plain JSON. dev' never "
+             "gets CoT. Everything else (split/oversample/downsample) is unchanged from s01.",
+    )
+    p.add_argument(
         "--limit",
         type=int,
         default=None,
@@ -955,6 +1077,7 @@ def main(argv: list[str] | None = None) -> int:
         limit=args.limit,
         per_class_oversample=_parse_per_class(args.minority_oversample_per_class),
         split_mode=args.split_mode,
+        cot_path=Path(args.cot).resolve() if args.cot else None,
     )
     return 0
 

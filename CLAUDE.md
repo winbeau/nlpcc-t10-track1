@@ -58,6 +58,7 @@ NLPCC 2026 Shared Task 10 **Track 1**：*Claim-level Faithfulness to Experimenta
 | Unsupported Entity | **213** | **639** |
 | Unsupported Causal Mechanistic | **140** | 276 |
 
+- ⚠️ **traindev jsonl 按行序前 1/3 集中全部少数类**（decile 0-2 各 ~17.5% 少数类句、decile 3 收尾 6%、decile 4-9 为 0）——任何按行序抽样/截断/顺序处理的脚本都会踩中这个偏置（2026-06-10 实测）。
 - **527 句是多标签**。评测规则：预测命中 gold `types` 中**任意一个**即算对；算 F1 时若命中用命中的那个作 reference，若错则用 `types[0]`。
   - → 多标签句构造训练目标时**优先选少数类**（更有利于 macro-F1 学习），单标签句直接用该 label。
 
