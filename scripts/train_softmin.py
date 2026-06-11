@@ -59,6 +59,20 @@ def main() -> None:
     #       subclass lazily (imports torch/swift here, on the server).
     reg.register()
 
+    # 2.5) Disable the cuDNN SDPA backend. On H200 + recent cuDNN, the cuDNN attention graph
+    #      can fail in the first forward with "mha_graph.execute(...).is_good() ... got false"
+    #      (a known flaky cuDNN-frontend SDPA bug). Flash / mem-efficient / math SDPA produce
+    #      identical logits, so the softmin causal-shift is unaffected — we just drop the
+    #      crashing backend. Toggle off with DISABLE_CUDNN_SDP=0.
+    if os.environ.get("DISABLE_CUDNN_SDP", "1") == "1":
+        try:
+            import torch
+            torch.backends.cuda.enable_cudnn_sdp(False)
+            if os.environ.get("RANK", "0") in ("0", ""):
+                print("[train_softmin] cuDNN SDPA backend DISABLED (flash/mem-efficient fallback)")
+        except Exception as e:  # noqa: BLE001
+            print(f"[train_softmin] could not disable cuDNN SDP: {e}")
+
     # 3) Hand off to the swift sft entrypoint with the original argv. In ms-swift 4.2.3
     #    sft_main lives in swift.pipelines (swift/cli/sft.py itself does
     #    `from swift.pipelines import sft_main`). For MULTI-GPU, launch this script under
