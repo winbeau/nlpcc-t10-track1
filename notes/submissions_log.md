@@ -96,6 +96,16 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 > - **机制**:s37 少数类 390 > s15 382,但 **PEM 41.47 < 43.34**;s33 PEM 37.03 << s01 42.83(−5.8)。**plain-CE + 过采样 = 过度开火少数类(FP 打碎段落)→ PEM 崩**。**softmin 的全部价值 = 控制过采样诱发的 FP**(PEM-bottleneck loss 恰在「过采样导致过度开火」时才发挥作用)。
 > - **⇒ 之前「softmin 死、plain-CE 更好」(s31/s32)是「无过采样」regime 的伪信号**;一旦上真实的过采样配方,softmin 反超 ~5 分。**softmin 没死;s01(47.80)/s15(50.26)仍是天花板,plain-CE 这条路否决。** s36/s38(plain-CE Gemma)训完补全(大概率同样偏低)。复现:`scripts/retrain_member.sh` + `train_gemma4.sh` + `ensemble_union.py`。
 
+## P1.5 CoT-SFT(环节② E1;基座=s01 配方只加 CoT,见 notes/cot_sft_plan.md)
+
+| s39 | m | **E1 = s01 配方 + CoT 教材**(softmin grid os3.0/ds0.6 401408 1ep 2卡 + `<analysis>`) | `s39_m_cotE1` | 待测(Codabench) | — | — | **298 (122/127/11/38)** |
+
+> **s39 = P1.5 第一个 CoT 模型,2026-06-11 出。** 教材 = gpt-5.5 三阶段蒸馏(units.jsonl 20794,少数类覆盖~99%,Stage C 审核 PASS 90.6%);E1 用 `build_dataset --cot` 把 `<analysis>{rationale}</analysis>\n{"label"}` 作训练目标,softmin **只作用末行 label span**(`<analysis>` 走 CE floor;test_softmin T7/T8 验证),其余严格 = s01(归因唯一变量=+CoT)。
+> - **格式健康**:testp1 parse_fallback = **1/5096(0.02%)**——CoT 不破坏末行 JSON 解析。
+> - **少数类 298 vs s01 单模 253(+45)**:UE 127(+35)/Contra 38(+15)/UCM 122(+13) 都↑,但 **SO 11 << s01 29**(CoT 让范围外推更保守)。落在健康单模区(s01 253/s09 268),非抑制塌陷区。
+> - **待**:testp1 实分(用户传 Codabench)+ densematch G2 分(dev 推理中)。判据:E1 testp1 > s01 47.80 且少数类召回不降 = CoT 增益成立 → E2/GRPO 起步用 E1;≈s01 = 教材未起效查 analysis 质量;< s01 = 排查 softmin-span。
+> - **复现**:教材 `scripts/cot_distill.py --stage blind|gold|verify`;数据 `build_dataset --cot data/cot/units.jsonl --split-mode component_aware --val-ratio 0.15 --minority-oversample 3.0 --supported-downsample 0.6`;训练 `GPUS=2,3 bash scripts/train_e1.sh`(含 cuDNN SDPA 禁用修复 H200 mha_graph 崩)。adapter=`outputs/cotE1_s01cot/v1-*/checkpoint-1980`。
+
 **当前最优 = s15 u_q5(50.26),仍是天花板。** 结论:
 - **union(召回叠加)是唯一超 grid 的方向**(s11→s14→s15 单调涨,但仅限**同家族 Qwen 成员**);单模都 ≤grid;后处理(s03-s07)单调掉分(testp1 召回-critical)。
 - **⚠️ 架构多样性 union 证伪(2026-06-04)**:往 5-Qwen 基底加任何**非 Qwen**成员都掉分 —— s18(+q4b)49.71、s19(+iv2b)48.48、s20(+iv8b)49.36、s21(+iv2b+iv8b)47.77、**s23(+gemma26b)49.83**(最接近但仍 −0.43)。**统一规律:新成员让 MF1↑ 但 PEM↓**(s23 MF1 57.67 > s15 57.17 **+0.50**,但 PEM 41.98 < 43.34 **−1.36**)→ 新成员加对了召回(MF1)却也加了**假阳性打碎干净段落**(PEM),净亏。s15 的 5-Qwen union 已 catch 住大部分正确少数类,再加只叠 FP。
