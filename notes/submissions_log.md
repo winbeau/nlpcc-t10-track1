@@ -96,9 +96,22 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 > - **机制**:s37 少数类 390 > s15 382,但 **PEM 41.47 < 43.34**;s33 PEM 37.03 << s01 42.83(−5.8)。**plain-CE + 过采样 = 过度开火少数类(FP 打碎段落)→ PEM 崩**。**softmin 的全部价值 = 控制过采样诱发的 FP**(PEM-bottleneck loss 恰在「过采样导致过度开火」时才发挥作用)。
 > - **⇒ 之前「softmin 死、plain-CE 更好」(s31/s32)是「无过采样」regime 的伪信号**;一旦上真实的过采样配方,softmin 反超 ~5 分。**softmin 没死;s01(47.80)/s15(50.26)仍是天花板,plain-CE 这条路否决。** s36/s38(plain-CE Gemma)训完补全(大概率同样偏低)。复现:`scripts/retrain_member.sh` + `train_gemma4.sh` + `ensemble_union.py`。
 
-## P1.5 CoT-SFT(环节② E1;基座=s01 配方只加 CoT,见 notes/cot_sft_plan.md)
+## P1.5 CoT-SFT(环节② E0/E1;基座=s01 配方,见 notes/cot_sft_plan.md)
 
 | s39 | m | **E1 = s01 配方 + CoT 教材**(softmin grid os3.0/ds0.6 401408 1ep 2卡 + `<analysis>`;⚠️**train'(devbench 85% image-disjoint)非full-traindev**) | `s39_m_cotE1` | **38.54** | 43.28 | 33.79 | **298 (122/127/11/38)** |
+| s40 | m | **E0 = E1 对照,label-only**(同 split/过采样/配方,唯一变量=无CoT) | `s40_m_cotE0` | 待测(Codabench) | — | — | **233 (102/77/41/13)** |
+
+> **🔴🔴 G2 闸门失败:CoT 有害(2026-06-11 干净对照实测)。** E1(CoT) vs E0(label-only) 唯一变量=+`<analysis>`,同 train'/split/过采样/配方,离线两台同档可比:
+> | 评测台 | E1(CoT) | E0(label-only) | **E1−E0** |
+> |---|--:|--:|--:|
+> | densematch score | 0.735 | **0.840** | **−0.105** |
+> | densematch MF1/PEM | 0.743/0.728 | 0.825/0.854 | −0.08/−0.13 |
+> | raw-dev score | 0.752 | **0.873** | **−0.122** |
+> | raw-dev MF1/PEM | 0.687/0.816 | 0.819/0.928 | −0.13/−0.11 |
+> - **E0 两台两指标全面碾压 E1 ~0.10-0.12,远超噪声。CoT 净效应为负。** testp1 开火:E1 298(122/127/11/38) vs E0 233(102/77/41/13)——E1 多开 65 个少数类但分数低得多 ⇒ **多开的是净假阳性(MF1+PEM 双输)**;且 E1 把 SO 压到 11(E0 41,CoT 反而漏 SO)。
+> - **机制(印证用户从一开始的怀疑)**:E1 loss~0.7(analysis 占)vs E0 loss~0.005(label 近记忆)。固定 1 epoch 预算下,CoT 目标**稀释了 label 拟合**;推理时 analysis 100%出现在少数类预测上(看似承重)却导出**低精度的少数类开火**——「不忠实 CoT」兑现:推理在场但把 label 带偏。
+> - **⇒ 路线判定**:**当前 s01 配方下 CoT-SFT 这条路否决**(densematch 同档排序在 s31/s32 已证可信)。GRPO **不在 E1 上跑**(放大已劣化的模型);roadmap 退化方案=E0 上 label-only GRPO(已非 CoT 路,价值低)。**s01(47.80)/s15(50.26) 仍是天花板,永久保底。** 待用户拍板:停 CoT 线 / 试变体(更多 epoch?但 s10 证 2ep 过拟合 / 改 analysis 格式 / E0-GRPO) / 直接回 union 冲榜。E0(s40) testp1 实分待传 Codabench 二次确认(densematch 强预测 E0 > E1 的 38.54)。
+> - 推理成本旁证:E1 testp1 推理~73min(analysis 解码) vs E0~20min(label-only),CoT 推理慢~5-6×。
 
 > **s39 = P1.5 第一个 CoT 模型,2026-06-11 出。** 教材 = gpt-5.5 三阶段蒸馏(units.jsonl 20794,少数类覆盖~99%,Stage C 审核 PASS 90.6%);E1 用 `build_dataset --cot` 把 `<analysis>{rationale}</analysis>\n{"label"}` 作训练目标,softmin **只作用末行 label span**(`<analysis>` 走 CE floor;test_softmin T7/T8 验证),其余严格 = s01(归因唯一变量=+CoT)。
 > - **格式健康**:testp1 parse_fallback = **1/5096(0.02%)**——CoT 不破坏末行 JSON 解析。
