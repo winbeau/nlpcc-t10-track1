@@ -99,7 +99,7 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 ## P1.5 CoT-SFT(环节② E0/E1;基座=s01 配方,见 notes/cot_sft_plan.md)
 
 | s39 | m | **E1 = s01 配方 + CoT 教材**(softmin grid os3.0/ds0.6 401408 1ep 2卡 + `<analysis>`;⚠️**train'(devbench 85% image-disjoint)非full-traindev**) | `s39_m_cotE1` | **38.54** | 43.28 | 33.79 | **298 (122/127/11/38)** |
-| s40 | m | **E0 = E1 对照,label-only**(同 split/过采样/配方,唯一变量=无CoT) | `s40_m_cotE0` | 待测(Codabench) | — | — | **233 (102/77/41/13)** |
+| s40 | m | **E0 = E1 对照,label-only**(同 split/过采样/配方,唯一变量=无CoT) | `s40_m_cotE0` | **43.85** | 49.31 | 38.40 | **233 (102/77/41/13)** |
 
 > **🔴🔴 G2 闸门失败:CoT 有害(2026-06-11 干净对照实测)。** E1(CoT) vs E0(label-only) 唯一变量=+`<analysis>`,同 train'/split/过采样/配方,离线两台同档可比:
 > | 评测台 | E1(CoT) | E0(label-only) | **E1−E0** |
@@ -108,7 +108,9 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 > | densematch MF1/PEM | 0.743/0.728 | 0.825/0.854 | −0.08/−0.13 |
 > | raw-dev score | 0.752 | **0.873** | **−0.122** |
 > | raw-dev MF1/PEM | 0.687/0.816 | 0.819/0.928 | −0.13/−0.11 |
+> - **🔴 testp1 实分三重确认(2026-06-11):s40(E0)=43.85 > s39(E1 CoT)=38.54,E0−E1=+5.31(MF1 +6.0/PEM +4.6)。** 与离线 densematch(+0.105)、raw-dev(+0.122)完全同向 ⇒ **CoT 有害结论锁定,三个独立信号一致。**
 > - **E0 两台两指标全面碾压 E1 ~0.10-0.12,远超噪声。CoT 净效应为负。** testp1 开火:E1 298(122/127/11/38) vs E0 233(102/77/41/13)——E1 多开 65 个少数类但分数低得多 ⇒ **多开的是净假阳性(MF1+PEM 双输)**;且 E1 把 SO 压到 11(E0 41,CoT 反而漏 SO)。
+> - **数据档成本量化**:s40(E0,train' label-only)=43.85 vs s01(full-traindev label-only)=47.80,train'(85% image-disjoint)仅 −3.95(过采样缓解了,比预估的 −9~13 小)。即:full-traindev+CoT 乐观上限≈47.8−5.3≈42.5 < s01,**CoT 即便搬 full-traindev 也大概率破不了 s01**。
 > - **机制(印证用户从一开始的怀疑)**:E1 loss~0.7(analysis 占)vs E0 loss~0.005(label 近记忆)。固定 1 epoch 预算下,CoT 目标**稀释了 label 拟合**;推理时 analysis 100%出现在少数类预测上(看似承重)却导出**低精度的少数类开火**——「不忠实 CoT」兑现:推理在场但把 label 带偏。
 > - **⇒ 路线判定**:**当前 s01 配方下 CoT-SFT 这条路否决**(densematch 同档排序在 s31/s32 已证可信)。GRPO **不在 E1 上跑**(放大已劣化的模型);roadmap 退化方案=E0 上 label-only GRPO(已非 CoT 路,价值低)。**s01(47.80)/s15(50.26) 仍是天花板,永久保底。** 待用户拍板:停 CoT 线 / 试变体(更多 epoch?但 s10 证 2ep 过拟合 / 改 analysis 格式 / E0-GRPO) / 直接回 union 冲榜。E0(s40) testp1 实分待传 Codabench 二次确认(densematch 强预测 E0 > E1 的 38.54)。
 > - 推理成本旁证:E1 testp1 推理~73min(analysis 解码) vs E0~20min(label-only),CoT 推理慢~5-6×。
