@@ -72,12 +72,22 @@ CUDA_VISIBLE_DEVICES="${GPUS%%,*}" MAX_PIXELS="$MP" PYTHONPATH=src uv run python
   --split dev --model "$MODEL" --adapter "$CKPT" --engine pt --data-root "$DATA_ROOT" \
   --max-new-tokens 160 --out "$DEVRAW" || echo "WARN: dev infer failed (non-fatal)"
 if [ -f "$DEVRAW" ]; then
-  PYTHONPATH=src uv run python -m nlpcc_t10.aggregate \
-    --pred "$DEVRAW" --ref "$DATA_ROOT/data/traindev-track-1.jsonl" --out "$DEVSUB" || true
-  if [ -f "$DENSE" ] && [ -f "$DEVSUB" ]; then
-    echo "### G2 densematch eval (E1) — same-regime ordering only, NOT an absolute score ###"
+  # Aggregate against the densematch gold itself (206-record SUBSET of the 501 dev records),
+  # NOT traindev — else aggregate pads to all 3333 records and the id sets mismatch (the eval
+  # then errors "extra prediction ids"). The dev raw covers all 501 dev ids ⊇ the 206 densematch.
+  RAWGOLD="data/devbench/dev_gold.jsonl"
+  if [ -f "$DENSE" ]; then
+    PYTHONPATH=src uv run python -m nlpcc_t10.aggregate --pred "$DEVRAW" --ref "$DENSE" --out "$DEVSUB" || true
+    echo "### G2 densematch eval ($TAG) — same-regime ordering only, NOT an absolute score ###"
     uv run python "$DATA_ROOT/offline_eval/evaluate.py" --track 1 \
       --gold "$DENSE" --pred "$DEVSUB" --match id || echo "WARN: densematch eval failed"
+  fi
+  if [ -f "$RAWGOLD" ]; then
+    RAWSUB="outputs/dev_${TAG}_rawgold_submission.jsonl"
+    PYTHONPATH=src uv run python -m nlpcc_t10.aggregate --pred "$DEVRAW" --ref "$RAWGOLD" --out "$RAWSUB" || true
+    echo "### raw-dev eval ($TAG) — full 501-record dev gold ###"
+    uv run python "$DATA_ROOT/offline_eval/evaluate.py" --track 1 \
+      --gold "$RAWGOLD" --pred "$RAWSUB" --match id || echo "WARN: raw-dev eval failed"
   fi
 fi
 echo "=== E1 DONE: $CKPT ; submission submissions/testp1_${TAG}_submission.zip ==="
