@@ -98,13 +98,15 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 
 ## P1.5 CoT-SFT(环节② E1;基座=s01 配方只加 CoT,见 notes/cot_sft_plan.md)
 
-| s39 | m | **E1 = s01 配方 + CoT 教材**(softmin grid os3.0/ds0.6 401408 1ep 2卡 + `<analysis>`) | `s39_m_cotE1` | 待测(Codabench) | — | — | **298 (122/127/11/38)** |
+| s39 | m | **E1 = s01 配方 + CoT 教材**(softmin grid os3.0/ds0.6 401408 1ep 2卡 + `<analysis>`;⚠️**train'(devbench 85% image-disjoint)非full-traindev**) | `s39_m_cotE1` | **38.54** | 43.28 | 33.79 | **298 (122/127/11/38)** |
 
 > **s39 = P1.5 第一个 CoT 模型,2026-06-11 出。** 教材 = gpt-5.5 三阶段蒸馏(units.jsonl 20794,少数类覆盖~99%,Stage C 审核 PASS 90.6%);E1 用 `build_dataset --cot` 把 `<analysis>{rationale}</analysis>\n{"label"}` 作训练目标,softmin **只作用末行 label span**(`<analysis>` 走 CE floor;test_softmin T7/T8 验证),其余严格 = s01(归因唯一变量=+CoT)。
 > - **格式健康**:testp1 parse_fallback = **1/5096(0.02%)**——CoT 不破坏末行 JSON 解析。
 > - **少数类 298 vs s01 单模 253(+45)**:UE 127(+35)/Contra 38(+15)/UCM 122(+13) 都↑,但 **SO 11 << s01 29**(CoT 让范围外推更保守)。落在健康单模区(s01 253/s09 268),非抑制塌陷区。
 > - **待**:testp1 实分(用户传 Codabench)+ densematch G2 分(dev 推理中)。判据:E1 testp1 > s01 47.80 且少数类召回不降 = CoT 增益成立 → E2/GRPO 起步用 E1;≈s01 = 教材未起效查 analysis 质量;< s01 = 排查 softmin-span。
 > - **复现**:教材 `scripts/cot_distill.py --stage blind|gold|verify`;数据 `build_dataset --cot data/cot/units.jsonl --split-mode component_aware --val-ratio 0.15 --minority-oversample 3.0 --supported-downsample 0.6`;训练 `GPUS=2,3 bash scripts/train_e1.sh`(含 cuDNN SDPA 禁用修复 H200 mha_graph 崩)。adapter=`outputs/cotE1_s01cot/v1-*/checkpoint-1980`。
+>
+> **🔴 s39 testp1 = 38.54,实测分析(2026-06-11):** 比 s01(47.80)低 9.3,但**这不是干净的 CoT 对照**——**E1 训在 train'(devbench 85% image-disjoint),s01 训在 full-traindev**。数据档差独立值 ~9-13 分(对照: s31 train'-softmin-无过采样=34.21 vs s01 full+过采样=47.80,差 13.6)。s39(train'+过采样+CoT)=38.54 比 s31 +4.3,但 ≈ s32(train' plain-CE 无过采样)38.68。**⇒ 38.54 落在 train' 数据档,CoT 净效应被数据档淹没,testp1 无法归因。** 干净归因唯一办法 = **训 E0(train'+过采样+label-only,跳过了的对照)**,比 E1−E0(testp1 + densematch 同档可比)。**G2 闸门尚未判定;GRPO 暂不启动**(无 E0 = 不知 CoT 增益,RL 只会放大未验证的东西)。⚠️ SO 仅 11(<s01 29)是具体担忧:CoT 让范围外推过保守。下一步:E0 对照 + analysis 因果消融(去 analysis 重推,看 label 是否变=因果承重否)。
 
 **当前最优 = s15 u_q5(50.26),仍是天花板。** 结论:
 - **union(召回叠加)是唯一超 grid 的方向**(s11→s14→s15 单调涨,但仅限**同家族 Qwen 成员**);单模都 ≤grid;后处理(s03-s07)单调掉分(testp1 召回-critical)。
