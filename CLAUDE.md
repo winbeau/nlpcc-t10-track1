@@ -167,7 +167,7 @@ uv run python "$DATA_ROOT/offline_eval/evaluate.py" --track 1 \
 - 模型解析失败/越界标签时，**fallback 到 `Supported`**（最安全、保 PEM）。
 - ⚠️ **不要信 9:1 dev（=88）选型**：32% 记录跨切分共享图片（泄漏）+ 分布失配（短/少数类稀 vs testp1 长/密）→ 排不了模型、也没预警到 fullres 掉分。**真信号 = Codabench 排行榜**（上限 100）或无泄漏的 testp1-shaped 子集。
 - **提交命名规范**：`testp1_s{NN}_{T}_{desc}.{zip,jsonl}`，`s{NN}` = 按创建顺序的稳定序号，`{T}` = 类型(`m`=单模 / `pp`=后处理 / `u`=union)，`{desc}` = 简短描述(desc 内用 `-`，`_` 只分隔三段)。新提交取下一个号 + 定类型 → 重命名 → 追加 `notes/submissions_log.md` 统一总表一行(序号/类型/描述/三元组得分/逐类计数)+ 复现 + 为什么试它。
-- 数据构造命令**务必记**（含 `--supported-downsample`；grid 那次漏记，反推吃了亏）。
+- 数据构造命令**务必记**（含 `--supported-downsample`）+ **产物 md5/行数**。⚠️ **s01 真配方已取证锁定（2026-06-14）：`--minority-oversample 3.0 --supported-downsample 0.50 --seed 42`（split-mode=random 默认、val-ratio 0.1）→ `data/train_sft.jsonl` md5 `3c5deb9b702b735267233cf85f61fe4f`、12741 行 / 9750 Supported、split.json md5 `7c17d2f2`。** build 是**确定性（seeded）**、默认逐句路径 Jun2→今**字节不变**，原始 traindev 完好 → s01 可**逐字节再生**。**之前把 ds 反推成 ~0.6 是错的**（0.6→13804=full_grid，正是 s33/s51/s52 输败那份；句子级 vs 记录级口径搞错）——这个未记+错推的参数害我们烧了 s33/s49-54 共 7 次重训复刻不出 47.80,还误判"softmin 必输/s01 不可复现"。**纪律:派生数据 build 命令+md5 进 `submissions_log.md`;反推值标 `(GUESS)` 并立即 build 校验;关键产物用带 md5 的不可变文件名,勿复用同路径。**
 
 ## 9. 待办 / 开放项（2026-06-04 大改：3 个 multi-agent 调研重定方向，详见 notes/）
 
