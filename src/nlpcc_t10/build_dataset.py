@@ -460,6 +460,7 @@ def expand_record(
     label_freq: Counter,
     data_root: Path,
     cot_map: dict[tuple[str, int], list[str]] | None = None,
+    multi_target: bool = False,
 ) -> list[dict[str, Any]]:
     """Expand one record into per-sentence samples. All get the same channel (paragraph_id).
     Returns list of (sample, label) tuples — label used downstream for resampling.
@@ -476,19 +477,25 @@ def expand_record(
     for sent_idx, sent_item in enumerate(sentence_labels):
         sentence = sent_item.get("sentence", "")
         types = sent_item.get("types", [])
-        target_label = pick_rarest_label(types, label_freq)
+        # multi-target (A1): for a MULTI-LABEL sentence emit ONE training copy per UNIQUE gold
+        # label (fixes pick_rarest routing that starves SO/Contra). Single-label unchanged.
+        if multi_target and types:
+            targets = list(dict.fromkeys(types))
+        else:
+            targets = [pick_rarest_label(types, label_freq)]
         cot_rationales = cot_map.get((paragraph_id, sent_idx)) if cot_map else None
-        sample = make_sample(
-            record_id=paragraph_id,
-            channel=paragraph_id,
-            claim_text=claim_text,
-            target_sentence=sentence,
-            target_label=target_label,
-            evidence_bundle=evidence_bundle,
-            data_root=data_root,
-            cot_rationales=cot_rationales,
-        )
-        samples.append((sample, target_label))
+        for target_label in targets:
+            sample = make_sample(
+                record_id=paragraph_id,
+                channel=paragraph_id,
+                claim_text=claim_text,
+                target_sentence=sentence,
+                target_label=target_label,
+                evidence_bundle=evidence_bundle,
+                data_root=data_root,
+                cot_rationales=cot_rationales,
+            )
+            samples.append((sample, target_label))
     return samples
 
 
@@ -794,6 +801,7 @@ def build_dataset(
     per_class_oversample: dict[str, float] | None = None,
     split_mode: str = "random",
     cot_path: Path | None = None,
+    multi_target: bool = False,
 ) -> dict[str, Any]:
     """Full pipeline: load, split, expand, resample, write. Returns summary dict."""
     data_path = data_root / "data" / "traindev-track-1.jsonl"
@@ -847,7 +855,7 @@ def build_dataset(
     # 4) Expand: sentence-level samples
     train_pairs: list[tuple[dict[str, Any], str]] = []
     for i in train_use_idx:
-        train_pairs.extend(expand_record(records[i], i, label_freq, data_root, cot_map=cot_map))
+        train_pairs.extend(expand_record(records[i], i, label_freq, data_root, cot_map=cot_map, multi_target=multi_target))
 
     dev_pairs: list[tuple[dict[str, Any], str]] = []
     for i in dev_idx:
@@ -1027,6 +1035,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=None,
         help="Only use the first N records (for fast local smoke-testing).",
     )
+    p.add_argument(
+        "--multi-target",
+        action="store_true",
+        help="A1: for a MULTI-LABEL sentence, emit ONE train copy per UNIQUE gold label instead of "
+             "pick_rarest (fixes pick_rarest routing that starves SO/Contra recall). TRAIN only; dev "
+             "keeps the true distribution. Not for use with --cot/--joint.",
+    )
     return p
 
 
@@ -1078,6 +1093,7 @@ def main(argv: list[str] | None = None) -> int:
         per_class_oversample=_parse_per_class(args.minority_oversample_per_class),
         split_mode=args.split_mode,
         cot_path=Path(args.cot).resolve() if args.cot else None,
+        multi_target=args.multi_target,
     )
     return 0
 
