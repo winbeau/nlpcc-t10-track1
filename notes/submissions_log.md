@@ -128,8 +128,11 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | 序号 | 类型 | 描述 | 文件(submissions/prod/) | Score | MF1 | PEM | #少数类(UCM/UE/SO/Contra) |
 |---|---|---|---|--:|--:|--:|---|
 | s41 | m | **A1 自洽**:s01 + 温度自洽(T1.0 K=8 add-only union,含 greedy 成员保纯加法) | `testp1_s41_m_a1sc-s01` | **待Codabench** | — | — | 待跑完 |
-| s49 | m | **λ-ablation plainCE**:A1(devbench train', λ=0)greedy testp1 | `testp1_s49_m_ablate-plainCE-trainp` | **待Codabench** | — | — | 166 (79/57/17/13) |
-| s50 | m | **λ-ablation softmin**:A0(devbench train', λ=0.5)greedy testp1 | `testp1_s50_m_ablate-softmin-trainp` | **待Codabench** | — | — | 166 (59/84/10/13) |
+| s49 | m | **λ-ablation plainCE**:A1(devbench train', λ=0)greedy testp1 | `testp1_s49_m_ablate-plainCE-trainp` | **38.68254** | — | — | 166 (79/57/17/13) |
+| s50 | m | **λ-ablation softmin**:A0(devbench train', λ=0.5)greedy testp1 | `testp1_s50_m_ablate-softmin-trainp` | **34.59594** | — | — | 166 (59/84/10/13) |
+
+> **🔴 干净 λ-ablation 判定(2026-06-14 testp1 实测):plain-CE 38.68 > softmin 34.60,Δ=+4.09。** 加上 densematch 同对照(plainCE 81.13 > softmin 78.97,+2.16),**两台一致:plain-CE 在 in-domain 和 OOD 上都胜 softmin。** 且 s49/s50 几乎复现早先 s32(plainCE train'≈38.68)/s31(softmin train'≈34.2)——**双重确认**。
+> ⇒ **唯一支持"softmin>plainCE"的证据 = 混淆的 s01(47.80) vs s33(42.87)**(差 max_length 4096/10240、数据集、batch 2/1)。**所有干净实验都反过来。** s01 的 47.80 究竟来自 softmin 还是它的配置/数据,需一个 **full-traindev 干净 λ-ablation**(softmin sibling of s33,同配置只改 λ)才能定;若 softmin-full ≈ s33(42.87) → softmin 无用、s01 优势是配置/数据假象;若 ≫ → softmin 真有 full-data 交互。**这是当前信息量最高的实验,且可能换掉 A1 的基座。**
 
 > **A1 离线 gate(densematch 206,leakage-free,2026-06-14):** 自洽(温度采样 + add-only union)在两条 lineage 都做出干净 lift:
 > | adapter(train') | greedy | T0.7 K8 | **T1.0 K8** |
