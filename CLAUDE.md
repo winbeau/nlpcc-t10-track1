@@ -152,6 +152,13 @@ uv run python "$DATA_ROOT/offline_eval/evaluate.py" --track 1 \
 - **永远用官方 `offline_eval/evaluate.py` 打分**，不要自己另写指标。
 - testp1 提交：跑 §3 的 `testp1-track-1.jsonl` → `aggregate` → 传 Codabench。
 
+### 7.1 Windows 桌面通知（notify-win，关键节点主动弹）
+
+本机长任务多在远程 GPU 后台跑（训练/推理/poll），完成往往隔很久。**关键节点主动给用户弹一条 Windows 通知**，不要默默等：
+- **何时弹**：远程长任务（训练 / testp1 推理 / 8-sample 自洽）跑完、关键实验结果落地（如某 sNN 出分、对照结论确定）、或任务失败需立即注意。**短轮询/中间进度不弹**（避免刷屏）。
+- **怎么弹**：`notify-win -t '<短标题>' -m '<结果/关键数字一两句>'`（成功省 `-s` 用默认；失败加 `-s Alarm2`；参数用单引号；中文/emoji 安全）。退出码 0=投递成功，255=Windows 不可达。
+- 详见用户级 skill `~/.claude/skills/notify-win/SKILL.md`。例：`notify-win -t 'Track1 出分' -m 's41=47.76≈s01,A1 自洽 testp1 NULL'`。
+
 ## 8. 约定与坑
 
 - **label 字符串逐字一致**（含空格大小写），见 §2；非法 label 会被评测器直接报错。
