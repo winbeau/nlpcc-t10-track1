@@ -96,15 +96,35 @@ _LABEL_LOOKUP = {lbl.lower(): lbl for lbl in TRACK1_LABELS}
 def iter_eval_records(
     split: str,
     data_root: Path,
+    records_file: str | None = None,
 ) -> list[dict[str, Any]]:
     """返回待推理 record 列表，每个 {id, claim_text, evidence_bundle, sentences:[str,...]}。
 
+    records_file (优先于 split)：直接从一个 *整-record* jsonl 读推理对象（每条含 id/claim_text/
+            evidence_bundle/sentence_label），**完全绕开 data/split.json** —— 用于干净评测一个显式
+            子集（如 data/devbench/dev_gold_densematch.jsonl，206 rec），不改/不依赖全局 split 态。
+            sentences = [s["sentence"] for s in rec["sentence_label"]]（types 若有则忽略，仅取句子）。
     dev:    从 data/split.json 取标记为 dev 的原始行号，回 traindev-track-1.jsonl 取该行；
             id = "track1-{idx:06d}"，sentences = [s["sentence"] for s in rec["sentence_label"]]
             （与 build_dataset.make_dev_gold_record 的 id 规则完全一致）。
     testp1: 直接读 testp1-track-1.jsonl；id 用文件自带的 rec["id"]；
             sentences = [s["sentence"] for s in rec["sentence_label"]]（test 无 types）。
     """
+    if records_file:
+        raw = load_jsonl(Path(records_file))
+        out: list[dict[str, Any]] = []
+        for rec in raw:
+            sents = [s.get("sentence", "") for s in rec.get("sentence_label", [])]
+            out.append(
+                {
+                    "id": rec["id"],
+                    "claim_text": rec.get("claim_text", ""),
+                    "evidence_bundle": rec.get("evidence_bundle", []),
+                    "sentences": sents,
+                }
+            )
+        return out
+
     if split == "testp1":
         path = data_root / "data" / "testp1-track-1.jsonl"
         raw = load_jsonl(path)
@@ -684,6 +704,12 @@ def dry_run(records: list[dict[str, Any]], data_root: Path, k: int) -> int:
 def build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Sentence-level inference for Track 1.")
     p.add_argument("--split", choices=("dev", "testp1"), required=True)
+    p.add_argument(
+        "--records-file", default=None,
+        help="整-record jsonl(id/claim_text/evidence_bundle/sentence_label),优先于 --split,"
+             "绕开 data/split.json 直接评一个显式子集(如 data/devbench/dev_gold_densematch.jsonl)。"
+             "用于 A1/A3 的 leakage-aware densematch gate,避免改全局 split 态。",
+    )
     p.add_argument("--data-root", default="../NLPCC-2026-Task10-Science")
     p.add_argument(
         "--model",
@@ -776,10 +802,11 @@ def main(argv: list[str] | None = None) -> int:
     args = build_arg_parser().parse_args(argv)
     data_root = Path(args.data_root).resolve()
 
-    records = iter_eval_records(args.split, data_root)
+    records = iter_eval_records(args.split, data_root, records_file=args.records_file)
     if args.limit is not None:
         records = records[: args.limit]
-    print(f"split={args.split}  records={len(records)}  "
+    src_desc = f"records-file={args.records_file}" if args.records_file else f"split={args.split}"
+    print(f"{src_desc}  records={len(records)}  "
           f"sentences={sum(len(r['sentences']) for r in records)}")
 
     if args.dry_run:
