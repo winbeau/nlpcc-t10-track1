@@ -127,7 +127,9 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 
 | 序号 | 类型 | 描述 | 文件(submissions/prod/) | Score | MF1 | PEM | #少数类(UCM/UE/SO/Contra) |
 |---|---|---|---|--:|--:|--:|---|
-| s41 | m | **A1 自洽**:s01 + 温度自洽(T1.0 K=8 add-only union,含 greedy 成员保纯加法) | `testp1_s41_m_a1sc-s01` | **待Codabench** | — | — | 318 (119/137/37/25) — vs s01 greedy 253,自洽 +65 firing |
+| s41 | m | **A1 自洽**:s01 + 温度自洽(T1.0 K=8 add-only union,含 greedy 成员保纯加法) | `testp1_s41_m_a1sc-s01` | **47.75838** | — | — | 318 (119/137/37/25) — vs s01 greedy 253,自洽 +65 firing |
+
+> **🔴 s41 = 47.76 ≈ s01 47.80(Δ −0.04,持平)→ A1 自洽 NULL on testp1。** 离线 densematch 的 +2.10 lift(softmin A0 代理)**未迁移**:densematch in-domain 低 FP 压力 → 高估 added-firing 杠杆(s30 同病,ρ=0.59 不可信)。testp1(OOD/PEM-precision-limited)上,65 个新 firing **净 break-even**(加对的被加错碎 PEM 抵消)。**A1 不破 50.26,也没伤(持平);s15(50.26)仍天花板。** ⇒ s42(A1×s15)同机制大概率也 NULL,不值得交;A1 作为 recall-adder 在 testp1 死。**唯一离线信号 densematch 再次对 added-firing 杠杆 over-promise** —— 教训三次锁定(s30/s16/s41)。
 | s49 | m | **λ-ablation plainCE**:A1(devbench train', λ=0)greedy testp1 | `testp1_s49_m_ablate-plainCE-trainp` | **38.68254** | — | — | 166 (79/57/17/13) |
 | s50 | m | **λ-ablation softmin**:A0(devbench train', λ=0.5)greedy testp1 | `testp1_s50_m_ablate-softmin-trainp` | **34.59594** | — | — | 166 (59/84/10/13) |
 
