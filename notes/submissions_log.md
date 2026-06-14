@@ -138,6 +138,8 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 > **⇒ s01 的 47.80 不是 softmin 给的,是配置给的**:config-A+softmin(s01=47.80) >> config-B+softmin(s51=39.14),**差 +8.66!**(config-A = max_length 4096 / 2卡 DDP global-batch-2 / s01 build;config-B = max_length 10240 / 1卡 / full_grid build)。**配置值 ~+8.66,是迄今最大单一杠杆。**
 > **★从没训过的 config-A + plainCE**:期望 ≈ 47.80(s01 config-A softmin)+ plainCE 优势(~+2~4) ≈ **49.8~51.8,有望破 s15(50.26)** 且作单模/union 基座俱佳。**= 当前最高价值实验(下一步)。** 警:s01 build 当年 downsample 未精记(§8),复刻用 os3.0/ds0.6 best-guess。
 
+| s52 | m | **★config-A + plainCE**(s01 配置:max_length 4096 / 2卡 DDP / os3.0-ds0.6;数据复用 `data/full_grid`;只改 λ=0=plainCE)= softmin 死后的破局候选,外推 ~51.5 | `testp1_s52_m_cfgA-plainCE` | **待Codabench** | — | — | 272 (92/137/23/20) |
+
 > **🔴 干净 λ-ablation 判定(2026-06-14 testp1 实测):plain-CE 38.68 > softmin 34.60,Δ=+4.09。** 加上 densematch 同对照(plainCE 81.13 > softmin 78.97,+2.16),**两台一致:plain-CE 在 in-domain 和 OOD 上都胜 softmin。** 且 s49/s50 几乎复现早先 s32(plainCE train'≈38.68)/s31(softmin train'≈34.2)——**双重确认**。
 > ⇒ **唯一支持"softmin>plainCE"的证据 = 混淆的 s01(47.80) vs s33(42.87)**(差 max_length 4096/10240、数据集、batch 2/1)。**所有干净实验都反过来。** s01 的 47.80 究竟来自 softmin 还是它的配置/数据,需一个 **full-traindev 干净 λ-ablation**(softmin sibling of s33,同配置只改 λ)才能定;若 softmin-full ≈ s33(42.87) → softmin 无用、s01 优势是配置/数据假象;若 ≫ → softmin 真有 full-data 交互。**这是当前信息量最高的实验,且可能换掉 A1 的基座。**
 
