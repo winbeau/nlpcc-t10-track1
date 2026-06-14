@@ -144,7 +144,9 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 > ⇒ **s01 的 +8.66 优势 = 数据 build(downsample/配比),不是 max_length/2卡(我之前的误判)。** s01 原始数据文件已被覆盖(现 train_sft.jsonl=Jun3 重建 12802,配比与 s01 近似但非同一文件)。**真正的 config-A+plainCE 从没正确训过**(s52 用错了数据)。修法 = 用 `data/train_sft.jsonl` 重训 plainCE(s53)。
 > ⚠️ 警示沉淀:本数据集**跨 config 外推极不可靠**(softmin/A1/config 三次外推全错);只信 testp1 实分。s01(47.80)因原始数据丢失**不可复现**(adapter 已存,作提交安全)。
 
-| s53 | m | **修正版 config-A+plainCE**:plainCE @ `data/train_sft.jsonl`(s01 配方近似,12802,2卡 maxlen4096)= s52 用错数据的修正重跑 | `testp1_s53_m_cfgA-plainCE-tsft` | **待Codabench** | — | — | 260 (110/104/30/16) — profile≈s01 253(109/92/29/23) |
+| s53 | m | **修正版 config-A+plainCE**:plainCE @ `data/train_sft.jsonl`(s01 配方近似,12802,2卡 maxlen4096)= s52 用错数据的修正重跑 | `testp1_s53_m_cfgA-plainCE-tsft` | **44.08014** | — | — | 260 (110/104/30/16) — profile≈s01 253(109/92/29/23) |
+
+> **🔴 s53=44.08(plainCE@train_sft)< s01=47.80(softmin@train_sft-原始),低 3.72;但 > s52=41.56(plainCE@full_grid)+2.5。** ⇒ 数据 build 确实影响(train_sft 比 full_grid +2.5),但 **train_sft(44 档)仍达不到 s01(47.80 档)** → 当前 `data/train_sft.jsonl`(Jun3 重建)**≠ s01 原始(Jun2)数据**,s01 的数据真丢了。待 s54(softmin@train_sft 复现对照)定论:s54≈47.80→train_sft=s01 数据(则 plainCE<softmin 反转,需查);s54≈44→train_sft≠s01 数据(s01 不可复现,plainCE≥softmin 维持)。后者概率高(plainCE>softmin 已三台)。
 | s54 | m | **复现对照**:softmin @ `data/train_sft.jsonl`(= s01 配方+loss,同 s53 配置只改 λ=0.5);≈47.80 则证 train_sft=s01 配方 | `testp1_s54_m_cfgA-softmin-tsft` | **跑完中** | — | — | 待跑完 |
 
 > **🔴 干净 λ-ablation 判定(2026-06-14 testp1 实测):plain-CE 38.68 > softmin 34.60,Δ=+4.09。** 加上 densematch 同对照(plainCE 81.13 > softmin 78.97,+2.16),**两台一致:plain-CE 在 in-domain 和 OOD 上都胜 softmin。** 且 s49/s50 几乎复现早先 s32(plainCE train'≈38.68)/s31(softmin train'≈34.2)——**双重确认**。
