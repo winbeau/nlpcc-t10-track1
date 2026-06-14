@@ -127,7 +127,7 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 
 | 序号 | 类型 | 描述 | 文件(submissions/prod/) | Score | MF1 | PEM | #少数类(UCM/UE/SO/Contra) |
 |---|---|---|---|--:|--:|--:|---|
-| s41 | m | **A1 自洽**:s01 + 温度自洽(T1.0 K=8 add-only union,含 greedy 成员保纯加法) | `testp1_s41_m_a1sc-s01` | **待Codabench** | — | — | 待跑完 |
+| s41 | m | **A1 自洽**:s01 + 温度自洽(T1.0 K=8 add-only union,含 greedy 成员保纯加法) | `testp1_s41_m_a1sc-s01` | **待Codabench** | — | — | 318 (119/137/37/25) — vs s01 greedy 253,自洽 +65 firing |
 | s49 | m | **λ-ablation plainCE**:A1(devbench train', λ=0)greedy testp1 | `testp1_s49_m_ablate-plainCE-trainp` | **38.68254** | — | — | 166 (79/57/17/13) |
 | s50 | m | **λ-ablation softmin**:A0(devbench train', λ=0.5)greedy testp1 | `testp1_s50_m_ablate-softmin-trainp` | **34.59594** | — | — | 166 (59/84/10/13) |
 
