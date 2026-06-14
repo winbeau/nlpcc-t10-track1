@@ -147,7 +147,11 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | s53 | m | **修正版 config-A+plainCE**:plainCE @ `data/train_sft.jsonl`(s01 配方近似,12802,2卡 maxlen4096)= s52 用错数据的修正重跑 | `testp1_s53_m_cfgA-plainCE-tsft` | **44.08014** | — | — | 260 (110/104/30/16) — profile≈s01 253(109/92/29/23) |
 
 > **🔴 s53=44.08(plainCE@train_sft)< s01=47.80(softmin@train_sft-原始),低 3.72;但 > s52=41.56(plainCE@full_grid)+2.5。** ⇒ 数据 build 确实影响(train_sft 比 full_grid +2.5),但 **train_sft(44 档)仍达不到 s01(47.80 档)** → 当前 `data/train_sft.jsonl`(Jun3 重建)**≠ s01 原始(Jun2)数据**,s01 的数据真丢了。待 s54(softmin@train_sft 复现对照)定论:s54≈47.80→train_sft=s01 数据(则 plainCE<softmin 反转,需查);s54≈44→train_sft≠s01 数据(s01 不可复现,plainCE≥softmin 维持)。后者概率高(plainCE>softmin 已三台)。
-| s54 | m | **复现对照**:softmin @ `data/train_sft.jsonl`(= s01 配方+loss,同 s53 配置只改 λ=0.5);≈47.80 则证 train_sft=s01 配方 | `testp1_s54_m_cfgA-softmin-tsft` | **待Codabench** | — | — | 244 (114/82/33/15) |
+| s54 | m | **复现对照**:softmin @ `data/train_sft.jsonl`(= s01 配方+loss,同 s53 配置只改 λ=0.5);≈47.80 则证 train_sft=s01 配方 | `testp1_s54_m_cfgA-softmin-tsft` | **44.74991** | — | — | 244 (114/82/33/15) |
+
+> **🔴🔴 s01 复现失败 + 实证定论(2026-06-14):s54(softmin@train_sft,与 s01 完全同配方/同 loss)= 44.75,比 s01=47.80 低 3.05。** ⇒ **s01 的 47.80 来自 Jun2 那份已被覆盖的原始数据,不是 config/loss。** 当前 `data/train_sft.jsonl`(Jun3 重建)≠ s01 数据;同配方同 loss 也只到 44.75。**s01 不可从现有数据复现(adapter 已存,作提交安全)。**
+> **🟡 softmin vs plainCE 实为数据依赖,之前"softmin 必输"修正:** train_sft 档 s54 softmin 44.75 ≥ s53 plainCE 44.08(softmin +0.67,~打平);full_grid/devbench/densematch 档 plainCE 赢 +2.2~4.1。⇒ **softmin 对 s01 不是错(那档打平);plainCE 只在别的 build 上明显占优。** 净:plainCE ≥ softmin 但 margin 数据依赖、有时打平。
+> **数据档总览(testp1):** s01 train_sft-Jun2=47.80 >> {train_sft-Jun3: s53/s54 ≈44} > {full_grid: s33/s51/s52 ≈39-43} > {devbench train': s49/s50 ≈35-39}。**数据 build 是最大杠杆(跨档差 ~8),但 s01 那档不可复现。**
 
 > **🔴 干净 λ-ablation 判定(2026-06-14 testp1 实测):plain-CE 38.68 > softmin 34.60,Δ=+4.09。** 加上 densematch 同对照(plainCE 81.13 > softmin 78.97,+2.16),**两台一致:plain-CE 在 in-domain 和 OOD 上都胜 softmin。** 且 s49/s50 几乎复现早先 s32(plainCE train'≈38.68)/s31(softmin train'≈34.2)——**双重确认**。
 > ⇒ **唯一支持"softmin>plainCE"的证据 = 混淆的 s01(47.80) vs s33(42.87)**(差 max_length 4096/10240、数据集、batch 2/1)。**所有干净实验都反过来。** s01 的 47.80 究竟来自 softmin 还是它的配置/数据,需一个 **full-traindev 干净 λ-ablation**(softmin sibling of s33,同配置只改 λ)才能定;若 softmin-full ≈ s33(42.87) → softmin 无用、s01 优势是配置/数据假象;若 ≫ → softmin 真有 full-data 交互。**这是当前信息量最高的实验,且可能换掉 A1 的基座。**
