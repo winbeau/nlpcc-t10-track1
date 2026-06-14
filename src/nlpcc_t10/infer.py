@@ -384,24 +384,28 @@ def infer_record(
 
 
 def _extract_text_and_logprob(resp) -> tuple[str, dict[str, float | int | None]]:
-    """从 ChatCompletionResponse 取 choice0 的文本 + 一组 token 级置信度统计。
+    """取 resp.choices[0] 的文本+置信度（薄封装；self-consistency n>1 用 _extract_choice 逐 choice 取）。"""
+    try:
+        choice = resp.choices[0]
+    except Exception:
+        return "", {"first_logprob": None, "min_logprob": None, "sum_logprob": None, "n_tokens": None}
+    return _extract_choice(choice)
+
+
+def _extract_choice(choice) -> tuple[str, dict[str, float | int | None]]:
+    """从单个 choice 取文本 + 一组 token 级置信度统计。
 
     模型输出形如 {"label": "X"}：结构 token（{ " label " : 空格 }）在贪心解码下几乎必然
-    （logprob≈0），唯一不确定的是 **标签值** 的 token。所以 review #14 里只取首 token（'{'）
-    的 logprob 毫无判别力。这里返回全 token 的统计，供段落级阈值收口（§5）按需选用：
+    （logprob≈0），唯一不确定的是 **标签值** 的 token。返回全 token 的统计，供段落级阈值收口
+    （§5）/ self-consistency 按需选用：
       first_logprob : 首 token（旧行为，向后兼容，基本无用）
-      min_logprob   : 全 token 最小 logprob —— 最弱的那个 token，通常就是标签 token；
-                      **长度无关**，作为"这条预测有多虚"的主信号最稳。
-      sum_logprob   : 全 token logprob 之和 = log P(整条响应) ≈ log P(标签短语)（有长度偏置）。
+      min_logprob   : 全 token 最小 logprob —— 最弱的那个 token，通常就是标签 token；长度无关。
+      sum_logprob   : 全 token logprob 之和 = log P(整条响应)（有长度偏置）。
       n_tokens      : 解码 token 数（便于做 mean = sum/n）。
     """
     conf: dict[str, float | int | None] = {
         "first_logprob": None, "min_logprob": None, "sum_logprob": None, "n_tokens": None,
     }
-    try:
-        choice = resp.choices[0]
-    except Exception:
-        return "", conf
     text = choice.message.content if choice.message is not None else ""
     if not isinstance(text, str):
         text = str(text)
@@ -428,6 +432,84 @@ def _extract_text_and_logprob(resp) -> tuple[str, dict[str, float | int | None]]
                 conf["min_logprob"] = min(span)
                 conf["sum_logprob"] = float(sum(span))
     return text, conf
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# A1 SELF-CONSISTENCY: n samples per sentence in ONE engine call (prefix KV reused)
+# ──────────────────────────────────────────────────────────────────────────────
+
+def infer_record_multi(
+    eng, adapter_request, engine_kind, request_config, record, data_root, n_samples: int,
+):
+    """Per-sentence self-consistency: request_config carries n=n_samples, so each sentence's
+    response has n choices (the n sampled completions), generated in ONE engine.infer call → the
+    shared system+evidence+claim prefix KV is reused across all n samples (cheaper than n separate runs).
+
+    Returns SAMPLE-MAJOR rows: a list of n inner row-lists, each inner list identical in schema to
+    infer_record's output (one row per sentence). Caller writes inner list k to <out>.s{k}<ext> so the
+    existing aggregate.py + ensemble_union.py --min-votes 1 path consumes them unchanged (add-only union).
+
+    Any length mismatch → every sample for the record falls back to all-Supported (PEM-safe; mirrors
+    the infer_record guard)."""
+    from swift import InferRequest  # noqa: WPS433  (4.2.3 top-level export)
+
+    rid = record["id"]
+    sentences: list[str] = record["sentences"]
+
+    def _fallback_all():
+        return [
+            [{"id": rid, "sent_index": i, "label": "Supported", "raw": "",
+              "logprob": None, "min_logprob": None, "sum_logprob": None,
+              "n_tokens": None, "parsed_ok": False} for i in range(len(sentences))]
+            for _ in range(n_samples)
+        ]
+
+    if not sentences:
+        return [[] for _ in range(n_samples)]
+
+    infer_requests = []
+    for sent in sentences:
+        messages, image_paths = build_messages_for_sentence(
+            record["claim_text"], sent, record["evidence_bundle"], data_root
+        )
+        kw: dict[str, Any] = {"messages": messages}
+        if image_paths:
+            kw["images"] = image_paths
+        infer_requests.append(InferRequest(**kw))
+
+    infer_kwargs: dict[str, Any] = {}
+    if engine_kind == "vllm" and adapter_request is not None:
+        infer_kwargs["adapter_request"] = adapter_request
+
+    responses = eng.infer(infer_requests, request_config, use_tqdm=False, **infer_kwargs)
+    if len(responses) != len(infer_requests):
+        print(
+            f"[infer] WARNING id={rid}: {len(responses)} responses for {len(infer_requests)} "
+            f"sentences; falling back ALL samples to 'Supported'.", file=sys.stderr,
+        )
+        return _fallback_all()
+
+    empty_conf = {"first_logprob": None, "min_logprob": None, "sum_logprob": None, "n_tokens": None}
+    samples = [[] for _ in range(n_samples)]
+    for i, resp in enumerate(responses):
+        choices = getattr(resp, "choices", None) or []
+        for k in range(n_samples):
+            if k < len(choices):
+                text, conf = _extract_choice(choices[k])
+            elif choices:  # engine returned fewer choices than n -> reuse last (best-effort, no crash)
+                text, conf = _extract_choice(choices[-1])
+            else:
+                text, conf = "", empty_conf
+            label, ok = parse_label(text)
+            samples[k].append(
+                {
+                    "id": rid, "sent_index": i, "label": label, "raw": text,
+                    "logprob": conf["first_logprob"], "min_logprob": conf["min_logprob"],
+                    "sum_logprob": conf["sum_logprob"], "n_tokens": conf["n_tokens"],
+                    "parsed_ok": ok,
+                }
+            )
+    return samples
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -640,12 +722,22 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--max-new-tokens", type=int, default=DEFAULT_MAX_NEW_TOKENS)
     p.add_argument(
         "--temperature", type=float, default=0.0,
-        help="采样温度。0.0=贪心(默认,行为不变)。E1 自洽采样用 >0(如 0.7);"
-             "多样本由调用方多次跑(不同 --seed)再 union，而非引擎 n>1。",
+        help="采样温度。0.0=贪心(默认,行为不变)。A1 自洽采样用 >0(如 0.7),配 --n 在一次调用里多采样;"
+             "也可由调用方多次跑(不同 --seed)再 union。",
     )
     p.add_argument(
         "--seed", type=int, default=None,
         help="采样种子(仅 temperature>0 时透传引擎,使一次采样可复现)。",
+    )
+    p.add_argument(
+        "--n", type=int, default=1,
+        help="A1 self-consistency: 每句在 *一次* 引擎调用里采样 n 个样本(共享前缀 KV,比多次跑省)。"
+             "n>1 需 --temperature>0;输出写 n 个样本文件 <out>.s0..s{n-1}<ext>(每个为标准 raw 格式),"
+             "下游对每个 aggregate 后用 ensemble_union.py --min-votes 1 取 add-only 并集。仅 per-sentence(不支持 --joint/--corrector)。",
+    )
+    p.add_argument(
+        "--top-logprobs", type=int, default=1,
+        help="每 token 返回的候选 logprob 数(默认 1=原行为)。B1/A3 soft-blend 取每类概率时可调大。",
     )
     p.add_argument(
         "--joint",
@@ -716,14 +808,59 @@ def main(argv: list[str] | None = None) -> int:
         max_tokens=(512 if (args.joint or args.corrector) else args.max_new_tokens),
         temperature=args.temperature,
         logprobs=not args.no_logprob,
-        top_logprobs=1 if not args.no_logprob else None,
+        top_logprobs=(args.top_logprobs if not args.no_logprob else None),
     )
     if args.temperature and args.temperature > 0 and args.seed is not None:
         rc_kwargs["seed"] = args.seed
+    if args.n and args.n > 1:
+        if args.joint or args.corrector:
+            print("error: --n>1 (self-consistency) is per-sentence only; drop --joint/--corrector.",
+                  file=sys.stderr)
+            return 2
+        if not (args.temperature and args.temperature > 0):
+            print("error: --n>1 needs --temperature>0 (greedy samples would be identical).",
+                  file=sys.stderr)
+            return 2
+        rc_kwargs["n"] = args.n
     request_config = RequestConfig(**rc_kwargs)
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # ---- A1 self-consistency (n>1): write n standard raw files <out>.s0..s{n-1}, return early ----
+    if args.n and args.n > 1:
+        sample_paths = [out_path.with_name(f"{out_path.stem}.s{k}{out_path.suffix}")
+                        for k in range(args.n)]
+        n_done = 0
+        n_fallback = 0
+        label_counter = {lbl: 0 for lbl in TRACK1_LABELS}
+        files = [p.open("w", encoding="utf-8") for p in sample_paths]
+        try:
+            for rec in records:
+                samples = infer_record_multi(
+                    eng, adapter_request, engine_kind, request_config, rec, data_root, args.n
+                )
+                for k, rows in enumerate(samples):
+                    for row in rows:
+                        if not row.get("parsed_ok", True):
+                            n_fallback += 1
+                        label_counter[row["label"]] = label_counter.get(row["label"], 0) + 1
+                        files[k].write(json.dumps(row, ensure_ascii=False) + "\n")
+                n_done += 1
+                if n_done % 50 == 0 or n_done == len(records):
+                    print(f"  [{n_done}/{len(records)}] records x{args.n} samples "
+                          f"(fallback so far: {n_fallback})")
+        finally:
+            for f in files:
+                f.close()
+        print(f"Wrote {args.n} sample files: {sample_paths[0]} .. {sample_paths[-1]}")
+        print(f"  records={n_done}  parse_fallbacks={n_fallback} (summed over {args.n} samples)")
+        print("  label distribution (summed over samples):")
+        for lbl in TRACK1_LABELS:
+            print(f"    {lbl}: {label_counter.get(lbl, 0)}")
+        print("Next: aggregate each <out>.sK.jsonl, then scripts/ensemble_union.py --min-votes 1 "
+              "over the N submissions = add-only self-consistency.")
+        return 0
 
     n_done = 0
     n_fallback = 0
