@@ -177,7 +177,7 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | 序号 | 类型 | 描述 | 文件(submissions/prod/) | Score | MF1 | PEM | #少数类(UCM/UE/SO/Contra) |
 |---|---|---|---|--:|--:|--:|---|
 | s55 | m | **复现 s01**:ds=0.50(正确数据,12741/9750)+ s01 配方(softmin 2卡 maxlen4096)| `testp1_s55_m_recover-s01-ds050` | **待Codabench** | — | — | 241 (106/79/26/30) |
-| s56 | m | **A1 multi-target**:ds=0.50 + `--multi-target`(多标签每 gold 各一副本,修 pick_rarest 路由)+ s01 配方 | `testp1_s56_m_multitarget-ds050` | **跑完中** | — | — | 待跑完 |
+| s56 | m | **A1 multi-target**:ds=0.50 + `--multi-target`(多标签每 gold 各一副本,修 pick_rarest 路由)+ s01 配方 | `testp1_s56_m_multitarget-ds050` | **待Codabench** | — | — | 344 (108/130/78/28) — vs s55 SO 26→78(3×)/UE 79→130 |
 
 > **s55/s56 = 夜间自动链。** s55 复现 s01(期望 ~47.80,确认数据恢复闭环;ckpt-2000 = s01 同步数)。s56 = A1 multi-target(SO target 507→1626、Contra 435→579、UCM 747 不变;预检 GREEN)。判据:**s56 vs s55**——s56>s55 = multi-target 净涨(SO/Contra 召回);≈或< = 零和/FP 碎 PEM。⚠️ s56 full-traindev→densematch 泄漏,不可离线门控,胜负以 Codabench 总分为准。ADD-mode;s01/s15 永久保底。
 
