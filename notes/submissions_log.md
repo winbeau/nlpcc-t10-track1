@@ -123,6 +123,24 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 >
 > **🔴 s39 testp1 = 38.54,实测分析(2026-06-11):** 比 s01(47.80)低 9.3,但**这不是干净的 CoT 对照**——**E1 训在 train'(devbench 85% image-disjoint),s01 训在 full-traindev**。数据档差独立值 ~9-13 分(对照: s31 train'-softmin-无过采样=34.21 vs s01 full+过采样=47.80,差 13.6)。s39(train'+过采样+CoT)=38.54 比 s31 +4.3,但 ≈ s32(train' plain-CE 无过采样)38.68。**⇒ 38.54 落在 train' 数据档,CoT 净效应被数据档淹没,testp1 无法归因。** 干净归因唯一办法 = **训 E0(train'+过采样+label-only,跳过了的对照)**,比 E1−E0(testp1 + densematch 同档可比)。**G2 闸门尚未判定;GRPO 暂不启动**(无 E0 = 不知 CoT 增益,RL 只会放大未验证的东西)。⚠️ SO 仅 11(<s01 29)是具体担忧:CoT 让范围外推过保守。下一步:E0 对照 + analysis 因果消融(去 analysis 重推,看 label 是否变=因果承重否)。
 
+## P2 A1 自洽 + softmin/plainCE 干净 λ-ablation(2026-06-14;见 notes/a1_a3_a4_execution_plan.md)
+
+| 序号 | 类型 | 描述 | 文件(submissions/prod/) | Score | MF1 | PEM | #少数类(UCM/UE/SO/Contra) |
+|---|---|---|---|--:|--:|--:|---|
+| s41 | m | **A1 自洽**:s01 + 温度自洽(T1.0 K=8 add-only union,含 greedy 成员保纯加法) | `testp1_s41_m_a1sc-s01` | **待Codabench** | — | — | 待跑完 |
+| s49 | m | **λ-ablation plainCE**:A1(devbench train', λ=0)greedy testp1 | `testp1_s49_m_ablate-plainCE-trainp` | **待Codabench** | — | — | 166 (79/57/17/13) |
+| s50 | m | **λ-ablation softmin**:A0(devbench train', λ=0.5)greedy testp1 | `testp1_s50_m_ablate-softmin-trainp` | **待Codabench** | — | — | 166 (59/84/10/13) |
+
+> **A1 离线 gate(densematch 206,leakage-free,2026-06-14):** 自洽(温度采样 + add-only union)在两条 lineage 都做出干净 lift:
+> | adapter(train') | greedy | T0.7 K8 | **T1.0 K8** |
+> |---|--:|--:|--:|
+> | A1 plain-CE | 81.13 | 82.74 (+1.61) | **83.70 (+2.57 / PEM +3.40)** |
+> | A0 softmin(=s01 配方代理) | 78.97 | 80.89 (+1.92) | **81.07 (+2.10)** |
+> PEM 单调↑证明加的是真阳性。**softmin 比 plain-CE 更尖锐但 lift 不输** → 自洽对生产的 s01(softmin)应迁移 → s41 用 T1.0 K8 套到 s01。infer.py 已加 `--n`(引擎内多采样)/`--records-file`(绕 split.json 干净评子集),已上 main 92f1e1a/f98922d。
+>
+> **🔬 softmin vs plain-CE 干净 ablation(回应"s01 vs s33 是否只差 loss"):** args.json 实测 **s01-vs-s33 不是干净对照**——除 loss 外还差 max_length(4096 vs 10240)、数据集文件、有效 batch(2 卡 vs 1 卡;step 2000 vs 4214)。**唯一干净 ablation = A0 vs A1**(args.json 只差 λ,同数据/同配置):densematch 上 **plain-CE 81.13 > softmin 78.97(+2.16)**。⇒ **没有干净实验证明 softmin 在 testp1 胜 plain-CE**;唯一干净对照在 in-domain densematch 上反而 plain-CE 赢。s49/s50 = 把这对干净 adapter 交 testp1,看 OOD 上是否翻盘(densematch 低估 FP 压力,softmin 价值假设在 testp1 长段才显现)。
+> 全部 ADD-mode;s01=47.80 / s15=50.26 永久保底不动。s42-s48 为 execution_plan 预留(A1×s15 / A3 / A4 GRPO),尚未跑。
+
 **当前最优 = s15 u_q5(50.26),仍是天花板。** 结论:
 - **union(召回叠加)是唯一超 grid 的方向**(s11→s14→s15 单调涨,但仅限**同家族 Qwen 成员**);单模都 ≤grid;后处理(s03-s07)单调掉分(testp1 召回-critical)。
 - **⚠️ 架构多样性 union 证伪(2026-06-04)**:往 5-Qwen 基底加任何**非 Qwen**成员都掉分 —— s18(+q4b)49.71、s19(+iv2b)48.48、s20(+iv8b)49.36、s21(+iv2b+iv8b)47.77、**s23(+gemma26b)49.83**(最接近但仍 −0.43)。**统一规律:新成员让 MF1↑ 但 PEM↓**(s23 MF1 57.67 > s15 57.17 **+0.50**,但 PEM 41.98 < 43.34 **−1.36**)→ 新成员加对了召回(MF1)却也加了**假阳性打碎干净段落**(PEM),净亏。s15 的 5-Qwen union 已 catch 住大部分正确少数类,再加只叠 FP。
