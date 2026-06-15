@@ -191,8 +191,16 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | s67 | u | **非对称 union**:s15 为底(全开火保留)+ 新5 ≥2 共识在 s15 漏判处加 | `testp1_s67_u_s15base-K2` | **49.48344** | — | — | 421 (+39: UCM3/UE22/SO11/Contra3) |
 | s68 | u | 非对称 union s15 底 + 新5 **≥3** 共识加 | `testp1_s68_u_s15base-K3` | 不传(同源 FP) | — | — | 392 (+10) |
 | s69 | u | 非对称 union s15 底 + K2(UE 收紧到 3)| `testp1_s69_u_s15base-K2ueTight` | 不传(同源 FP) | — | — | 404 (+22) |
-| **s70** | m | **★密度匹配 softmin**(全 ds0.50 base + 68 注入密集记录;config-A 2卡;= s01 配方 + density)| `s70_dsm_density` | 训练中→待 Codabench | — | — | — |
-| s71 | m | 密度匹配 plainCE(同 base+注入;1卡;门控同配方,解相关成员)| `s71_dpce_density` | 训练中→待 Codabench | — | — | — |
+| s70 | m | 密度匹配 softmin(全 ds0.50 + 68 注入;config-A 2卡)| `testp1_s70_m_density-softmin` | **44.67282** | — | — | 361 (UCM116/UE190/SO24/Contra31);≥2段 8.7% vs s01 3.8% |
+| s71 | m | 密度匹配 plainCE(同 base+注入;1卡;解相关)| `testp1_s71_m_density-plaince` | 训练中 | — | — | — |
+| s72 | u | s15 5成员 + s70 全部(OR mv1)| `testp1_s72_u_density-aug6` | 不传(+71含UE,s67险) | — | — | 453 (143/213/51/46) |
+| s73 | u | s15终稿底 + s70 全部开火(asym K1)| `testp1_s73_u_s15base-s70dens` | 不传(≈s72) | — | — | 453 (+71) |
+| **s74** | u | **★s15终稿底 + s70 仅 UCM/Contra(外科,排除FP-prone UE/SO)** | `testp1_s74_u_s15base-s70ucmContra` | **★50.45480** | — | — | 396 (+14: UCM5/Contra9) |
+
+> **🟢🔴 密度匹配 testp1 实测(2026-06-15)= 单模没兑现,但外科 union 首破 s15 顶:**
+> - **s70 密度单模 = 44.67 < s01 47.80 < s55(无密度)45.48。** 机制对(testp1 ≥2少数类段 8.7% vs s01 3.8%,密度确实让单模原生开多了),但 testp1 OOD 上多开的火(尤其 UE 190,UE 非密度目标类)大多 FP → 拖垮单模 PEM。**densematch 门控第 4 次过度乐观**(+2.68 没传到 testp1;前车 s30/s16/s41)。「密度→强单模 48-50」未成。
+> - **★s74 = 50.4548 = 新最佳,首破 s15(50.26),+0.19。** = s15 终稿 + **只加 s70 在 UCM/Contra(密度强化类)的开火**(+14: UCM5/Contra9),排除 s70 的 UE/SO(FP-prone)。说明 s70 的 UCM/Contra 开火里确有 s15 漏的正确召回。**部分推翻 s67「加firing必亏」**:加对类(密度强化的UCM/Contra)有用,加全部(s72/s73 +71含UE)才亏。
+> - s72/s73(s15+s70全部,453,+71含UE56)不传——s67 模式大概率 < s15。**新最佳 = s74 50.45。** 下一步:s71(2nd密度)好了 → s76 = s15 + (s70+s71) UCM/Contra,冲过 50.45。s01(47.80)/s15(50.26)永久保底。
 
 > **🟢 PHASE C 密度匹配门控 PASS(2026-06-15)= 项目首个过门的「造新召回」杠杆。** 在 devbench(image-disjoint,干净)上,matched control vs density(同 ds0.50 plainCE config-A 1卡,**仅差 47 个注入密集记录**):
 > | | densematch score | MacroF1 | PEM | sent-acc |
