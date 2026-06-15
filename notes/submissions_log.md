@@ -178,6 +178,16 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 |---|---|---|---|--:|--:|--:|---|
 | s55 | m | **复现 s01**:ds=0.50(正确数据,12741/9750)+ s01 配方(softmin 2卡 maxlen4096)| `testp1_s55_m_recover-s01-ds050` | **45.48379** | — | — | 241 (106/79/26/30) |
 | s56 | m | **A1 multi-target**:ds=0.50 + `--multi-target`(多标签每 gold 各一副本,修 pick_rarest 路由)+ s01 配方 | `testp1_s56_m_multitarget-ds050` | **46.11494** | — | — | 344 (108/130/78/28) — vs s55 SO 26→78(3×)/UE 79→130 |
+| s57 | (成员) | ds=0.50 **plain-CE**(SOFTMIN_LAMBDA=0,纯 CE 解相关成员)+ s01 配方 | `outputs/prod/s57_ds050_pce_member` | 未单提 | — | — | 238 |
+| s58 | (成员) | ds=0.50 **multi-target plain-CE**(mt+纯CE,SIGHUP 后 setsid 重跑成功)| `outputs/prod/s58_ds050mt_pce_member` | 未单提 | — | — | — |
+| s59 | (成员) | ds=0.50 **softmin seed7**(不同切分解相关,UE 偏多)| `outputs/prod/s59_ds050_sm_s7_member` | 未单提 | — | — | 271 (—/132/—/—) UE 重 |
+| s60 | u | **ds0.50 舰队 union mv1**(6 成员 s01/s55-s59 OR 单票,召回)| `testp1_s60_u_ds050fleet-mv1` | 待 Codabench | — | — | 486 (127/229/78/52) |
+| s61 | u | ds0.50 舰队 union **mv2**(≥2 共识,精度)| `testp1_s61_u_ds050fleet-mv2` | 待 Codabench | — | — | 350 (116/148/53/33) |
+| s62 | u | ds0.50 舰队 union **ContraGate**(默认 mv1,Contra:2)| `testp1_s62_u_ds050fleet-contraGate` | 待 Codabench | — | — | 468 (127/230/78/33) |
+| s63 | u | ds0.50 舰队 union **SO+ContraGate**(SO:2,Contra:2)| `testp1_s63_u_ds050fleet-soContraGate` | 待 Codabench | — | — | 443 (127/230/53/33) |
+| **s64** | u | **★augmented 10 成员 mv2**(s15 老5:s01/s08/s09/s12/s13 + 新5:s55-s59,≥2 共识)| `testp1_s64_u_aug10-mv2` | **待 Codabench(冲52头号)** | — | — | 377 (124/158/61/34) ≈s15 预算 |
+| s65 | u | augmented 10 成员 **mv3**(≥3 共识,保守)| `testp1_s65_u_aug10-mv3` | 待 Codabench | — | — | 316 (116/123/47/30) |
+| s66 | u | augmented 10 成员 **mv2 + UCM 放宽**(UCM:1,余 mv2)| `testp1_s66_u_aug10-ucmLib` | 待 Codabench | — | — | 396 (143/158/61/34) |
 
 > **🟡 s55/s56 实测判读(2026-06-15):**
 > - **s55=45.48 ≠ s01=47.80(差 −2.3)→ s01 未精确复现。** 数据内容已字节验证对(ds=0.50,12741/9750),配方/loss/seed 全同,故 2.3 主因 = **单模 run-to-run 方差**(2卡 DDP + GPU 浮点非结合性,在脆性 PEM 上 ±~2)+ 可能残留(s01 用 GPU0/1、s55 用 GPU6/7)。⇒ **s01 的 47.80 是 ~45-48 方差带的高位有利抽样**;ds=0.50 确把档位拉到 45-46(远高于错数据 39-44 档),方向对,但精确 47.80 含运气。**校正"完全可复现→47.80"的过强结论:数据可复现,但训练出的分有 ±2 噪声。**
