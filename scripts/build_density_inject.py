@@ -88,7 +88,9 @@ def minority_sent_idxs(rec: dict) -> list[tuple[int, str]]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--data-root", required=True)
-    ap.add_argument("--split", required=True, help="data/devbench/split.json (train' boundary)")
+    ap.add_argument("--split", required=True,
+                    help="data/devbench/split.json (train' boundary), or 'ALL' to use every "
+                         "traindev record (submit-only final build, no dev holdout)")
     ap.add_argument("--out", required=True)
     ap.add_argument("--max-samples", type=int, default=420, help="stop after this many per-sentence samples")
     ap.add_argument("--seed", type=int, default=42)
@@ -100,8 +102,11 @@ def main() -> int:
     rng = random.Random(a.seed)
     data_root = Path(a.data_root)
     records = load_jsonl(data_root / "data" / "traindev-track-1.jsonl")
-    split = json.loads(Path(a.split).read_text(encoding="utf-8"))
-    train_idx = [i for i in range(len(records)) if split.get(f"track1-{i:06d}") == "train"]
+    if a.split.upper() == "ALL":
+        train_idx = list(range(len(records)))
+    else:
+        split = json.loads(Path(a.split).read_text(encoding="utf-8"))
+        train_idx = [i for i in range(len(records)) if split.get(f"track1-{i:06d}") == "train"]
     label_freq = compute_global_label_freq([records[i] for i in train_idx])
     donor_cls = {c.strip() for c in a.donor_classes.split(",")}
     anchor_cls = {c.strip() for c in a.anchor_classes.split(",")}
