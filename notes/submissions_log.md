@@ -188,9 +188,11 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | **s64** | u | **★augmented 10 成员 mv2**(s15 老5:s01/s08/s09/s12/s13 + 新5:s55-s59,≥2 共识)| `testp1_s64_u_aug10-mv2` | **49.33612** | — | — | 377 (124/158/61/34) ≈s15 预算 |
 | s65 | u | augmented 10 成员 **mv3**(≥3 共识,保守)| `testp1_s65_u_aug10-mv3` | 待 Codabench | — | — | 316 (116/123/47/30) |
 | s66 | u | augmented 10 成员 **mv2 + UCM 放宽**(UCM:1,余 mv2)| `testp1_s66_u_aug10-ucmLib` | 待 Codabench | — | — | 396 (143/158/61/34) |
-| s67 | u | **非对称 union**:s15 为底(全开火保留)+ 新5 ≥2 共识在 s15 漏判处加 | `testp1_s67_u_s15base-K2` | 待 Codabench | — | — | 421 (+39: UCM3/UE22/SO11/Contra3) |
-| s68 | u | 非对称 union s15 底 + 新5 **≥3** 共识加 | `testp1_s68_u_s15base-K3` | 待 Codabench | — | — | 392 (+10) |
-| s69 | u | 非对称 union s15 底 + K2(UE 收紧到 3)| `testp1_s69_u_s15base-K2ueTight` | 待 Codabench | — | — | 404 (+22) |
+| s67 | u | **非对称 union**:s15 为底(全开火保留)+ 新5 ≥2 共识在 s15 漏判处加 | `testp1_s67_u_s15base-K2` | **49.48344** | — | — | 421 (+39: UCM3/UE22/SO11/Contra3) |
+| s68 | u | 非对称 union s15 底 + 新5 **≥3** 共识加 | `testp1_s68_u_s15base-K3` | 不传(同源 FP) | — | — | 392 (+10) |
+| s69 | u | 非对称 union s15 底 + K2(UE 收紧到 3)| `testp1_s69_u_s15base-K2ueTight` | 不传(同源 FP) | — | — | 404 (+22) |
+
+> **🔴🔴 s67 = union 杠杆死亡判决书(2026-06-15)**:s67 是 s15 的**严格超集**(0 删、仅 +39 firing,已校验),却 **49.48 < s15 50.26(−0.78)**。逻辑闭环:**往 s15 上加任何 firing 都净亏 → 那 39 个新舰队共识开火是 FP → s15 漏判处「漏得对」(真是 Supported)→ s15=50.26 是 union 硬顶。** s68/s69 同源不传(省配额)。**到 52 的唯一路 = 一个原生更强的单模(密度匹配训练),不是 union/后处理/加成员。** 与用户判断完全一致。
 
 > **🔴 s60-s66 实测判读(2026-06-15)= union 顶已确认枯竭,转密度匹配训练主攻:**
 > - **共识 >> 单票(对同质新舰队)**:s61 mv2(48.72)比 s60 mv1(46.25)**+2.47**。新 ds0.50 舰队彼此相关,单票 OR 把相关 FP 全放进碎 PEM;但老规律(s15 用单票)仍对,因 s15 的 5 成员**高度异构**(per-sent/joint、8b/32b)。**规律:成员越异构,单票越安全;越同质,越要共识门控。**
