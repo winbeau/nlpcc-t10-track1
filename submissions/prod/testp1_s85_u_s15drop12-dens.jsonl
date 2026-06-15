@@ -1,0 +1,586 @@
+{"id": "track1-p1-test-000008", "labels": ["Supported", "Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000012", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000014", "labels": ["Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000016", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000023", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000026", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000027", "labels": ["Unsupported Causal Mechanistic", "Unsupported Causal Mechanistic", "Unsupported Causal Mechanistic", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-000028", "labels": ["Supported", "Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000029", "labels": ["Supported", "Supported", "Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity"]}
+{"id": "track1-p1-test-000035", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000043", "labels": ["Contradiction", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000044", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-000051", "labels": ["Supported", "Supported", "Supported", "Scope Overgeneralization", "Supported"]}
+{"id": "track1-p1-test-000054", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000059", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000060", "labels": ["Supported", "Supported", "Supported", "Unsupported Entity", "Unsupported Entity", "Unsupported Entity"]}
+{"id": "track1-p1-test-000069", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000071", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000075", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000077", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-000081", "labels": ["Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000083", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-000084", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Scope Overgeneralization"]}
+{"id": "track1-p1-test-000100", "labels": ["Unsupported Causal Mechanistic", "Scope Overgeneralization", "Supported", "Supported", "Unsupported Entity"]}
+{"id": "track1-p1-test-000103", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000109", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000112", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000114", "labels": ["Supported", "Supported", "Supported", "Contradiction", "Supported"]}
+{"id": "track1-p1-test-000128", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000134", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000135", "labels": ["Unsupported Entity", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000136", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000137", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000138", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-000139", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000140", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000141", "labels": ["Contradiction", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-000143", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000148", "labels": ["Unsupported Entity", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000154", "labels": ["Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000155", "labels": ["Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000164", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported"]}
+{"id": "track1-p1-test-000165", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000166", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-000187", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000189", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-000191", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000192", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000197", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-000199", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000200", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000204", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-000211", "labels": ["Supported", "Unsupported Entity", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000216", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000218", "labels": ["Supported", "Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000221", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000222", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000223", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000229", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-000235", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000243", "labels": ["Supported", "Supported", "Supported", "Scope Overgeneralization", "Supported"]}
+{"id": "track1-p1-test-000249", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000253", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000254", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000257", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000261", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000265", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000276", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000278", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-000284", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000289", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000292", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000300", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000307", "labels": ["Supported", "Supported", "Scope Overgeneralization", "Supported", "Supported", "Unsupported Causal Mechanistic", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-000309", "labels": ["Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000310", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000312", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000318", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported"]}
+{"id": "track1-p1-test-000322", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000326", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000329", "labels": ["Supported", "Supported", "Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000333", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000334", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity"]}
+{"id": "track1-p1-test-000337", "labels": ["Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000341", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000345", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000348", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000360", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000361", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000364", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Unsupported Entity", "Supported"]}
+{"id": "track1-p1-test-000367", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000371", "labels": ["Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000377", "labels": ["Supported", "Unsupported Causal Mechanistic", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-000387", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000390", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Unsupported Entity"]}
+{"id": "track1-p1-test-000399", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000401", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-000406", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000411", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000412", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000415", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000416", "labels": ["Supported", "Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000417", "labels": ["Supported", "Supported", "Supported", "Scope Overgeneralization", "Supported", "Supported"]}
+{"id": "track1-p1-test-000419", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported"]}
+{"id": "track1-p1-test-000422", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Entity"]}
+{"id": "track1-p1-test-000430", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000435", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000436", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Unsupported Entity", "Supported"]}
+{"id": "track1-p1-test-000442", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000445", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000447", "labels": ["Unsupported Entity", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported"]}
+{"id": "track1-p1-test-000449", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000451", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000454", "labels": ["Supported", "Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000455", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000456", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-000458", "labels": ["Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000462", "labels": ["Supported", "Unsupported Entity", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000463", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-000466", "labels": ["Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000469", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000474", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000477", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000480", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity"]}
+{"id": "track1-p1-test-000484", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000485", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000488", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000495", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-000496", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000508", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000511", "labels": ["Supported", "Supported", "Contradiction", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000515", "labels": ["Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000521", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000532", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Scope Overgeneralization"]}
+{"id": "track1-p1-test-000535", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000536", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000538", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000544", "labels": ["Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000545", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000546", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000547", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000551", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000552", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000555", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000564", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000571", "labels": ["Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000572", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000581", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000582", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000586", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000590", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000597", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000600", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000606", "labels": ["Scope Overgeneralization", "Supported", "Supported"]}
+{"id": "track1-p1-test-000613", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000618", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000619", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-000623", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000624", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000628", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000629", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000632", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000634", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-000635", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000638", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000641", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000644", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-000645", "labels": ["Supported", "Supported", "Supported", "Supported", "Contradiction", "Supported", "Supported"]}
+{"id": "track1-p1-test-000653", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000654", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000656", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000658", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000659", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000663", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000666", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000668", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000670", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000672", "labels": ["Supported", "Supported", "Contradiction", "Supported", "Supported"]}
+{"id": "track1-p1-test-000682", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000686", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000687", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000688", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000692", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000695", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000697", "labels": ["Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000700", "labels": ["Supported", "Supported", "Supported", "Unsupported Entity", "Supported"]}
+{"id": "track1-p1-test-000702", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000712", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-000723", "labels": ["Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000724", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000732", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000740", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000741", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Contradiction", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000743", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000744", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000756", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000757", "labels": ["Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000765", "labels": ["Unsupported Causal Mechanistic", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000769", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000772", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-000773", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000775", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Scope Overgeneralization", "Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000778", "labels": ["Supported", "Unsupported Entity", "Supported"]}
+{"id": "track1-p1-test-000789", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000790", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-000792", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000803", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000805", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000807", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000814", "labels": ["Supported", "Supported", "Supported", "Unsupported Entity"]}
+{"id": "track1-p1-test-000820", "labels": ["Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000822", "labels": ["Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000823", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000824", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000825", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000833", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000834", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000838", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000839", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000842", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000845", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000854", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000856", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000859", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000865", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000866", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-000869", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000874", "labels": ["Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000879", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000882", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000883", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-000886", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000887", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000889", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-000891", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000892", "labels": ["Unsupported Causal Mechanistic", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000895", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000898", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000899", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000900", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000905", "labels": ["Unsupported Entity", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000906", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000909", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000911", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000912", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000914", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000918", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000922", "labels": ["Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported"]}
+{"id": "track1-p1-test-000928", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000930", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000932", "labels": ["Supported", "Supported", "Supported", "Contradiction", "Supported"]}
+{"id": "track1-p1-test-000933", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000939", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported"]}
+{"id": "track1-p1-test-000940", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported"]}
+{"id": "track1-p1-test-000941", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000942", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-000948", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000951", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-000954", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000961", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-000963", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-000965", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000967", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000968", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000969", "labels": ["Unsupported Entity", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000975", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000976", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000977", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000980", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Contradiction"]}
+{"id": "track1-p1-test-000983", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000985", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000988", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000996", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-000998", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001005", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001006", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001007", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001008", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001016", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001023", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001024", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001025", "labels": ["Unsupported Entity", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001028", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-001032", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001034", "labels": ["Supported", "Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001035", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001036", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported"]}
+{"id": "track1-p1-test-001041", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001042", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001057", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Unsupported Causal Mechanistic", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-001058", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001059", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001061", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001063", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001064", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001065", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001066", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Scope Overgeneralization", "Supported"]}
+{"id": "track1-p1-test-001071", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001072", "labels": ["Supported", "Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001076", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-001079", "labels": ["Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001080", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001086", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001094", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001095", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-001096", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001098", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001099", "labels": ["Supported", "Unsupported Causal Mechanistic", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001101", "labels": ["Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001109", "labels": ["Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001110", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001115", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001116", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001122", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001124", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001125", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001126", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001134", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001140", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001141", "labels": ["Supported", "Supported", "Supported", "Supported", "Contradiction", "Supported", "Supported"]}
+{"id": "track1-p1-test-001143", "labels": ["Supported", "Supported", "Unsupported Entity"]}
+{"id": "track1-p1-test-001144", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001145", "labels": ["Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001147", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-001152", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001162", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001165", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001166", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001167", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001169", "labels": ["Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-001175", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001178", "labels": ["Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001183", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001186", "labels": ["Contradiction", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001187", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001189", "labels": ["Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001206", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001210", "labels": ["Supported", "Supported", "Supported", "Contradiction", "Supported", "Supported"]}
+{"id": "track1-p1-test-001212", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001213", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001216", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001222", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001228", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001229", "labels": ["Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001233", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001236", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001239", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001242", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001246", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001248", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001250", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Contradiction"]}
+{"id": "track1-p1-test-001255", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001256", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001259", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001261", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001264", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001268", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001277", "labels": ["Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Unsupported Entity"]}
+{"id": "track1-p1-test-001279", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-001283", "labels": ["Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001284", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001285", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Contradiction", "Supported"]}
+{"id": "track1-p1-test-001288", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001292", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001297", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001300", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001308", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001312", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001315", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001320", "labels": ["Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001323", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001324", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001329", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001330", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001331", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001332", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-001333", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001335", "labels": ["Supported", "Contradiction", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001336", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001345", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001346", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Scope Overgeneralization"]}
+{"id": "track1-p1-test-001353", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-001355", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001357", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001358", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001359", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001364", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001365", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-001373", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001374", "labels": ["Supported", "Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001376", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001386", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001388", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001390", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001392", "labels": ["Supported", "Supported", "Supported", "Unsupported Entity", "Unsupported Entity", "Supported", "Supported", "Unsupported Entity"]}
+{"id": "track1-p1-test-001394", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001396", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001399", "labels": ["Supported", "Unsupported Entity", "Unsupported Entity"]}
+{"id": "track1-p1-test-001412", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001416", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001417", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001419", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001421", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001423", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001435", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001438", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001439", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001442", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity"]}
+{"id": "track1-p1-test-001444", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001446", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001452", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001453", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001455", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-001459", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Unsupported Entity", "Supported", "Supported"]}
+{"id": "track1-p1-test-001463", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001465", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001466", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001482", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported"]}
+{"id": "track1-p1-test-001486", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001487", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001492", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported"]}
+{"id": "track1-p1-test-001494", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Contradiction", "Supported", "Supported"]}
+{"id": "track1-p1-test-001495", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-001505", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001507", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001513", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001514", "labels": ["Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Scope Overgeneralization", "Supported"]}
+{"id": "track1-p1-test-001515", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001520", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Scope Overgeneralization", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001521", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001522", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001523", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001525", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001530", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001532", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001540", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001542", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001546", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Contradiction", "Supported", "Supported"]}
+{"id": "track1-p1-test-001548", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001550", "labels": ["Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001552", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001561", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001565", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported"]}
+{"id": "track1-p1-test-001567", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001572", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001573", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001576", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001581", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001584", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001589", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001591", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001602", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001604", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001609", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001610", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001615", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001618", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Contradiction"]}
+{"id": "track1-p1-test-001626", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001628", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001637", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001639", "labels": ["Unsupported Entity", "Supported", "Unsupported Entity", "Unsupported Entity", "Supported", "Supported"]}
+{"id": "track1-p1-test-001640", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001641", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001650", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001652", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported"]}
+{"id": "track1-p1-test-001657", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001661", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001663", "labels": ["Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001665", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001666", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-001670", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001689", "labels": ["Unsupported Entity", "Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001697", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001699", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001700", "labels": ["Supported", "Unsupported Entity", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001701", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001703", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-001704", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001707", "labels": ["Supported", "Supported", "Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001709", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001710", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001714", "labels": ["Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported"]}
+{"id": "track1-p1-test-001717", "labels": ["Supported", "Supported", "Supported", "Supported", "Scope Overgeneralization"]}
+{"id": "track1-p1-test-001721", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001723", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001728", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001729", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001734", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001742", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001745", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001747", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001749", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001753", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001756", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001759", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001760", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001762", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-001766", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001771", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001772", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001781", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001784", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001785", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001791", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported"]}
+{"id": "track1-p1-test-001792", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001793", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001804", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Contradiction"]}
+{"id": "track1-p1-test-001805", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001807", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001810", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001811", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001819", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001828", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001832", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001833", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001834", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001836", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001850", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001852", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001855", "labels": ["Supported", "Supported", "Scope Overgeneralization", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001860", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported"]}
+{"id": "track1-p1-test-001863", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001873", "labels": ["Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001875", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001883", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001884", "labels": ["Supported", "Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001887", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001888", "labels": ["Scope Overgeneralization", "Supported", "Supported"]}
+{"id": "track1-p1-test-001890", "labels": ["Unsupported Entity", "Scope Overgeneralization", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001893", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001895", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Entity"]}
+{"id": "track1-p1-test-001898", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001899", "labels": ["Supported", "Contradiction", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001903", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001905", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001910", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001917", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001924", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001928", "labels": ["Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001932", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001933", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-001934", "labels": ["Supported", "Unsupported Causal Mechanistic", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001937", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported"]}
+{"id": "track1-p1-test-001939", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001943", "labels": ["Supported", "Supported", "Unsupported Entity", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001946", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001947", "labels": ["Supported", "Supported", "Scope Overgeneralization", "Supported", "Supported"]}
+{"id": "track1-p1-test-001949", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Contradiction", "Supported"]}
+{"id": "track1-p1-test-001950", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001952", "labels": ["Supported", "Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001955", "labels": ["Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001959", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001961", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001962", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Scope Overgeneralization"]}
+{"id": "track1-p1-test-001963", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001967", "labels": ["Supported", "Unsupported Causal Mechanistic", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001969", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001975", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001980", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001986", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001993", "labels": ["Supported", "Supported", "Supported", "Supported", "Unsupported Entity", "Supported"]}
+{"id": "track1-p1-test-001997", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-001999", "labels": ["Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002000", "labels": ["Unsupported Causal Mechanistic", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-002010", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002014", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002015", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002016", "labels": ["Supported", "Unsupported Entity", "Supported", "Supported"]}
+{"id": "track1-p1-test-002021", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002023", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002027", "labels": ["Unsupported Entity", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic"]}
+{"id": "track1-p1-test-002031", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002033", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002035", "labels": ["Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002037", "labels": ["Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002039", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Contradiction", "Supported"]}
+{"id": "track1-p1-test-002041", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002043", "labels": ["Supported", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002048", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002057", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002058", "labels": ["Scope Overgeneralization", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002059", "labels": ["Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002060", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002061", "labels": ["Supported", "Contradiction", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002063", "labels": ["Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Unsupported Causal Mechanistic", "Supported", "Supported", "Supported", "Supported"]}
+{"id": "track1-p1-test-002064", "labels": ["Unsupported Entity", "Supported", "Unsupported Entity", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported", "Supported"]}
