@@ -39,3 +39,6 @@ runs/
 
 # PHASE C loop config (track the queue; runtime status/ledger stay ignored)
 !notes/phaseC/queue.jsonl
+
+# local secrets (API keys) — never commit
+.env

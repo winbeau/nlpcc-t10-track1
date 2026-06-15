@@ -25,6 +25,19 @@ PROMPT = ("Transcribe this scientific figure or table into compact structured te
           "extracted data, no interpretation.")
 
 
+def _load_env():
+    """Load KEY=VALUE lines from repo-root .env into os.environ (does not override existing).
+    Lets `python3 scripts/gpt5_transcribe.py` pick up GPT5_KEY without it on the command line."""
+    f = Path(__file__).resolve().parents[1] / ".env"
+    if not f.exists():
+        return
+    for line in f.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
 def b64_image(path: Path):
     try:
         data = path.read_bytes()
@@ -72,6 +85,7 @@ def main(argv=None) -> int:
     ap.add_argument("--limit", type=int, default=0)
     a = ap.parse_args(argv)
 
+    _load_env()
     key = os.environ.get("GPT5_KEY")
     if not key:
         print("ERROR: set GPT5_KEY", file=sys.stderr)
