@@ -176,6 +176,35 @@ def write_jsonl(records: list[dict[str, Any]], path: Path) -> None:
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
 
+def apply_ocr_augment(records: list[dict[str, Any]], cache_path: Path) -> int:
+    """OCR digit-grounding (track B): inject GPT-5.5 vision transcriptions into evidence
+    captions IN PLACE, so the model trains on digit-grounded evidence (train==inference once
+    testp* is augmented the same way). cache_path = jsonl of {img_path, text} from
+    scripts/gpt5_transcribe.py. Returns #evidence items augmented."""
+    cache: dict[str, str] = {}
+    with cache_path.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            d = json.loads(line)
+            if d.get("text"):
+                cache[d["img_path"]] = d["text"]
+    n = 0
+    for r in records:
+        for ev in r.get("evidence_bundle", []):
+            tx = cache.get(ev.get("img_path", ""))
+            if not tx:
+                continue
+            key = "image_caption" if (ev.get("type") == "image" or "image_caption" in ev) else "table_caption"
+            cap = ev.get(key) or ev.get("image_caption") or ev.get("table_caption") or []
+            if not isinstance(cap, list):
+                cap = [str(cap)]
+            ev[key] = list(cap) + ["[GPT5-VISION TRANSCRIPTION] " + tx]
+            n += 1
+    return n
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # LABEL-FREQUENCY ANALYSIS
 # ──────────────────────────────────────────────────────────────────────────────
@@ -802,6 +831,7 @@ def build_dataset(
     split_mode: str = "random",
     cot_path: Path | None = None,
     multi_target: bool = False,
+    ocr_augment: Path | None = None,
 ) -> dict[str, Any]:
     """Full pipeline: load, split, expand, resample, write. Returns summary dict."""
     data_path = data_root / "data" / "traindev-track-1.jsonl"
@@ -809,6 +839,9 @@ def build_dataset(
     if limit is not None:
         records = records[:limit]
     print(f"Loaded {len(records)} records from {data_path}")
+    if ocr_augment is not None:
+        na = apply_ocr_augment(records, ocr_augment)
+        print(f"[ocr-augment] injected GPT5-vision transcriptions into {na} evidence items from {ocr_augment}")
 
     # 1) 9:1 split by record (BEFORE computing label frequency, so dev sentences do not
     #    contaminate multi-label target selection — review finding #9). split_mode:
@@ -1042,6 +1075,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
              "pick_rarest (fixes pick_rarest routing that starves SO/Contra recall). TRAIN only; dev "
              "keeps the true distribution. Not for use with --cot/--joint.",
     )
+    p.add_argument(
+        "--ocr-augment", default=None,
+        help="OCR digit-grounding (track B): jsonl cache {img_path,text} of GPT-5.5 vision "
+             "transcriptions (scripts/gpt5_transcribe.py) to inject into evidence captions during "
+             "the build. The test set must be augmented the SAME way at inference (train==inference).",
+    )
     return p
 
 
@@ -1094,6 +1133,7 @@ def main(argv: list[str] | None = None) -> int:
         split_mode=args.split_mode,
         cot_path=Path(args.cot).resolve() if args.cot else None,
         multi_target=args.multi_target,
+        ocr_augment=Path(args.ocr_augment).resolve() if args.ocr_augment else None,
     )
     return 0
 
