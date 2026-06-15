@@ -176,8 +176,14 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 
 | 序号 | 类型 | 描述 | 文件(submissions/prod/) | Score | MF1 | PEM | #少数类(UCM/UE/SO/Contra) |
 |---|---|---|---|--:|--:|--:|---|
-| s55 | m | **复现 s01**:ds=0.50(正确数据,12741/9750)+ s01 配方(softmin 2卡 maxlen4096)| `testp1_s55_m_recover-s01-ds050` | **待Codabench** | — | — | 241 (106/79/26/30) |
-| s56 | m | **A1 multi-target**:ds=0.50 + `--multi-target`(多标签每 gold 各一副本,修 pick_rarest 路由)+ s01 配方 | `testp1_s56_m_multitarget-ds050` | **待Codabench** | — | — | 344 (108/130/78/28) — vs s55 SO 26→78(3×)/UE 79→130 |
+| s55 | m | **复现 s01**:ds=0.50(正确数据,12741/9750)+ s01 配方(softmin 2卡 maxlen4096)| `testp1_s55_m_recover-s01-ds050` | **45.48379** | — | — | 241 (106/79/26/30) |
+| s56 | m | **A1 multi-target**:ds=0.50 + `--multi-target`(多标签每 gold 各一副本,修 pick_rarest 路由)+ s01 配方 | `testp1_s56_m_multitarget-ds050` | **46.11494** | — | — | 344 (108/130/78/28) — vs s55 SO 26→78(3×)/UE 79→130 |
+
+> **🟡 s55/s56 实测判读(2026-06-15):**
+> - **s55=45.48 ≠ s01=47.80(差 −2.3)→ s01 未精确复现。** 数据内容已字节验证对(ds=0.50,12741/9750),配方/loss/seed 全同,故 2.3 主因 = **单模 run-to-run 方差**(2卡 DDP + GPU 浮点非结合性,在脆性 PEM 上 ±~2)+ 可能残留(s01 用 GPU0/1、s55 用 GPU6/7)。⇒ **s01 的 47.80 是 ~45-48 方差带的高位有利抽样**;ds=0.50 确把档位拉到 45-46(远高于错数据 39-44 档),方向对,但精确 47.80 含运气。**校正"完全可复现→47.80"的过强结论:数据可复现,但训练出的分有 ±2 噪声。**
+> - **s56=46.11 > s55=45.48(+0.63),matched pair(仅差 multi-target)→ multi-target 方向为正、SO 开火 3× 且未碎 PEM**(预测的"安全一档"兑现)。但 **+0.63 在 ±2 噪声带内,单跑不能定论**。
+> - **两者均 < s01(47.80)< s15(50.26)。深层教训:单模杠杆的效应(~0-2)常小于 run 方差(±2),且 densematch(ρ.59)分辨不了 → 这正是 +3-5 极难、s15 难破的根因。** s15 的 +2.5(union>单模)是唯一稳健杠杆。
+> - 下一步候选:s56(SO 解相关,firing 与 s15 成员不同)**并入 s15 union 一发**(博 SO 召回叠加,union 是唯一稳健 +);或收手保 s15。s01/s15 永久保底不动。
 
 > **s55/s56 = 夜间自动链。** s55 复现 s01(期望 ~47.80,确认数据恢复闭环;ckpt-2000 = s01 同步数)。s56 = A1 multi-target(SO target 507→1626、Contra 435→579、UCM 747 不变;预检 GREEN)。判据:**s56 vs s55**——s56>s55 = multi-target 净涨(SO/Contra 召回);≈或< = 零和/FP 碎 PEM。⚠️ s56 full-traindev→densematch 泄漏,不可离线门控,胜负以 Codabench 总分为准。ADD-mode;s01/s15 永久保底。
 
