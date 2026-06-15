@@ -191,6 +191,18 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | s67 | u | **非对称 union**:s15 为底(全开火保留)+ 新5 ≥2 共识在 s15 漏判处加 | `testp1_s67_u_s15base-K2` | **49.48344** | — | — | 421 (+39: UCM3/UE22/SO11/Contra3) |
 | s68 | u | 非对称 union s15 底 + 新5 **≥3** 共识加 | `testp1_s68_u_s15base-K3` | 不传(同源 FP) | — | — | 392 (+10) |
 | s69 | u | 非对称 union s15 底 + K2(UE 收紧到 3)| `testp1_s69_u_s15base-K2ueTight` | 不传(同源 FP) | — | — | 404 (+22) |
+| **s70** | m | **★密度匹配 softmin**(全 ds0.50 base + 68 注入密集记录;config-A 2卡;= s01 配方 + density)| `s70_dsm_density` | 训练中→待 Codabench | — | — | — |
+| s71 | m | 密度匹配 plainCE(同 base+注入;1卡;门控同配方,解相关成员)| `s71_dpce_density` | 训练中→待 Codabench | — | — | — |
+
+> **🟢 PHASE C 密度匹配门控 PASS(2026-06-15)= 项目首个过门的「造新召回」杠杆。** 在 devbench(image-disjoint,干净)上,matched control vs density(同 ds0.50 plainCE config-A 1卡,**仅差 47 个注入密集记录**):
+> | | densematch score | MacroF1 | PEM | sent-acc |
+> |---|---|---|---|---|
+> | control(无注入) | 0.8251 | 0.8103 | 0.8398 | 0.9684 |
+> | **density(+47 注入)** | **0.8519** | **0.8397** | **0.8641** | **0.9733** |
+> | Δ | **+2.68** | **+2.94** | **+2.43** | +0.49 |
+> - **三项全涨,PEM 也涨 +2.43**——不是「MF1 涨/PEM 平或跌」(那是 s30/s16/s41 过度乐观的特征),而是模型在密集长段**开对了**少数类、**补全**了更多段。这是质变信号。
+> - **构造(`scripts/build_density_inject.py`,label-clean SIMI 子集)**:供体=train' 单标签 **UCM/Contra** 少数类句(无 Table/Figure 引用),宿主=len≥6 且恰好 1 个单标签 UCM/Contra 少数类的段,**跨域(CV/NLP/RL…)+ 零共享专有名词**配对,逐句注入(非 joint,避 −4.5 PEM 税),证据=anchor∪donor 并集。UCM/Contra 标签加无关证据不被满足→标签有效。`expand_record` 的 paragraph sampler 按 channel 分组→步数=记录数(3759 train' + 47 注入 = 3806,0 丢样验证)。
+> - ⚠️ **densematch 是域内、必要非充分**(synthesis 警告 + s30/s16/s41 前车之鉴);testp1 OOD,+2.68 大概率打折。**s70/s71 = 全 traindev(ds0.50 base 12802 + 68 注入/600 样本 `data/density_inject_full.jsonl`)重训,交 testp1 实测。** s70=softmin(s01 配方+density,ceiling 高)、s71=plainCE(门控同配方+解相关)。目标:单模 ≥48 → 再 union s15 成员博 52。复现:`scripts/build_density_inject.py --split ALL` + `/tmp/density_prod.sh`(throwaway)。
 
 > **🔴🔴 s67 = union 杠杆死亡判决书(2026-06-15)**:s67 是 s15 的**严格超集**(0 删、仅 +39 firing,已校验),却 **49.48 < s15 50.26(−0.78)**。逻辑闭环:**往 s15 上加任何 firing 都净亏 → 那 39 个新舰队共识开火是 FP → s15 漏判处「漏得对」(真是 Supported)→ s15=50.26 是 union 硬顶。** s68/s69 同源不传(省配额)。**到 52 的唯一路 = 一个原生更强的单模(密度匹配训练),不是 union/后处理/加成员。** 与用户判断完全一致。
 
