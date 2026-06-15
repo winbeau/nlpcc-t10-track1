@@ -114,11 +114,16 @@ def main() -> int:
             if len(ts) == 1 and ts[0] in donor_cls and not FIGREF.search(s.get("sentence", "")):
                 donors.append((i, si, ts[0]))
 
-    # ---- anchor pool: len>=min, EXACTLY 1 minority, that minority class in anchor_cls ----
+    # ---- anchor pool: len>=min, EXACTLY 1 minority, that minority sentence SINGLE-label in
+    # anchor_cls (single-label so expand_record's pick_rarest can't route it to UE/SO -> both
+    # the anchor minority AND the injected donor minority are guaranteed clean UCM/Contra) ----
     anchors = []
     for i in train_idx:
+        slabels = records[i].get("sentence_label", [])
         ms = minority_sent_idxs(records[i])
-        if len(records[i].get("sentence_label", [])) >= a.min_anchor_len and len(ms) == 1 and ms[0][1] in anchor_cls:
+        if (len(slabels) >= a.min_anchor_len and len(ms) == 1
+                and ms[0][1] in anchor_cls
+                and len(slabels[ms[0][0]].get("types", [])) == 1):
             anchors.append(i)
 
     rng.shuffle(donors)
