@@ -202,6 +202,17 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 > - **★s74 = 50.4548 = 新最佳,首破 s15(50.26),+0.19。** = s15 终稿 + **只加 s70 在 UCM/Contra(密度强化类)的开火**(+14: UCM5/Contra9),排除 s70 的 UE/SO(FP-prone)。说明 s70 的 UCM/Contra 开火里确有 s15 漏的正确召回。**部分推翻 s67「加firing必亏」**:加对类(密度强化的UCM/Contra)有用,加全部(s72/s73 +71含UE)才亏。
 > - s72/s73(s15+s70全部,453,+71含UE56)不传——s67 模式大概率 < s15。**新最佳 = s74 50.45。** 下一步:s71(2nd密度)好了 → s76 = s15 + (s70+s71) UCM/Contra,冲过 50.45。s01(47.80)/s15(50.26)永久保底。
 
+> **🏁 密度增强 union 完整网格(2026-06-15)= 重组法天花板 = s75 50.61(破 s15 +0.35):**
+> | 序 | 配方 | 加firing | testp1 |
+> |---|---|---|---|
+> | s74 | s15 + s70 UCM/Contra | +14 | 50.45 |
+> | **s75** | **s15 + (s70+s56) UCM/Contra** | **+17** | **★50.61 (峰值)** |
+> | s77 | s15 + 6源(+舰队)UCM/Contra | +38 | 49.59(舰队Contra=FP) |
+> | s78 | s15 + (s70+s56) UCM/Contra+**SO** | +43 | 49.90(SO=FP) |
+> | s80 | s75 + 11个**高置信UE**(≥−0.05) | +28 | 50.22(高置信UE也FP) |
+> | s79 | s75 + 30个UE(≥−0.2) | +47 | 不传(必更差) |
+> - **逐类定论:UCM/Contra 是密度唯一能加对的类(s70/s56 两源 +17 最优,加舰队/3+源就FP);UE 加任何量+任何置信门控都FP(testp1 OOD 模型自信地错);SO 无高置信子集全FP;砍=召回受限亏(s16/21冲突项)。** ⇒ **重组法封顶 s75=50.61。** 到 51.85(+1.24)需新信号(OCR数字接地 / 更强单模),deadline 内不可行。**P1 最终 = s75 50.61。** 工具:`scripts/asym_union.py`(外科加)+ `scripts/conf_gated_union.py`(置信门控,证 UE 关死)。s01/s15 永久保底。
+
 > **🟢 PHASE C 密度匹配门控 PASS(2026-06-15)= 项目首个过门的「造新召回」杠杆。** 在 devbench(image-disjoint,干净)上,matched control vs density(同 ds0.50 plainCE config-A 1卡,**仅差 47 个注入密集记录**):
 > | | densematch score | MacroF1 | PEM | sent-acc |
 > |---|---|---|---|---|
