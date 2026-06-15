@@ -181,13 +181,24 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 | s57 | (成员) | ds=0.50 **plain-CE**(SOFTMIN_LAMBDA=0,纯 CE 解相关成员)+ s01 配方 | `outputs/prod/s57_ds050_pce_member` | 未单提 | — | — | 238 |
 | s58 | (成员) | ds=0.50 **multi-target plain-CE**(mt+纯CE,SIGHUP 后 setsid 重跑成功)| `outputs/prod/s58_ds050mt_pce_member` | 未单提 | — | — | — |
 | s59 | (成员) | ds=0.50 **softmin seed7**(不同切分解相关,UE 偏多)| `outputs/prod/s59_ds050_sm_s7_member` | 未单提 | — | — | 271 (—/132/—/—) UE 重 |
-| s60 | u | **ds0.50 舰队 union mv1**(6 成员 s01/s55-s59 OR 单票,召回)| `testp1_s60_u_ds050fleet-mv1` | 待 Codabench | — | — | 486 (127/229/78/52) |
-| s61 | u | ds0.50 舰队 union **mv2**(≥2 共识,精度)| `testp1_s61_u_ds050fleet-mv2` | 待 Codabench | — | — | 350 (116/148/53/33) |
-| s62 | u | ds0.50 舰队 union **ContraGate**(默认 mv1,Contra:2)| `testp1_s62_u_ds050fleet-contraGate` | 待 Codabench | — | — | 468 (127/230/78/33) |
-| s63 | u | ds0.50 舰队 union **SO+ContraGate**(SO:2,Contra:2)| `testp1_s63_u_ds050fleet-soContraGate` | 待 Codabench | — | — | 443 (127/230/53/33) |
-| **s64** | u | **★augmented 10 成员 mv2**(s15 老5:s01/s08/s09/s12/s13 + 新5:s55-s59,≥2 共识)| `testp1_s64_u_aug10-mv2` | **待 Codabench(冲52头号)** | — | — | 377 (124/158/61/34) ≈s15 预算 |
+| s60 | u | **ds0.50 舰队 union mv1**(6 成员 s01/s55-s59 OR 单票,召回)| `testp1_s60_u_ds050fleet-mv1` | **46.24557** | — | — | 486 (127/229/78/52) |
+| s61 | u | ds0.50 舰队 union **mv2**(≥2 共识,精度)| `testp1_s61_u_ds050fleet-mv2` | **48.72485** | — | — | 350 (116/148/53/33) |
+| s62 | u | ds0.50 舰队 union **ContraGate**(默认 mv1,Contra:2)| `testp1_s62_u_ds050fleet-contraGate` | **46.94652** | — | — | 468 (127/230/78/33) |
+| s63 | u | ds0.50 舰队 union **SO+ContraGate**(SO:2,Contra:2)| `testp1_s63_u_ds050fleet-soContraGate` | **46.97287** | — | — | 443 (127/230/53/33) |
+| **s64** | u | **★augmented 10 成员 mv2**(s15 老5:s01/s08/s09/s12/s13 + 新5:s55-s59,≥2 共识)| `testp1_s64_u_aug10-mv2` | **49.33612** | — | — | 377 (124/158/61/34) ≈s15 预算 |
 | s65 | u | augmented 10 成员 **mv3**(≥3 共识,保守)| `testp1_s65_u_aug10-mv3` | 待 Codabench | — | — | 316 (116/123/47/30) |
 | s66 | u | augmented 10 成员 **mv2 + UCM 放宽**(UCM:1,余 mv2)| `testp1_s66_u_aug10-ucmLib` | 待 Codabench | — | — | 396 (143/158/61/34) |
+| s67 | u | **非对称 union**:s15 为底(全开火保留)+ 新5 ≥2 共识在 s15 漏判处加 | `testp1_s67_u_s15base-K2` | 待 Codabench | — | — | 421 (+39: UCM3/UE22/SO11/Contra3) |
+| s68 | u | 非对称 union s15 底 + 新5 **≥3** 共识加 | `testp1_s68_u_s15base-K3` | 待 Codabench | — | — | 392 (+10) |
+| s69 | u | 非对称 union s15 底 + K2(UE 收紧到 3)| `testp1_s69_u_s15base-K2ueTight` | 待 Codabench | — | — | 404 (+22) |
+
+> **🔴 s60-s66 实测判读(2026-06-15)= union 顶已确认枯竭,转密度匹配训练主攻:**
+> - **共识 >> 单票(对同质新舰队)**:s61 mv2(48.72)比 s60 mv1(46.25)**+2.47**。新 ds0.50 舰队彼此相关,单票 OR 把相关 FP 全放进碎 PEM;但老规律(s15 用单票)仍对,因 s15 的 5 成员**高度异构**(per-sent/joint、8b/32b)。**规律:成员越异构,单票越安全;越同质,越要共识门控。**
+> - **s64 aug10-mv2(49.34)= 本批最高但仍 < s15(50.26),差 −0.93。** 根因:mv2 over 10 成员把 s15 老成员各算 1 票、需 2 票才开火 → **误删了 s15「单成员独抓」的正确召回**(那正是 s15 50.26 的底)。
+> - **修法 = 非对称 union(s67-s69)**:以 s15 为不可动底座(0 删,已校验),只在 s15 漏判处加新5 强共识。但**叠加空间已量化几乎枯竭**:K=2 仅净加 39 firing(其中 24 落 s15 全-Supported 净段,质量不定)、K=3 仅 10。→ **s67/s68 最多在 50.26 上下微动 ±0.5,撑不到 52。**
+> - **★伪先验确证(免费实算)**:traindev GOLD 仅 **0.2%** 段含 ≥2 少数类(长段 0.7%);s01 预测 3.8%,s15 union **9.9%**。**s15 的 47.80→50.26 增益,本质是 union 用「多异构成员各开 1 个不同少数类」凑出 9.9% 的 ≥2 密度**——union 在「假装」破先验。testp1 是长密段,真实 ≥2 比例远高于 9.9% → 这是到 52 的召回缺口。
+> - **★战略锁定(用户判断 + 数据一致):union 顶 = 50.26 已榨干,因底层单模顶 47.80。要 union 到 52,必先把单模抬到 48-50。** 唯一未用杠杆 = **密度匹配训练**(造长密少数类段、joint 训,让单模原生敢在密集长段开多个少数类,而非靠 union 凑)。拦路 = 脏标(少数类标签相对各自证据)。已起 workflow `wh31d06bo` 设计+对抗核实 label-valid 构造。build_dataset 无密度支持(待实现)。
+> - 上传优先:**s67(K2,+39)**先试(博 50.26 上方);若 >50.26 说明加对了 → s69;若 ≤ → s68(更近 s15)兜底。s60/s64 已知 <s15 不必再传。s01/s15 永久保底。
 
 > **🟡 s55/s56 实测判读(2026-06-15):**
 > - **s55=45.48 ≠ s01=47.80(差 −2.3)→ s01 未精确复现。** 数据内容已字节验证对(ds=0.50,12741/9750),配方/loss/seed 全同,故 2.3 主因 = **单模 run-to-run 方差**(2卡 DDP + GPU 浮点非结合性,在脆性 PEM 上 ±~2)+ 可能残留(s01 用 GPU0/1、s55 用 GPU6/7)。⇒ **s01 的 47.80 是 ~45-48 方差带的高位有利抽样**;ds=0.50 确把档位拉到 45-46(远高于错数据 39-44 档),方向对,但精确 47.80 含运气。**校正"完全可复现→47.80"的过强结论:数据可复现,但训练出的分有 ±2 噪声。**
