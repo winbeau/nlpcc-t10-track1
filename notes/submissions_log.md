@@ -213,6 +213,8 @@ export MODELSCOPE_CACHE=/data/chenjiayu/wenbiao_zhao/ms_cache
 > | s79 | s75 + 30个UE(≥−0.2) | +47 | 不传(必更差) |
 > - **逐类定论:UCM/Contra 是密度唯一能加对的类(s70/s56 两源 +17 最优,加舰队/3+源就FP);UE 加任何量+任何置信门控都FP(testp1 OOD 模型自信地错);SO 无高置信子集全FP;砍=召回受限亏(s16/21冲突项)。** ⇒ **重组法封顶 s75=50.61。** 到 51.85(+1.24)需新信号(OCR数字接地 / 更强单模),deadline 内不可行。**P1 最终 = s75 50.61。** 工具:`scripts/asym_union.py`(外科加)+ `scripts/conf_gated_union.py`(置信门控,证 UE 关死)。s01/s15 永久保底。
 
+> **🔴 s82 = OCR 数字接地(推理时,轨道A)= 负结果(2026-06-15):** GPT-5.5 当读图模型转写全 654 testp1 证据图(质量好、0失败,`scripts/gpt5_transcribe.py`,key 在服务器 `.env`/gitignore)→ 注入 caption → Qwen s01 重推增强证据(不重训)。结果:OCR 只改 s01 **1.1%(58/5096)** 预测,主要**多开 UE(+35,FP-prone)**、UCM/Contra 仅 +6;外科加进 s15 净 **+1**(1 Contra)→ **s82 ≈ s15 50.26 < s75 50.61,不传。** 根因:**s01 没训过转写 = OOD,不会用 augmented 证据**,只更爱过开火 UE。⇒ **推理时 OCR 死;真 OCR 杠杆 = 增强证据重训(轨道B)= P2 主攻**(转写全 traindev + 重训,需 `build_dataset --ocr-augment`)。GPT-5.5 当分类器也死(densematch 25,过开火;Contra 精度实测 0.29,非记忆中 82%)。**P1 最终仍 = s75 50.61。**
+
 > **🟢 PHASE C 密度匹配门控 PASS(2026-06-15)= 项目首个过门的「造新召回」杠杆。** 在 devbench(image-disjoint,干净)上,matched control vs density(同 ds0.50 plainCE config-A 1卡,**仅差 47 个注入密集记录**):
 > | | densematch score | MacroF1 | PEM | sent-acc |
 > |---|---|---|---|---|
