@@ -1,9 +1,6 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="UTF-8"/>
+<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>NLPCC 2026 Track1 — 标签统计与 PEM 攻坚分析</title>
+<title>NLPCC 2026 Track1 — 方法 · 标签统计 · PEM 攻坚分析</title>
 <style>
       :root {
         --paper: #f7f7f5;
@@ -415,262 +412,236 @@
       }
     
       details { border:1px solid var(--rule); background:#fff; margin:14px 0 18px; }
-      summary { cursor:pointer; padding:12px 16px; font-family:ui-monospace,Menlo,"PingFang SC",monospace;
+      summary { cursor:pointer; padding:12px 16px; font-family:ui-monospace,Menlo,monospace;
                 font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
       details[open] summary { border-bottom:1px solid var(--rule-soft); }
       details .scroll { max-height:520px; overflow:auto; }
       tr.hi td { background: var(--accent-faint); }
-      tr.hi-win td { background: #eaf2ea; }
+      tr.hi-win td { background:#eaf2ea; }
       .tag { font-family:ui-monospace,Menlo,monospace; font-size:10px; padding:1px 6px; border-radius:2px;
              border:1px solid var(--rule); color:var(--ink-soft); }
       .big { font-size:15px; }
-      td.win { color:#4a7a4a; font-weight:600; }
-      td.lose { color:var(--danger); font-weight:600; }
-</style>
-</head>
-<body>
-<article class="doc">
+      td.win { color:#4a7a4a; font-weight:600; } td.lose { color:var(--danger); font-weight:600; }
+      td.pem { font-weight:600; }
+</style></head><body><article class="doc">
 <header class="doc-header">
-<div class="doc-eyebrow"><span class="mascot"></span>NLPCC 2026 · TASK 10 · TRACK 1 · 标签统计</div>
-<h1 class="doc-title">标签统计与 PEM 攻坚分析</h1>
-<p class="doc-subtitle">Macro-F1 全场第一，输的全部在 PEM —— 边际杠杆从「召回」翻转为「精度」</p>
-<div class="doc-meta">
-<span>STATUS · Phase-1 排行第 2 / 9</span>
-<span>DATE · 2026-06-16</span>
-<span>TEAM · xjdx_001</span>
-<span>DATA · testp1 586段/5096句</span>
-</div>
+<div class="doc-eyebrow"><span class="mascot"></span>NLPCC 2026 · TASK 10 · TRACK 1 · 方法与标签统计</div>
+<h1 class="doc-title">方法 · 标签统计 · PEM 攻坚分析</h1>
+<p class="doc-subtitle">单模训练 + Union 集成全记录；Macro-F1 全场第一，输的全部在 PEM</p>
+<div class="doc-meta"><span>STATUS · Phase-1 排行第 2 / 9</span><span>DATE · 2026-06-16</span><span>TEAM · xjdx_001</span><span>DATA · testp1 586段/5096句</span></div>
 </header>
 
-<div class="tldr">
-<div class="tldr-label">TL;DR</div>
-<p class="big">我们的 <strong>Macro-F1 = 57.54 是全场第一</strong>（比第一名 chuhaicai 还高 +0.95），但总分排第二，<strong>差距 100% 集中在 PEM（43.69 vs 47.10，−3.41）</strong>。由于 score=(MF1+PEM)/2，保住现有 MF1，<strong>只要 PEM 从 43.69 升到 ≥46.15（+2.46，约 586 段里多修对 14 段）即可反超第一</strong>。结构分析定位到 PEM 损失的来源 = <strong>UE（Unsupported Entity）的低支持度假阳性</strong>，并给出一个从未试过的外科减法方案。</p>
-</div>
+<div class="tldr"><div class="tldr-label">TL;DR</div>
+<p class="big">我们用 <strong>Qwen3-VL-8B + LoRA（softmin PEM 损失）</strong> 训多个差异化单模，再用 <strong>并集 Union（任一成员开火即采纳）</strong> 把召回堆到全场最高：<strong>Macro-F1 = 57.54 第一</strong>。但总分排第二，<strong>差距 100% 在 PEM（43.69 vs 47.10，−3.41）</strong>。关键发现：<strong>86 次提交里 MF1 涨了 +4.77，PEM 只动了 +0.86 —— 我们所有杠杆都在堆 MF1，PEM 卡在 43-44 从未触及第一名的 47</strong>。Union 已到天花板；破局要直攻 PEM（精度），而非继续堆召回。</p></div>
 
-<section>
-<h2><span class="num">01</span>排行榜定位：差距全在 PEM</h2>
+<section><h2><span class="num">01</span>排行榜定位：差距全在 PEM</h2>
 <figure><svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
 <line x1="60" y1="210" x2="660" y2="210" stroke="#d8d8d2"/>
-<text x="200" y="252" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#4a4a4a" letter-spacing="0.05em">MACRO-F1</text>
-<text x="500" y="252" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#4a4a4a" letter-spacing="0.05em">PEM</text>
-<rect x="150" y="37.4" width="46" height="172.6" fill="#6f9bb8"/><text x="173" y="30.4" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a" font-weight="600">57.54</text><text x="173" y="228" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">我们</text>
-<rect x="220" y="40.2" width="46" height="169.8" fill="#b88a4a"/><text x="243" y="33.2" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a" font-weight="600">56.59</text><text x="243" y="228" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">第一</text>
-<rect x="450" y="78.9" width="46" height="131.1" fill="#6f9bb8"/><text x="473" y="71.9" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a" font-weight="600">43.69</text><text x="473" y="228" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">我们</text>
-<rect x="520" y="68.7" width="46" height="141.3" fill="#b88a4a"/><text x="543" y="61.7" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a" font-weight="600">47.10</text><text x="543" y="228" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">第一</text>
+<text x="200" y="252" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#4a4a4a">MACRO-F1</text>
+<text x="500" y="252" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#4a4a4a">PEM</text>
+<rect x="150" y="37.4" width="46" height="172.6" fill="#6f9bb8"/><text x="173" y="30.4" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a" font-weight="600">57.54</text><text x="173" y="228" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">我们</text><rect x="220" y="40.2" width="46" height="169.8" fill="#b88a4a"/><text x="243" y="33.2" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a" font-weight="600">56.59</text><text x="243" y="228" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">第一</text>
+<rect x="450" y="78.9" width="46" height="131.1" fill="#6f9bb8"/><text x="473" y="71.9" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a" font-weight="600">43.69</text><text x="473" y="228" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">我们</text><rect x="520" y="68.7" width="46" height="141.3" fill="#b88a4a"/><text x="543" y="61.7" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a" font-weight="600">47.10</text><text x="543" y="228" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">第一</text>
 <rect x="560" y="20" width="11" height="11" fill="#6f9bb8"/><text x="577" y="30" font-family="ui-monospace,monospace" font-size="11" fill="#4a4a4a">xjdx_001</text>
 <rect x="560" y="38" width="11" height="11" fill="#b88a4a"/><text x="577" y="48" font-family="ui-monospace,monospace" font-size="11" fill="#4a4a4a">chuhaicai #1</text>
 <text x="200" y="120" text-anchor="middle" font-family="ui-serif,serif" font-size="12" fill="#4a7a4a">+0.95 ▲</text>
-<text x="500" y="160" text-anchor="middle" font-family="ui-serif,serif" font-size="12" fill="#a05050">−3.41 ▼</text>
-</svg><figcaption><span class="fig-num">FIG 1</span>我们 vs 第一名：MF1 我们领先，PEM 我们落后 3.41</figcaption></figure>
-<table>
-<thead><tr><th>排名</th><th>队伍</th><th>Score</th><th>Macro-F1</th><th>PEM</th></tr></thead>
-<tbody>
+<text x="500" y="158" text-anchor="middle" font-family="ui-serif,serif" font-size="12" fill="#a05050">−3.41 ▼</text>
+</svg><figcaption><span class="fig-num">FIG 1</span>我们 vs 第一名：MF1 我们领先 +0.95，PEM 我们落后 −3.41</figcaption></figure>
+<table><thead><tr><th>排名</th><th>队伍</th><th>Score</th><th>Macro-F1</th><th>PEM</th></tr></thead><tbody>
 <tr><td class="num">1</td><td>chuhaicai</td><td class="num">51.8457</td><td class="num">56.5925</td><td class="num win">47.0990</td></tr>
 <tr class="hi"><td class="num">2</td><td><strong>xjdx_001（我们 = s75）</strong></td><td class="num">50.6137</td><td class="num win">57.5415</td><td class="num lose">43.6860</td></tr>
 <tr><td class="num">3</td><td>wangzhenchao</td><td class="num">47.1815</td><td class="num">51.3595</td><td class="num">43.0034</td></tr>
 <tr><td class="num">4</td><td>bit-trustai</td><td class="num">44.0947</td><td class="num">49.9642</td><td class="num">38.2253</td></tr>
 <tr><td class="num">5</td><td>hzt_spidey_111</td><td class="num">42.4415</td><td class="num">48.0228</td><td class="num">36.8601</td></tr>
-<tr><td class="num">6</td><td>tony_he</td><td class="num">37.5461</td><td class="num">40.2799</td><td class="num">34.8123</td></tr>
 </tbody></table>
-<div class="callout"><div class="callout-label">关键差值</div>
-MF1 我们 <strong style="color:#4a7a4a">+0.949（领先全场）</strong>｜PEM 我们 <strong style="color:#a05050">−3.413（落后第一）</strong>｜追平需 PEM <strong>+2.464</strong>。高 MF1 + 低 PEM 的指纹 = <strong>假阳性主导的 PEM 损失</strong>（若是漏召回，MF1 会一起被压低）。</div>
-</section>
+<div class="callout"><div class="callout-label">关键差值</div>MF1 我们 <strong style="color:#4a7a4a">+0.949（领先全场）</strong>｜PEM 我们 <strong style="color:#a05050">−3.413</strong>｜追平需 PEM <strong>+2.464</strong>。高 MF1 + 低 PEM = <strong>假阳性主导的 PEM 损失</strong>（漏召回会同时压低 MF1）。</div></section>
 
-<section>
-<h2><span class="num">02</span>Gold 参考分布（traindev 17547 句）</h2>
-<table>
-<thead><tr><th>类别</th><th>primary types[0]</th><th>any-of types</th><th>占比 (any-of)</th></tr></thead>
-<tbody>
-<tr><td>Supported</td><td class="num">16438</td><td class="num">16438</td><td class="num">93.7%</td></tr>
-<tr><td>Scope Overgeneralization</td><td class="num">540</td><td class="num">605</td><td class="num">3.4%</td></tr>
-<tr><td>Unsupported Entity</td><td class="num">213</td><td class="num">639</td><td class="num">3.6%</td></tr>
-<tr><td>Unsupported Causal Mechanistic</td><td class="num">140</td><td class="num">276</td><td class="num">1.6%</td></tr>
-<tr><td>Contradiction</td><td class="num">216</td><td class="num">216</td><td class="num">1.2%</td></tr>
+<section><h2><span class="num">02</span>方法 · 单模如何训练</h2>
+<div class="cards cols-2">
+<div class="card tone-a"><div class="card-icon">模型</div><div class="card-name">Qwen3-VL-8B + LoRA</div><div class="card-desc">bf16；LoRA rank16/alpha32/dropout0.05；冻结 ViT；target all-linear。框架 ms-swift 4.2.3。多模态读图——真实表格数字在图里，caption 常不够。</div></div>
+<div class="card tone-a"><div class="card-icon">建模粒度</div><div class="card-name">句子级</div><div class="card-desc">每样本 = 共享 evidence(图+caption)/claim 前缀 + 1 个 TARGET 句子 → 输出 1 个 label。3333 records 展开成 ~17547 句级样本；推理时同段前缀 KV-cache 复用。</div></div>
+<div class="card tone-b"><div class="card-icon">损失</div><div class="card-name">softmin PEM-bottleneck</div><div class="card-desc">PEM 是「整段 AND」——段内最差一句决定成败。损失按段聚合 <code>(1/β)·logsumexp(β·Lᵢ)−log(nₚ)/β</code>（β=5,λ=0.5），惩罚段内最差句而非均值 CE。段分组靠 <code>channel</code> 字段 + ParagraphGroupSampler（一段一 batch）。</div></div>
+<div class="card tone-b"><div class="card-icon">类别不均衡</div><div class="card-name">过采样 + 下采样</div><div class="card-desc">s01 锁定配方：<code>--minority-oversample 3.0 --supported-downsample 0.50 --seed 42</code> → 12741 句 / 9750 Supported。4 个少数类过采样 3×，Supported 下采样到 0.50。</div></div>
+</div>
+<p><strong>config-A（s01 最优）</strong>：max_length 4096、2 卡 DDP（global-batch 2）、1 epoch、max_pixels 401408、use_logits_to_keep=false、packing/padding_free 全 OFF（否则 per-sentence Lᵢ 不可恢复、channel 丢失）。<strong>32B 用段落联合（joint）格式</strong>：整段一次 forward、纯 CE（per-sentence 32B 因每句重复图前缀会 OOM ~200G），作 union 的异构成员。数据档是最大杠杆：ds=0.50 vs 0.60 差约 8 分。</p></section>
+
+<section><h2><span class="num">03</span>方法 · 如何做 Union 集成</h2>
+<p>核心赢家路径 = <strong>多样模型并集（recall-additive）</strong>。<code>scripts/ensemble_union.py --min-votes 1</code>：逐句看所有成员，<strong>只要任一成员开火少数类就采纳</strong>（同位多个不同少数类时取最高票，平票按稀有度 Contra&gt;SO&gt;UCM&gt;UE 选更稀有的）；<strong>只有全部成员都说 Supported 才保持 Supported</strong>。<code>--min-votes 2</code>（≥2 共识）= 精度向，已证更差（s16）。</p>
+<table><thead><tr><th>层级</th><th>做法</th><th>代表</th></tr></thead><tbody>
+<tr><td>对称并集</td><td><code>ensemble_union.py --min-votes 1</code>，5 个异构 Qwen 成员（grid+os4+perclass+joint8b+joint32b）OR 并起来</td><td class="num">s15 = 50.26</td></tr>
+<tr><td>≥2 共识</td><td>同上但需 2 票才开火 → 误删「单成员独抓」的真召回</td><td class="num">s16 = 47.29 ↓</td></tr>
+<tr><td>非对称外科</td><td><code>asym_union.py</code>：以 s15 为不可动底座（开火逐字保留），只在 s15=Supported 处、当 ≥K 成员同意时 <strong>加</strong>一个少数类（按类 K）。保证是 s15 的严格超集，只增召回</td><td class="num">s74/s75</td></tr>
 </tbody></table>
-<p>少数类 any-of 合计 1736 句（9.9%），527 句多标签。<strong>极不均衡 + 段落级 PEM</strong> 是任务难点根源：长段里只要一句判错，整段 PEM 归零。</p>
-</section>
+<p><strong>s75（当前最优 50.61）</strong> = s15 底座 + 密度成员 s70/s56 <strong>仅在 UCM/Contra</strong> 的开火（外科加 +17）。规律：<strong>成员越异构，单票并集越安全</strong>；同质舰队需共识门控。但堆成员已到顶——架构多样性（InternVL/Gemma）全 ≤50.26，naive-union 天花板 = s15。</p></section>
 
-<section>
-<h2><span class="num">03</span>集成演进：逐类标签 × 分数</h2>
-<table>
-<thead><tr><th>提交</th><th>类型</th><th>Score</th><th>Sup</th><th>UE</th><th>UCM</th><th>SO</th><th>Contra</th><th>少数类</th></tr></thead>
-<tbody>
-<tr><td class='num'><strong>s01</strong></td><td><span class='tag'>单模</span></td><td class='num accent'>47.80</td><td class='num'>4843</td><td class='num'>92</td><td class='num'>109</td><td class='num'>29</td><td class='num'>23</td><td class='num'><strong>253</strong></td></tr>
-<tr><td class='num'><strong>s08</strong></td><td><span class='tag'>单模</span></td><td class='num accent'>45.10</td><td class='num'>4861</td><td class='num'>80</td><td class='num'>102</td><td class='num'>28</td><td class='num'>25</td><td class='num'><strong>235</strong></td></tr>
-<tr><td class='num'><strong>s09</strong></td><td><span class='tag'>单模</span></td><td class='num accent'>43.83</td><td class='num'>4828</td><td class='num'>112</td><td class='num'>104</td><td class='num'>33</td><td class='num'>19</td><td class='num'><strong>268</strong></td></tr>
-<tr><td class='num'><strong>s11</strong></td><td><span class='tag'>union</span></td><td class='num accent'>48.22</td><td class='num'>4757</td><td class='num'>142</td><td class='num'>127</td><td class='num'>43</td><td class='num'>27</td><td class='num'><strong>339</strong></td></tr>
-<tr><td class='num'><strong>s12</strong></td><td><span class='tag'>单模</span></td><td class='num accent'>43.33</td><td class='num'>4887</td><td class='num'>66</td><td class='num'>90</td><td class='num'>31</td><td class='num'>22</td><td class='num'><strong>209</strong></td></tr>
-<tr><td class='num'><strong>s13</strong></td><td><span class='tag'>单模</span></td><td class='num accent'>44.43</td><td class='num'>4913</td><td class='num'>40</td><td class='num'>97</td><td class='num'>19</td><td class='num'>27</td><td class='num'><strong>183</strong></td></tr>
-<tr><td class='num'><strong>s14</strong></td><td><span class='tag'>union</span></td><td class='num accent'>49.99</td><td class='num'>4731</td><td class='num'>148</td><td class='num'>137</td><td class='num'>48</td><td class='num'>32</td><td class='num'><strong>365</strong></td></tr>
-<tr class="hi-win"><td class='num'><strong>s15</strong></td><td><span class='tag'>union</span></td><td class='num accent'>50.26</td><td class='num'>4714</td><td class='num'>155</td><td class='num'>139</td><td class='num'>52</td><td class='num'>36</td><td class='num'><strong>382</strong></td></tr>
-<tr><td class='num'><strong>s16</strong></td><td><span class='tag'>union</span></td><td class='num accent'>47.29</td><td class='num'>4843</td><td class='num'>87</td><td class='num'>110</td><td class='num'>32</td><td class='num'>24</td><td class='num'><strong>253</strong></td></tr>
-<tr><td class='num'><strong>s70</strong></td><td><span class='tag'>单模</span></td><td class='num accent'>44.67</td><td class='num'>4735</td><td class='num'>190</td><td class='num'>116</td><td class='num'>24</td><td class='num'>31</td><td class='num'><strong>361</strong></td></tr>
-<tr><td class='num'><strong>s74</strong></td><td><span class='tag'>union</span></td><td class='num accent'>50.45</td><td class='num'>4700</td><td class='num'>155</td><td class='num'>144</td><td class='num'>52</td><td class='num'>45</td><td class='num'><strong>396</strong></td></tr>
-<tr class="hi"><td class='num'><strong>s75</strong></td><td><span class='tag'>union</span></td><td class='num accent'>50.61</td><td class='num'>4697</td><td class='num'>155</td><td class='num'>146</td><td class='num'>52</td><td class='num'>46</td><td class='num'><strong>399</strong></td></tr>
-<tr><td class='num'><strong>s86</strong></td><td><span class='tag'>union</span></td><td class='num accent'>50.46</td><td class='num'>4695</td><td class='num'>155</td><td class='num'>146</td><td class='num'>52</td><td class='num'>48</td><td class='num'><strong>401</strong></td></tr>
+<section><h2><span class="num">04</span>集成演进：逐类标签 × MF1 × PEM</h2>
+<table><thead><tr><th>提交</th><th>类型</th><th>Score</th><th>MF1</th><th>PEM</th><th>Sup</th><th>UE</th><th>UCM</th><th>SO</th><th>Con</th><th>少数类</th></tr></thead><tbody>
+<tr><td class='num'><strong>s01</strong></td><td><span class='tag'>单模</span></td><td class='num accent'>47.80</td><td class='num'>52.77</td><td class='num pem'>42.83</td><td class='num'>4843</td><td class='num'>92</td><td class='num'>109</td><td class='num'>29</td><td class='num'>23</td><td class='num'><strong>253</strong></td></tr>
+<tr><td class='num'><strong>s08</strong></td><td><span class='tag'>单模</span></td><td class='num accent'>45.10</td><td class='num'>50.45</td><td class='num pem'>39.76</td><td class='num'>4861</td><td class='num'>80</td><td class='num'>102</td><td class='num'>28</td><td class='num'>25</td><td class='num'><strong>235</strong></td></tr>
+<tr><td class='num'><strong>s09</strong></td><td><span class='tag'>单模</span></td><td class='num accent'>43.83</td><td class='num'>49.95</td><td class='num pem'>37.71</td><td class='num'>4828</td><td class='num'>112</td><td class='num'>104</td><td class='num'>33</td><td class='num'>19</td><td class='num'><strong>268</strong></td></tr>
+<tr><td class='num'><strong>s11</strong></td><td><span class='tag'>union</span></td><td class='num accent'>48.22</td><td class='num'>54.80</td><td class='num pem'>41.64</td><td class='num'>4757</td><td class='num'>142</td><td class='num'>127</td><td class='num'>43</td><td class='num'>27</td><td class='num'><strong>339</strong></td></tr>
+<tr><td class='num'><strong>s12</strong></td><td><span class='tag'>单模</span></td><td class='num accent'>43.33</td><td class='num'>48.27</td><td class='num pem'>38.40</td><td class='num'>4887</td><td class='num'>66</td><td class='num'>90</td><td class='num'>31</td><td class='num'>22</td><td class='num'><strong>209</strong></td></tr>
+<tr><td class='num'><strong>s13</strong></td><td><span class='tag'>单模</span></td><td class='num accent'>44.43</td><td class='num'>49.44</td><td class='num pem'>39.42</td><td class='num'>4913</td><td class='num'>40</td><td class='num'>97</td><td class='num'>19</td><td class='num'>27</td><td class='num'><strong>183</strong></td></tr>
+<tr><td class='num'><strong>s14</strong></td><td><span class='tag'>union</span></td><td class='num accent'>49.99</td><td class='num'>56.80</td><td class='num pem'>43.17</td><td class='num'>4731</td><td class='num'>148</td><td class='num'>137</td><td class='num'>48</td><td class='num'>32</td><td class='num'><strong>365</strong></td></tr>
+<tr class="hi-win"><td class='num'><strong>s15</strong></td><td><span class='tag'>union</span></td><td class='num accent'>50.26</td><td class='num'>57.17</td><td class='num pem'>43.34</td><td class='num'>4714</td><td class='num'>155</td><td class='num'>139</td><td class='num'>52</td><td class='num'>36</td><td class='num'><strong>382</strong></td></tr>
+<tr><td class='num'><strong>s16</strong></td><td><span class='tag'>union</span></td><td class='num accent'>47.29</td><td class='num'>52.59</td><td class='num pem'>41.98</td><td class='num'>4843</td><td class='num'>87</td><td class='num'>110</td><td class='num'>32</td><td class='num'>24</td><td class='num'><strong>253</strong></td></tr>
+<tr><td class='num'><strong>s37</strong></td><td><span class='tag'>union</span></td><td class='num accent'>48.54</td><td class='num'>55.62</td><td class='num pem'>41.47</td><td class='num'>4706</td><td class='num'>169</td><td class='num'>132</td><td class='num'>50</td><td class='num'>39</td><td class='num'><strong>390</strong></td></tr>
+<tr><td class='num'><strong>s70</strong></td><td><span class='tag'>单模</span></td><td class='num accent'>44.67</td><td class='num'>—</td><td class='num pem'>—</td><td class='num'>4735</td><td class='num'>190</td><td class='num'>116</td><td class='num'>24</td><td class='num'>31</td><td class='num'><strong>361</strong></td></tr>
+<tr><td class='num'><strong>s74</strong></td><td><span class='tag'>union</span></td><td class='num accent'>50.45</td><td class='num'>—</td><td class='num pem'>—</td><td class='num'>4700</td><td class='num'>155</td><td class='num'>144</td><td class='num'>52</td><td class='num'>45</td><td class='num'><strong>396</strong></td></tr>
+<tr class="hi"><td class='num'><strong>s75</strong></td><td><span class='tag'>union</span></td><td class='num accent'>50.61</td><td class='num'>57.54</td><td class='num pem'>43.69</td><td class='num'>4697</td><td class='num'>155</td><td class='num'>146</td><td class='num'>52</td><td class='num'>46</td><td class='num'><strong>399</strong></td></tr>
+<tr><td class='num'><strong>s86</strong></td><td><span class='tag'>union</span></td><td class='num accent'>50.46</td><td class='num'>—</td><td class='num pem'>—</td><td class='num'>4695</td><td class='num'>155</td><td class='num'>146</td><td class='num'>52</td><td class='num'>48</td><td class='num'><strong>401</strong></td></tr>
 </tbody></table>
-<p><strong>规律</strong>：s01→s11→s14→s15 的 union 召回单调堆叠，MF1 与 PEM 同涨直到 <strong>s15 = 50.26（naive-union 天花板）</strong>；s75 再用密度源外科加 UCM/Contra 到 50.61。但 <strong>s16（全局 ≥2 共识）</strong>把少数类从 382 砍到 253，<strong>MF1 与 PEM 双跌</strong> —— 证明「无差别砍」会误伤真阳性、连 PEM 一起拖垮。<em>所以减法必须外科、按类、按支持度。</em></p>
-</section>
+<p><strong>规律</strong>：union 召回堆叠让 <strong>MF1 与 PEM 同涨</strong>直到 s15=50.26；s75 再外科加密度到 50.61。但 <strong>s16 全局共识把少数类 382→253，MF1 与 PEM 双跌</strong>（误伤真阳性）；<strong>s37 plainCE 重训少数类更多(390)但 PEM 反低(41.47)</strong> —— 过度开火打碎段落。减法必须外科、按类、按支持度。</p></section>
 
-<section>
-<h2><span class="num">04</span>s75 的 PEM 结构剖析</h2>
-<h3>4.1 段落少数类计数（586 段）</h3>
-<table>
-<thead><tr><th>每段少数类预测数</th><th>段数</th><th>说明</th></tr></thead>
-<tbody>
+<section><h2><span class="num">05</span>PEM 专项分析：所有杠杆都在堆 MF1，PEM 卡死</h2>
+<figure><svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#4a7a4a"/></marker></defs>
+<line x1="90" y1="330" x2="650" y2="330" stroke="#d8d8d2"/><line x1="90" y1="40" x2="90" y2="330" stroke="#d8d8d2"/>
+<text x="140.9" y="350" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">40</text><text x="268.2" y="350" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">45</text><text x="395.5" y="350" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">50</text><text x="522.7" y="350" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">55</text><text x="650.0" y="350" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">60</text><text x="78" y="302.9" text-anchor="end" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">25</text><text x="78" y="251.1" text-anchor="end" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">30</text><text x="78" y="199.4" text-anchor="end" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">35</text><text x="78" y="147.6" text-anchor="end" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">40</text><text x="78" y="95.8" text-anchor="end" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">45</text><text x="78" y="44.0" text-anchor="end" font-family="ui-monospace,monospace" font-size="10" fill="#7a7a7a">50</text>
+<text x="370" y="372" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#4a4a4a">MACRO-F1 →</text>
+<text x="30" y="185" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#4a4a4a" transform="rotate(-90 30 185)">PEM →</text>
+<line x1="471.8" y1="32.8" x2="650.0" y2="105.3" stroke="#a05050" stroke-dasharray="6 4" stroke-width="1.5"/><text x="510.0" y="40.4" font-family="ui-monospace,monospace" font-size="10" fill="#a05050" transform="rotate(20 510.0 48.4)">追平第一线 (MF1+PEM=103.69)</text>
+<circle cx="465.8" cy="114.2" r="4.5" fill="#6f9bb8"/><text x="461.8" y="106.2" font-family="ui-monospace,monospace" font-size="9" fill="#6f9bb8">s01</text><circle cx="370.0" cy="144.3" r="3" fill="#c0c0ba"/><circle cx="351.9" cy="149.6" r="3" fill="#c0c0ba"/><circle cx="204.1" cy="200.8" r="3" fill="#c0c0ba"/><circle cx="-317.0" cy="395.2" r="3" fill="#c0c0ba"/><circle cx="251.3" cy="197.3" r="3" fill="#c0c0ba"/><circle cx="314.9" cy="195.5" r="3" fill="#c0c0ba"/><circle cx="406.9" cy="146.0" r="3" fill="#c0c0ba"/><circle cx="394.2" cy="167.3" r="3" fill="#c0c0ba"/><circle cx="307.3" cy="176.1" r="3" fill="#c0c0ba"/><circle cx="517.6" cy="126.6" r="4.5" fill="#6f9bb8"/><text x="513.6" y="118.6" font-family="ui-monospace,monospace" font-size="9" fill="#6f9bb8">s11</text><circle cx="351.4" cy="160.2" r="3" fill="#c0c0ba"/><circle cx="381.3" cy="149.6" r="3" fill="#c0c0ba"/><circle cx="568.6" cy="110.7" r="4.5" fill="#6f9bb8"/><text x="564.6" y="102.7" font-family="ui-monospace,monospace" font-size="9" fill="#6f9bb8">s14</text><circle cx="577.9" cy="108.9" r="4.5" fill="#6f9bb8"/><text x="573.9" y="100.9" font-family="ui-monospace,monospace" font-size="9" fill="#6f9bb8">s15</text><circle cx="461.5" cy="123.1" r="3" fill="#c0c0ba"/><circle cx="580.7" cy="121.3" r="3" fill="#c0c0ba"/><circle cx="557.2" cy="137.2" r="3" fill="#c0c0ba"/><circle cx="566.9" cy="123.1" r="3" fill="#c0c0ba"/><circle cx="547.0" cy="147.8" r="3" fill="#c0c0ba"/><circle cx="590.7" cy="123.1" r="3" fill="#c0c0ba"/><circle cx="275.0" cy="197.3" r="3" fill="#c0c0ba"/><circle cx="442.3" cy="169.0" r="3" fill="#c0c0ba"/><circle cx="-12.3" cy="303.4" r="3" fill="#c0c0ba"/><circle cx="360.1" cy="153.1" r="3" fill="#c0c0ba"/><circle cx="130.0" cy="259.2" r="3" fill="#c0c0ba"/><circle cx="231.8" cy="207.9" r="3" fill="#c0c0ba"/><circle cx="362.9" cy="174.3" r="3" fill="#c0c0ba"/><circle cx="-244.0" cy="372.3" r="3" fill="#c0c0ba"/><circle cx="538.5" cy="128.3" r="3" fill="#c0c0ba"/><circle cx="540.3" cy="128.3" r="3" fill="#c0c0ba"/><circle cx="224.4" cy="207.9" r="3" fill="#c0c0ba"/><circle cx="377.9" cy="160.1" r="3" fill="#c0c0ba"/><circle cx="587.4" cy="105.4" r="7" fill="#6f9bb8"/><text x="598.4" y="109.4" font-family="ui-monospace,monospace" font-size="11" fill="#6f9bb8" font-weight="600">s75 (我们)</text><circle cx="563.3" cy="70.0" r="7" fill="#b88a4a"/><text x="574.3" y="74.0" font-family="ui-monospace,monospace" font-size="11" fill="#b88a4a" font-weight="600">chuhaicai #1</text><line x1="587.4" y1="105.4" x2="587.4" y2="79.9" stroke="#4a7a4a" stroke-width="1.5" marker-end="url(#ah)"/><text x="593.4" y="92.6" font-family="ui-serif,serif" font-size="11" fill="#4a7a4a">+2.46 PEM</text>
+</svg><figcaption><span class="fig-num">FIG 2</span>全部提交的 MF1–PEM 散点：我们的演进沿 MF1 轴右移，PEM 几乎不动；第一名在左上方（少 MF1、多 PEM）；虚线为追平第一的等分线</figcaption></figure>
+<table><thead><tr><th>阶段</th><th>提交</th><th>MF1</th><th>PEM</th><th>ΔPEM vs s01</th></tr></thead><tbody>
+<tr><td>单模最优</td><td class="num">s01</td><td class="num">52.77</td><td class="num pem">42.83</td><td class="num">基准</td></tr>
+<tr><td>3 成员并集</td><td class="num">s11</td><td class="num">54.80</td><td class="num pem">41.64</td><td class="num lose">−1.19</td></tr>
+<tr><td>4 成员并集</td><td class="num">s14</td><td class="num">56.80</td><td class="num pem">43.17</td><td class="num win">+0.34</td></tr>
+<tr class="hi-win"><td>5 成员并集</td><td class="num">s15</td><td class="num">57.17</td><td class="num pem">43.34</td><td class="num win">+0.51</td></tr>
+<tr class="hi"><td>密度外科(终稿)</td><td class="num">s75</td><td class="num">57.54</td><td class="num pem">43.69</td><td class="num win">+0.86</td></tr>
+<tr><td><strong>第一名</strong></td><td>chuhaicai</td><td class="num">56.59</td><td class="num pem">47.10</td><td class="num win"><strong>+4.27</strong></td></tr>
+</tbody></table>
+<div class="callout warn"><div class="callout-label">核心结论</div>
+86 次提交里 <strong>MF1 从 52.77 → 57.54（+4.77）</strong>，而 <strong>PEM 从 42.83 → 43.69，只动了 +0.86</strong>。所有杠杆（并集、密度、CoT、自洽）都在堆 MF1；<strong>PEM 被 ~43.7 的硬顶卡死，从未接近第一名的 47.10</strong>。第一名走的是另一条路：<strong>用更低的 MF1 换更高的 PEM（更精确、段落更干净）</strong>。这意味着继续堆召回不会涨 PEM，只会加假阳性。<strong>破局唯一方向 = 直攻 PEM 精度。</strong></div>
+<p><strong>PEM 是双向受限的</strong>：早期粗暴抑制（s03–s06 阈值/veto）把 PEM 砍到 34–40（说明 <em>砍真召回</em> 会掉 PEM——召回受限）；但在我们当前的召回前沿，<em>再加召回</em> 也不涨 PEM（s37 少数类最多却 PEM 最低——精度受限）。我们正好站在 PEM 曲线的顶点附近，<strong>只有「外科去假阳性」能把它继续往上推</strong>。</p></section>
+
+<section><h2><span class="num">06</span>s75 的 PEM 结构剖析</h2>
+<h3>6.1 段落少数类计数（586 段）</h3>
+<table><thead><tr><th>每段少数类预测数</th><th>段数</th><th>说明</th></tr></thead><tbody>
 <tr><td class="num">0</td><td class="num">262</td><td>全 Supported；PEM 安全（除非漏召回）</td></tr>
 <tr class="hi"><td class="num">1</td><td class="num"><strong>261</strong></td><td><strong>PEM 主战场</strong>：这一句若 FP → 整段碎；翻对 → +1 段</td></tr>
 <tr><td class="num">2</td><td class="num">52</td><td>多少数类段</td></tr>
-<tr><td class="num">3</td><td class="num">10</td><td></td></tr>
-<tr><td class="num">4</td><td class="num">1</td><td></td></tr>
+<tr><td class="num">3</td><td class="num">10</td><td></td></tr><tr><td class="num">4</td><td class="num">1</td><td></td></tr>
 </tbody></table>
 <p>261 段命悬一句。追平第一只需在其中<strong>净修对约 14 段</strong>。</p>
-
-<h3>4.2 成员支持度矩阵（7 成员 = FP 探测器）</h3>
+<h3>6.2 成员支持度矩阵（7 成员 = FP 探测器）</h3>
 <figure><svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
-<line x1="70" y1="190" x2="660" y2="190" stroke="#d8d8d2"/>
-<rect x="90" y="90.0" width="50" height="100.0" fill="#a05050"/><text x="115" y="84.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">20</text><text x="115" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">1票</text><rect x="168" y="45.0" width="50" height="145.0" fill="#a05050"/><text x="193" y="39.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">29</text><text x="193" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">2票</text><rect x="246" y="70.0" width="50" height="120.0" fill="#c9c9c2"/><text x="271" y="64.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">24</text><text x="271" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">3票</text><rect x="324" y="50.0" width="50" height="140.0" fill="#c9c9c2"/><text x="349" y="44.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">28</text><text x="349" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">4票</text><rect x="402" y="90.0" width="50" height="100.0" fill="#c9c9c2"/><text x="427" y="84.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">20</text><text x="427" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">5票</text><rect x="480" y="120.0" width="50" height="70.0" fill="#c9c9c2"/><text x="505" y="114.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">14</text><text x="505" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">6票</text><rect x="558" y="90.0" width="50" height="100.0" fill="#c9c9c2"/><text x="583" y="84.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">20</text><text x="583" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">7票</text>
+<line x1="70" y1="190" x2="660" y2="190" stroke="#d8d8d2"/><rect x="90" y="90.0" width="50" height="100.0" fill="#a05050"/><text x="115" y="84.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">20</text><text x="115" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">1票</text><rect x="168" y="45.0" width="50" height="145.0" fill="#a05050"/><text x="193" y="39.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">29</text><text x="193" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">2票</text><rect x="246" y="70.0" width="50" height="120.0" fill="#c9c9c2"/><text x="271" y="64.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">24</text><text x="271" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">3票</text><rect x="324" y="50.0" width="50" height="140.0" fill="#c9c9c2"/><text x="349" y="44.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">28</text><text x="349" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">4票</text><rect x="402" y="90.0" width="50" height="100.0" fill="#c9c9c2"/><text x="427" y="84.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">20</text><text x="427" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">5票</text><rect x="480" y="120.0" width="50" height="70.0" fill="#c9c9c2"/><text x="505" y="114.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">14</text><text x="505" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">6票</text><rect x="558" y="90.0" width="50" height="100.0" fill="#c9c9c2"/><text x="583" y="84.0" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#1a1a1a">20</text><text x="583" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#7a7a7a">7票</text>
 <rect x="80" y="22" width="120" height="44" fill="none" stroke="#a05050" stroke-dasharray="4 3"/>
-<text x="140" y="16" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#a05050">FP 嫌疑区 (≤2票, 49个)</text>
-</svg><figcaption><span class="fig-num">FIG 2</span>UE 的 155 个预测按成员支持度分布：低支持尾巴（≤2票，49个）= 假阳性高发区</figcaption></figure>
-<table>
-<thead><tr><th>类</th><th>n</th><th>1票</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>解读</th></tr></thead>
-<tbody>
+<text x="140" y="16" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#a05050">FP 嫌疑区 (≤2票, 49个)</text></svg><figcaption><span class="fig-num">FIG 3</span>UE 的 155 个预测按成员支持度分布：低支持尾巴（≤2票，49个）= 假阳性高发区</figcaption></figure>
+<table><thead><tr><th>类</th><th>n</th><th>1票</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>解读</th></tr></thead><tbody>
 <tr class="hi"><td><strong>UE</strong></td><td class="num">155</td><td class="num"><strong>20</strong></td><td class="num"><strong>29</strong></td><td class="num">24</td><td class="num">28</td><td class="num">20</td><td class="num">14</td><td class="num">20</td><td>低支持尾巴肥 → FP 嫌疑集中</td></tr>
 <tr><td>UCM</td><td class="num">146</td><td class="num">22</td><td class="num">13</td><td class="num">7</td><td class="num">11</td><td class="num">11</td><td class="num">24</td><td class="num"><strong>58</strong></td><td>集中高支持 → 真阳性，不动</td></tr>
 <tr><td>SO</td><td class="num">52</td><td class="num">5</td><td class="num">11</td><td class="num">9</td><td class="num">7</td><td class="num">8</td><td class="num">7</td><td class="num">5</td><td>分散</td></tr>
 <tr><td>Contra</td><td class="num">46</td><td class="num"><strong>17</strong></td><td class="num">3</td><td class="num">6</td><td class="num">2</td><td class="num">2</td><td class="num">3</td><td class="num">13</td><td>双峰：17 单成员可疑 + 13 铁实</td></tr>
 </tbody></table>
-<p>UCM 的火集中在 6–7 票（真阳性，「UCM 已解」），而 <strong>UE 有 49 个 ≤2 票</strong> —— 正是 s79/s80 实测「往 union 加任何 UE 都是 FP」的同一过度开火分布。<strong>这把「PEM 损失来自 UE 假阳性」从推测变为结构证据。</strong></p>
-</section>
+<p>UCM 集中 6–7 票（真阳性，「已解」），<strong>UE 有 49 个 ≤2 票</strong>——正是 s79/s80 实测「加任何 UE 都 FP」的同一过度开火分布。<strong>把「PEM 损失来自 UE 假阳性」从推测变为结构证据。</strong></p></section>
 
-<section>
-<h2><span class="num">05</span>方法：UE 精度外科减（未试过的空白）</h2>
-<p>全部 86 次提交里，UE 实验（s67/s69/s79/s80/conf_gated）都是<strong>加</strong> UE 或全局共识（s16）；<strong>从来没有一次是「只从获胜 union 减掉低支持 UE」</strong>。方向：外科砍 UE 假阳性，用我们富余的 MF1 换 PEM。</p>
-<table>
-<thead><tr><th>探针</th><th>规则</th><th>UE 变化</th><th>其他类</th><th>翻转</th></tr></thead>
-<tbody>
+<section><h2><span class="num">07</span>方法 · UE 精度外科减（未试过的空白）</h2>
+<p>全部 86 次提交里，UE 实验（s67/s69/s79/s80/conf_gated）都是<strong>加</strong> UE 或全局共识（s16）；<strong>从没「只从获胜 union 减低支持 UE」</strong>。方向：外科砍 UE 假阳性，用富余的 MF1 换 PEM。</p>
+<table><thead><tr><th>探针</th><th>规则</th><th>UE 变化</th><th>其他类</th><th>翻转</th></tr></thead><tbody>
 <tr class="hi-win"><td class="num"><strong>s87 / T1</strong> 保守·首选</td><td>单成员 UE→Supported</td><td class="num">155→135</td><td>不变</td><td class="num">20</td></tr>
 <tr><td class="num">s88 / T2 中等</td><td>≤2 成员 UE→Supported</td><td class="num">155→106</td><td>不变</td><td class="num">49</td></tr>
 <tr><td class="num">s89 / T3</td><td>T1 + 单成员 Contra→Supported</td><td class="num">155→135</td><td>Contra 46→29</td><td class="num">37</td></tr>
 </tbody></table>
-<p>20 个单成员 UE 中 <strong>13 个正好是所在段的唯一少数类</strong>，若为 FP，每翻对一个直接 +0.17 PEM（最多约 +2.2）。<strong>不踩老雷</strong>：s16 砍了 129 个（含高精度 UCM/Contra 真阳性）所以连 PEM 都跌；我们只动 20–49 个文档实测的低精度过触发类 UE，量级与选择性完全不同。</p>
-<div class="callout warn"><div class="callout-label">风险 · 必读</div>
-本质是 <strong>+EV 的方向性赌注，非确定性</strong>。成立前提 = 「低支持 UE 多为 FP」（证据：s79/s80 testp1 实测 + per-class UE 精度 0.88 figref 过触发 + s82 OCR）。<strong>testp1 本地无 gold，唯一真信号是 Codabench</strong> —— 建议先交 s87（仅 20 翻、最小风险）探一发。若低支持 UE 其实多为真阳性，会像 s16 一样掉 PEM。</div>
-</section>
+<p>20 个单成员 UE 中 <strong>13 个正好是所在段的唯一少数类</strong>，若为 FP，每翻对一个 +0.17 PEM（最多 ~+2.2）。<strong>不踩老雷</strong>：s16 砍 129 个（含高精度真阳性）连 PEM 都跌；我们只动 20–49 个低精度过触发 UE，量级与选择性完全不同。</p>
+<div class="callout warn"><div class="callout-label">风险 · 必读</div>本质是 <strong>+EV 方向性赌注，非确定性</strong>。前提 = 低支持 UE 多为 FP（证据 s79/s80 + UE 精度 0.88 + s82）。<strong>testp1 本地无 gold，唯一真信号是 Codabench</strong>——先交 s87（仅 20 翻、最小风险）。若低支持 UE 实为真阳性，会像 s16 掉 PEM。</div></section>
 
-<section>
-<h2><span class="num">06</span>验证路径与 Phase 2</h2>
+<section><h2><span class="num">08</span>验证路径与 Phase 2</h2>
 <div class="cards cols-2">
-<div class="card tone-a"><div class="card-icon">STEP 1 · 廉价验证</div><div class="card-name">Codabench 探针</div><div class="card-desc">先交 s87（UE 单成员→Sup，20 翻）。有效 → 再试 s88/s89 深度；无效 → 假设证伪，停。唯一真信号。</div></div>
-<div class="card tone-b"><div class="card-icon">STEP 2 · 离线去险</div><div class="card-name">devbench 实测 FP 率</div><div class="card-desc">在有 gold 的 devbench 重推成员，直接量化低支持 UE 的真实 FP 率，省 Codabench 配额（需 GPU）。</div></div>
-<div class="card tone-a"><div class="card-icon">STEP 3 · 决赛迁移</div><div class="card-name">Phase 2 复刻</div><div class="card-desc">当前榜是 Phase-1 preliminary，testp2 是决赛。本地只存 union，需服务器重推成员后套用同一减法。</div></div>
-<div class="card tone-c"><div class="card-icon">备选 · 高天花板</div><div class="card-name">精度导向重训</div><div class="card-desc">训一个减少数类过采样的精度成员（与密度 s70 相反）作 union 精度成员。GPU、方差高，但 union 重组之外唯一真抬 PEM 的训练杠杆。</div></div>
-</div>
-</section>
+<div class="card tone-a"><div class="card-icon">STEP 1 · 廉价验证</div><div class="card-name">Codabench 探针</div><div class="card-desc">先交 s87（20 翻）。有效→试 s88/s89 深度；无效→假设证伪，停。唯一真信号。</div></div>
+<div class="card tone-b"><div class="card-icon">STEP 2 · 离线去险</div><div class="card-name">devbench 实测 FP 率</div><div class="card-desc">在有 gold 的 devbench 重推成员，量化低支持 UE 真实 FP 率，省 Codabench 配额（需 GPU）。</div></div>
+<div class="card tone-a"><div class="card-icon">STEP 3 · 决赛迁移</div><div class="card-name">Phase 2 复刻</div><div class="card-desc">当前榜是 Phase-1 preliminary，testp2 才是决赛。本地只存 union，需服务器重推成员后套同一减法。</div></div>
+<div class="card tone-c"><div class="card-icon">备选 · 高天花板</div><div class="card-name">精度导向重训</div><div class="card-desc">训一个减过采样的精度成员（与密度 s70 相反）作 union 精度成员。GPU、方差高，但 union 之外唯一真抬 PEM 的训练杠杆。</div></div>
+</div></section>
 
-<section>
-<h2><span class="num">07</span>附录：全部提交逐类标签统计</h2>
-<details>
-<summary>展开全部 79 个 testp1 提交的逐类标签分布</summary>
-<div class="scroll">
-<table>
-<thead><tr><th>文件</th><th>Sup</th><th>UE</th><th>UCM</th><th>SO</th><th>Contra</th><th>少数类</th><th>Score</th></tr></thead>
-<tbody>
-<tr><td class='num'>gemma4_26b_pce_submission</td><td class='num'>5050</td><td class='num'>21</td><td class='num'>15</td><td class='num'>7</td><td class='num'>3</td><td class='num'>46</td><td class='num'>—</td></tr>
-<tr><td class='num'>gridckpt_thr_base</td><td class='num'>4843</td><td class='num'>93</td><td class='num'>109</td><td class='num'>28</td><td class='num'>23</td><td class='num'>253</td><td class='num'>—</td></tr>
-<tr><td class='num'>gridckpt_thr_tau-0p01</td><td class='num'>5032</td><td class='num'>1</td><td class='num'>47</td><td class='num'>1</td><td class='num'>15</td><td class='num'>64</td><td class='num'>—</td></tr>
-<tr><td class='num'>s01_m_q8b-grid</td><td class='num'>4843</td><td class='num'>92</td><td class='num'>109</td><td class='num'>29</td><td class='num'>23</td><td class='num'>253</td><td class='num'>47.80</td></tr>
-<tr><td class='num'>s02_m_q8b-fullres</td><td class='num'>4836</td><td class='num'>108</td><td class='num'>104</td><td class='num'>22</td><td class='num'>26</td><td class='num'>260</td><td class='num'>44.47</td></tr>
-<tr><td class='num'>s03_pp_tau020</td><td class='num'>4906</td><td class='num'>55</td><td class='num'>99</td><td class='num'>15</td><td class='num'>21</td><td class='num'>190</td><td class='num'>43.85</td></tr>
-<tr><td class='num'>s04_pp_tau003</td><td class='num'>4969</td><td class='num'>23</td><td class='num'>81</td><td class='num'>6</td><td class='num'>17</td><td class='num'>127</td><td class='num'>38.48</td></tr>
-<tr><td class='num'>s05_pp_vetoAll</td><td class='num'>5050</td><td class='num'>35</td><td class='num'>6</td><td class='num'>5</td><td class='num'>0</td><td class='num'>46</td><td class='num'>18.86</td></tr>
-<tr><td class='num'>s06_pp_vetoGated</td><td class='num'>4925</td><td class='num'>56</td><td class='num'>88</td><td class='num'>10</td><td class='num'>17</td><td class='num'>171</td><td class='num'>39.57</td></tr>
-<tr><td class='num'>s07_m_q8b-gentle15</td><td class='num'>4850</td><td class='num'>113</td><td class='num'>80</td><td class='num'>19</td><td class='num'>34</td><td class='num'>246</td><td class='num'>40.91</td></tr>
-<tr><td class='num'>s08_m_q8b-os4</td><td class='num'>4861</td><td class='num'>80</td><td class='num'>102</td><td class='num'>28</td><td class='num'>25</td><td class='num'>235</td><td class='num'>45.10</td></tr>
-<tr><td class='num'>s09_m_q8b-perclass</td><td class='num'>4828</td><td class='num'>112</td><td class='num'>104</td><td class='num'>33</td><td class='num'>19</td><td class='num'>268</td><td class='num'>43.83</td></tr>
-<tr><td class='num'>s10_m_q8b-perclassEp2</td><td class='num'>4903</td><td class='num'>74</td><td class='num'>80</td><td class='num'>17</td><td class='num'>22</td><td class='num'>193</td><td class='num'>41.70</td></tr>
-<tr><td class='num'>s11_u_q3</td><td class='num'>4757</td><td class='num'>142</td><td class='num'>127</td><td class='num'>43</td><td class='num'>27</td><td class='num'>339</td><td class='num'>48.22</td></tr>
-<tr><td class='num'>s12_m_q8b-joint</td><td class='num'>4887</td><td class='num'>66</td><td class='num'>90</td><td class='num'>31</td><td class='num'>22</td><td class='num'>209</td><td class='num'>43.33</td></tr>
-<tr><td class='num'>s13_m_q32b-joint</td><td class='num'>4913</td><td class='num'>40</td><td class='num'>97</td><td class='num'>19</td><td class='num'>27</td><td class='num'>183</td><td class='num'>44.43</td></tr>
-<tr><td class='num'>s14_u_q4</td><td class='num'>4731</td><td class='num'>148</td><td class='num'>137</td><td class='num'>48</td><td class='num'>32</td><td class='num'>365</td><td class='num'>49.99</td></tr>
-<tr><td class='num'>s15_u_q5</td><td class='num'>4714</td><td class='num'>155</td><td class='num'>139</td><td class='num'>52</td><td class='num'>36</td><td class='num'>382</td><td class='num'>50.26</td></tr>
-<tr><td class='num'>s16_u_2of4</td><td class='num'>4843</td><td class='num'>87</td><td class='num'>110</td><td class='num'>32</td><td class='num'>24</td><td class='num'>253</td><td class='num'>47.29</td></tr>
-<tr><td class='num'>s17_m_q4b</td><td class='num'>4876</td><td class='num'>78</td><td class='num'>91</td><td class='num'>27</td><td class='num'>24</td><td class='num'>220</td><td class='num'>—</td></tr>
-<tr><td class='num'>s18_u_q5-q4b</td><td class='num'>4692</td><td class='num'>164</td><td class='num'>139</td><td class='num'>58</td><td class='num'>43</td><td class='num'>404</td><td class='num'>49.71</td></tr>
-<tr><td class='num'>s19_u_q5-iv2b</td><td class='num'>4648</td><td class='num'>201</td><td class='num'>146</td><td class='num'>58</td><td class='num'>43</td><td class='num'>448</td><td class='num'>48.48</td></tr>
-<tr><td class='num'>s20_u_q5-iv8b</td><td class='num'>4681</td><td class='num'>171</td><td class='num'>139</td><td class='num'>58</td><td class='num'>47</td><td class='num'>415</td><td class='num'>49.36</td></tr>
-<tr><td class='num'>s21_u_q5-iv2b8b</td><td class='num'>4624</td><td class='num'>212</td><td class='num'>146</td><td class='num'>61</td><td class='num'>53</td><td class='num'>472</td><td class='num'>47.77</td></tr>
-<tr><td class='num'>s22_u_consensus8</td><td class='num'>4764</td><td class='num'>129</td><td class='num'>121</td><td class='num'>48</td><td class='num'>34</td><td class='num'>332</td><td class='num'>—</td></tr>
-<tr><td class='num'>s23_u_q5-gemma26b</td><td class='num'>4598</td><td class='num'>237</td><td class='num'>152</td><td class='num'>65</td><td class='num'>44</td><td class='num'>498</td><td class='num'>49.83</td></tr>
-<tr><td class='num'>s24_m_iv2b</td><td class='num'>4855</td><td class='num'>134</td><td class='num'>71</td><td class='num'>18</td><td class='num'>18</td><td class='num'>241</td><td class='num'>—</td></tr>
-<tr><td class='num'>s25_m_iv8b</td><td class='num'>4886</td><td class='num'>74</td><td class='num'>79</td><td class='num'>31</td><td class='num'>26</td><td class='num'>210</td><td class='num'>40.04</td></tr>
-<tr><td class='num'>s26_m_gemma26b</td><td class='num'>4726</td><td class='num'>191</td><td class='num'>105</td><td class='num'>46</td><td class='num'>28</td><td class='num'>370</td><td class='num'>44.69</td></tr>
-<tr><td class='num'>s27_m_gemma31b</td><td class='num'>5009</td><td class='num'>23</td><td class='num'>45</td><td class='num'>13</td><td class='num'>6</td><td class='num'>87</td><td class='num'>29.28</td></tr>
-<tr><td class='num'>s28_u_q5-gemma31b</td><td class='num'>4699</td><td class='num'>161</td><td class='num'>145</td><td class='num'>54</td><td class='num'>37</td><td class='num'>397</td><td class='num'>—</td></tr>
-<tr><td class='num'>s29_u_q5-gemma26b31b</td><td class='num'>4589</td><td class='num'>243</td><td class='num'>153</td><td class='num'>66</td><td class='num'>45</td><td class='num'>507</td><td class='num'>—</td></tr>
-<tr><td class='num'>s30_u_cleanunion</td><td class='num'>4827</td><td class='num'>111</td><td class='num'>108</td><td class='num'>28</td><td class='num'>22</td><td class='num'>269</td><td class='num'>43.85</td></tr>
-<tr><td class='num'>s31_m_clean-softmin</td><td class='num'>4932</td><td class='num'>85</td><td class='num'>57</td><td class='num'>9</td><td class='num'>13</td><td class='num'>164</td><td class='num'>34.21</td></tr>
-<tr><td class='num'>s32_m_clean-plainCE</td><td class='num'>4930</td><td class='num'>56</td><td class='num'>78</td><td class='num'>19</td><td class='num'>13</td><td class='num'>166</td><td class='num'>38.68</td></tr>
-<tr><td class='num'>s33_m_grid-plainCE</td><td class='num'>4851</td><td class='num'>108</td><td class='num'>92</td><td class='num'>21</td><td class='num'>24</td><td class='num'>245</td><td class='num'>42.87</td></tr>
-<tr><td class='num'>s34_m_os4-plainCE</td><td class='num'>4877</td><td class='num'>89</td><td class='num'>88</td><td class='num'>23</td><td class='num'>19</td><td class='num'>219</td><td class='num'>—</td></tr>
-<tr><td class='num'>s35_m_perclass-plainCE</td><td class='num'>4813</td><td class='num'>116</td><td class='num'>115</td><td class='num'>32</td><td class='num'>20</td><td class='num'>283</td><td class='num'>—</td></tr>
-<tr><td class='num'>s36_m_gemma26b-plainCE</td><td class='num'>5050</td><td class='num'>21</td><td class='num'>15</td><td class='num'>7</td><td class='num'>3</td><td class='num'>46</td><td class='num'>21.40</td></tr>
-<tr><td class='num'>s37_u_q5-plainCE</td><td class='num'>4706</td><td class='num'>169</td><td class='num'>132</td><td class='num'>50</td><td class='num'>39</td><td class='num'>390</td><td class='num'>48.54</td></tr>
-<tr><td class='num'>s38_u_q5-plainCE-gemma</td><td class='num'>4691</td><td class='num'>176</td><td class='num'>135</td><td class='num'>53</td><td class='num'>41</td><td class='num'>405</td><td class='num'>48.58</td></tr>
-<tr><td class='num'>s39_m_cotE1</td><td class='num'>4798</td><td class='num'>127</td><td class='num'>122</td><td class='num'>11</td><td class='num'>38</td><td class='num'>298</td><td class='num'>38.54</td></tr>
-<tr><td class='num'>s40_m_cotE0</td><td class='num'>4863</td><td class='num'>77</td><td class='num'>102</td><td class='num'>41</td><td class='num'>13</td><td class='num'>233</td><td class='num'>43.85</td></tr>
-<tr><td class='num'>s41_m_a1sc-s01</td><td class='num'>4778</td><td class='num'>137</td><td class='num'>119</td><td class='num'>37</td><td class='num'>25</td><td class='num'>318</td><td class='num'>47.76</td></tr>
-<tr><td class='num'>s49_m_ablate-plainCE-trainp</td><td class='num'>4930</td><td class='num'>57</td><td class='num'>79</td><td class='num'>17</td><td class='num'>13</td><td class='num'>166</td><td class='num'>38.68</td></tr>
-<tr><td class='num'>s50_m_ablate-softmin-trainp</td><td class='num'>4930</td><td class='num'>84</td><td class='num'>59</td><td class='num'>10</td><td class='num'>13</td><td class='num'>166</td><td class='num'>34.60</td></tr>
-<tr><td class='num'>s51_m_ablate-softmin-full</td><td class='num'>4854</td><td class='num'>122</td><td class='num'>82</td><td class='num'>20</td><td class='num'>18</td><td class='num'>242</td><td class='num'>39.14</td></tr>
-<tr><td class='num'>s52_m_cfgA-plainCE</td><td class='num'>4824</td><td class='num'>137</td><td class='num'>92</td><td class='num'>23</td><td class='num'>20</td><td class='num'>272</td><td class='num'>41.56</td></tr>
-<tr><td class='num'>s53_m_cfgA-plainCE-tsft</td><td class='num'>4836</td><td class='num'>104</td><td class='num'>110</td><td class='num'>30</td><td class='num'>16</td><td class='num'>260</td><td class='num'>44.08</td></tr>
-<tr><td class='num'>s54_m_cfgA-softmin-tsft</td><td class='num'>4852</td><td class='num'>82</td><td class='num'>114</td><td class='num'>33</td><td class='num'>15</td><td class='num'>244</td><td class='num'>44.75</td></tr>
-<tr><td class='num'>s55_m_recover-s01-ds050</td><td class='num'>4855</td><td class='num'>79</td><td class='num'>106</td><td class='num'>26</td><td class='num'>30</td><td class='num'>241</td><td class='num'>45.48</td></tr>
-<tr><td class='num'>s56_m_multitarget-ds050</td><td class='num'>4752</td><td class='num'>130</td><td class='num'>108</td><td class='num'>78</td><td class='num'>28</td><td class='num'>344</td><td class='num'>46.12</td></tr>
-<tr><td class='num'>s60_u_ds050fleet-mv1</td><td class='num'>4610</td><td class='num'>229</td><td class='num'>127</td><td class='num'>78</td><td class='num'>52</td><td class='num'>486</td><td class='num'>46.25</td></tr>
-<tr><td class='num'>s61_u_ds050fleet-mv2</td><td class='num'>4746</td><td class='num'>148</td><td class='num'>116</td><td class='num'>53</td><td class='num'>33</td><td class='num'>350</td><td class='num'>48.73</td></tr>
-<tr><td class='num'>s62_u_ds050fleet-contraGate</td><td class='num'>4628</td><td class='num'>230</td><td class='num'>127</td><td class='num'>78</td><td class='num'>33</td><td class='num'>468</td><td class='num'>46.95</td></tr>
-<tr><td class='num'>s63_u_ds050fleet-soContraGate</td><td class='num'>4653</td><td class='num'>230</td><td class='num'>127</td><td class='num'>53</td><td class='num'>33</td><td class='num'>443</td><td class='num'>46.97</td></tr>
-<tr><td class='num'>s64_u_aug10-mv2</td><td class='num'>4719</td><td class='num'>158</td><td class='num'>124</td><td class='num'>61</td><td class='num'>34</td><td class='num'>377</td><td class='num'>49.34</td></tr>
-<tr><td class='num'>s65_u_aug10-mv3</td><td class='num'>4780</td><td class='num'>123</td><td class='num'>116</td><td class='num'>47</td><td class='num'>30</td><td class='num'>316</td><td class='num'>—</td></tr>
-<tr><td class='num'>s66_u_aug10-ucmLib</td><td class='num'>4700</td><td class='num'>158</td><td class='num'>143</td><td class='num'>61</td><td class='num'>34</td><td class='num'>396</td><td class='num'>—</td></tr>
-<tr><td class='num'>s67_u_s15base-K2</td><td class='num'>4675</td><td class='num'>177</td><td class='num'>142</td><td class='num'>63</td><td class='num'>39</td><td class='num'>421</td><td class='num'>49.48</td></tr>
-<tr><td class='num'>s68_u_s15base-K3</td><td class='num'>4704</td><td class='num'>160</td><td class='num'>141</td><td class='num'>55</td><td class='num'>36</td><td class='num'>392</td><td class='num'>—</td></tr>
-<tr><td class='num'>s69_u_s15base-K2ueTight</td><td class='num'>4692</td><td class='num'>160</td><td class='num'>142</td><td class='num'>63</td><td class='num'>39</td><td class='num'>404</td><td class='num'>—</td></tr>
-<tr><td class='num'>s70_m_density-softmin</td><td class='num'>4735</td><td class='num'>190</td><td class='num'>116</td><td class='num'>24</td><td class='num'>31</td><td class='num'>361</td><td class='num'>44.67</td></tr>
-<tr><td class='num'>s72_u_density-aug6</td><td class='num'>4643</td><td class='num'>213</td><td class='num'>143</td><td class='num'>51</td><td class='num'>46</td><td class='num'>453</td><td class='num'>—</td></tr>
-<tr><td class='num'>s73_u_s15base-s70dens</td><td class='num'>4643</td><td class='num'>211</td><td class='num'>144</td><td class='num'>53</td><td class='num'>45</td><td class='num'>453</td><td class='num'>—</td></tr>
-<tr><td class='num'>s74_u_s15base-s70ucmContra</td><td class='num'>4700</td><td class='num'>155</td><td class='num'>144</td><td class='num'>52</td><td class='num'>45</td><td class='num'>396</td><td class='num'>50.45</td></tr>
-<tr class="hi"><td class='num'>s75_u_s15base-s70s56ucmContra</td><td class='num'>4697</td><td class='num'>155</td><td class='num'>146</td><td class='num'>52</td><td class='num'>46</td><td class='num'>399</td><td class='num'>50.61</td></tr>
-<tr><td class='num'>s77_u_s15base-6src-ucmContra</td><td class='num'>4676</td><td class='num'>155</td><td class='num'>150</td><td class='num'>52</td><td class='num'>63</td><td class='num'>420</td><td class='num'>49.59</td></tr>
-<tr><td class='num'>s78_u_s15base-s70s56-ucmContraSO</td><td class='num'>4671</td><td class='num'>155</td><td class='num'>146</td><td class='num'>78</td><td class='num'>46</td><td class='num'>425</td><td class='num'>49.90</td></tr>
-<tr><td class='num'>s79_u_s15-ucmContra-UEconf02</td><td class='num'>4667</td><td class='num'>185</td><td class='num'>146</td><td class='num'>52</td><td class='num'>46</td><td class='num'>429</td><td class='num'>—</td></tr>
-<tr><td class='num'>s80_u_s15-ucmContra-UEconf005</td><td class='num'>4686</td><td class='num'>166</td><td class='num'>146</td><td class='num'>52</td><td class='num'>46</td><td class='num'>410</td><td class='num'>50.22</td></tr>
-<tr><td class='num'>s82_u_s15base-s01ocr-ucmContra</td><td class='num'>4713</td><td class='num'>155</td><td class='num'>139</td><td class='num'>52</td><td class='num'>37</td><td class='num'>383</td><td class='num'>—</td></tr>
-<tr><td class='num'>s83_u_s15drop13-dens</td><td class='num'>4716</td><td class='num'>149</td><td class='num'>140</td><td class='num'>49</td><td class='num'>42</td><td class='num'>380</td><td class='num'>—</td></tr>
-<tr><td class='num'>s84_u_s15drop1213-dens</td><td class='num'>4736</td><td class='num'>142</td><td class='num'>136</td><td class='num'>43</td><td class='num'>39</td><td class='num'>360</td><td class='num'>—</td></tr>
-<tr><td class='num'>s85_u_s15drop12-dens</td><td class='num'>4713</td><td class='num'>148</td><td class='num'>144</td><td class='num'>48</td><td class='num'>43</td><td class='num'>383</td><td class='num'>50.24</td></tr>
-<tr><td class='num'>s86_u_s15-3dens-ucmContra</td><td class='num'>4695</td><td class='num'>155</td><td class='num'>146</td><td class='num'>52</td><td class='num'>48</td><td class='num'>401</td><td class='num'>50.46</td></tr>
-<tr><td class='num'>s87_pp_ue1trim</td><td class='num'>4717</td><td class='num'>135</td><td class='num'>146</td><td class='num'>52</td><td class='num'>46</td><td class='num'>379</td><td class='num'>—</td></tr>
-<tr><td class='num'>s88_pp_ue2trim</td><td class='num'>4746</td><td class='num'>106</td><td class='num'>146</td><td class='num'>52</td><td class='num'>46</td><td class='num'>350</td><td class='num'>—</td></tr>
-<tr><td class='num'>s89_pp_ue1contra1trim</td><td class='num'>4734</td><td class='num'>135</td><td class='num'>146</td><td class='num'>52</td><td class='num'>29</td><td class='num'>362</td><td class='num'>—</td></tr>
-</tbody></table>
-</div>
-</details>
-</section>
+<section><h2><span class="num">09</span>附录：全部提交逐类标签统计</h2>
+<details><summary>展开全部 79 个 testp1 提交（逐类标签 + MF1/PEM/Score）</summary><div class="scroll">
+<table><thead><tr><th>文件</th><th>Sup</th><th>UE</th><th>UCM</th><th>SO</th><th>Con</th><th>少数类</th><th>MF1</th><th>PEM</th><th>Score</th></tr></thead><tbody>
+<tr><td class='num'>gemma4_26b_pce_submission</td><td class='num'>5050</td><td class='num'>21</td><td class='num'>15</td><td class='num'>7</td><td class='num'>3</td><td class='num'>46</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>gridckpt_thr_base</td><td class='num'>4843</td><td class='num'>93</td><td class='num'>109</td><td class='num'>28</td><td class='num'>23</td><td class='num'>253</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>gridckpt_thr_tau-0p01</td><td class='num'>5032</td><td class='num'>1</td><td class='num'>47</td><td class='num'>1</td><td class='num'>15</td><td class='num'>64</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s01_m_q8b-grid</td><td class='num'>4843</td><td class='num'>92</td><td class='num'>109</td><td class='num'>29</td><td class='num'>23</td><td class='num'>253</td><td class='num'>52.77</td><td class='num'>42.83</td><td class='num'>47.80</td></tr>
+<tr><td class='num'>s02_m_q8b-fullres</td><td class='num'>4836</td><td class='num'>108</td><td class='num'>104</td><td class='num'>22</td><td class='num'>26</td><td class='num'>260</td><td class='num'>49.00</td><td class='num'>39.93</td><td class='num'>44.47</td></tr>
+<tr><td class='num'>s03_pp_tau020</td><td class='num'>4906</td><td class='num'>55</td><td class='num'>99</td><td class='num'>15</td><td class='num'>21</td><td class='num'>190</td><td class='num'>48.29</td><td class='num'>39.42</td><td class='num'>43.85</td></tr>
+<tr><td class='num'>s04_pp_tau003</td><td class='num'>4969</td><td class='num'>23</td><td class='num'>81</td><td class='num'>6</td><td class='num'>17</td><td class='num'>127</td><td class='num'>42.48</td><td class='num'>34.47</td><td class='num'>38.48</td></tr>
+<tr><td class='num'>s05_pp_vetoAll</td><td class='num'>5050</td><td class='num'>35</td><td class='num'>6</td><td class='num'>5</td><td class='num'>0</td><td class='num'>46</td><td class='num'>22.01</td><td class='num'>15.70</td><td class='num'>18.86</td></tr>
+<tr><td class='num'>s06_pp_vetoGated</td><td class='num'>4925</td><td class='num'>56</td><td class='num'>88</td><td class='num'>10</td><td class='num'>17</td><td class='num'>171</td><td class='num'>44.34</td><td class='num'>34.81</td><td class='num'>39.57</td></tr>
+<tr><td class='num'>s07_m_q8b-gentle15</td><td class='num'>4850</td><td class='num'>113</td><td class='num'>80</td><td class='num'>19</td><td class='num'>34</td><td class='num'>246</td><td class='num'>46.84</td><td class='num'>34.98</td><td class='num'>40.91</td></tr>
+<tr><td class='num'>s08_m_q8b-os4</td><td class='num'>4861</td><td class='num'>80</td><td class='num'>102</td><td class='num'>28</td><td class='num'>25</td><td class='num'>235</td><td class='num'>50.45</td><td class='num'>39.76</td><td class='num'>45.10</td></tr>
+<tr><td class='num'>s09_m_q8b-perclass</td><td class='num'>4828</td><td class='num'>112</td><td class='num'>104</td><td class='num'>33</td><td class='num'>19</td><td class='num'>268</td><td class='num'>49.95</td><td class='num'>37.71</td><td class='num'>43.83</td></tr>
+<tr><td class='num'>s10_m_q8b-perclassEp2</td><td class='num'>4903</td><td class='num'>74</td><td class='num'>80</td><td class='num'>17</td><td class='num'>22</td><td class='num'>193</td><td class='num'>46.53</td><td class='num'>36.86</td><td class='num'>41.70</td></tr>
+<tr><td class='num'>s11_u_q3</td><td class='num'>4757</td><td class='num'>142</td><td class='num'>127</td><td class='num'>43</td><td class='num'>27</td><td class='num'>339</td><td class='num'>54.80</td><td class='num'>41.64</td><td class='num'>48.22</td></tr>
+<tr><td class='num'>s12_m_q8b-joint</td><td class='num'>4887</td><td class='num'>66</td><td class='num'>90</td><td class='num'>31</td><td class='num'>22</td><td class='num'>209</td><td class='num'>48.27</td><td class='num'>38.40</td><td class='num'>43.33</td></tr>
+<tr><td class='num'>s13_m_q32b-joint</td><td class='num'>4913</td><td class='num'>40</td><td class='num'>97</td><td class='num'>19</td><td class='num'>27</td><td class='num'>183</td><td class='num'>49.44</td><td class='num'>39.42</td><td class='num'>44.43</td></tr>
+<tr><td class='num'>s14_u_q4</td><td class='num'>4731</td><td class='num'>148</td><td class='num'>137</td><td class='num'>48</td><td class='num'>32</td><td class='num'>365</td><td class='num'>56.80</td><td class='num'>43.17</td><td class='num'>49.99</td></tr>
+<tr><td class='num'>s15_u_q5</td><td class='num'>4714</td><td class='num'>155</td><td class='num'>139</td><td class='num'>52</td><td class='num'>36</td><td class='num'>382</td><td class='num'>57.17</td><td class='num'>43.34</td><td class='num'>50.26</td></tr>
+<tr><td class='num'>s16_u_2of4</td><td class='num'>4843</td><td class='num'>87</td><td class='num'>110</td><td class='num'>32</td><td class='num'>24</td><td class='num'>253</td><td class='num'>52.59</td><td class='num'>41.98</td><td class='num'>47.29</td></tr>
+<tr><td class='num'>s17_m_q4b</td><td class='num'>4876</td><td class='num'>78</td><td class='num'>91</td><td class='num'>27</td><td class='num'>24</td><td class='num'>220</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s18_u_q5-q4b</td><td class='num'>4692</td><td class='num'>164</td><td class='num'>139</td><td class='num'>58</td><td class='num'>43</td><td class='num'>404</td><td class='num'>57.28</td><td class='num'>42.15</td><td class='num'>49.71</td></tr>
+<tr><td class='num'>s19_u_q5-iv2b</td><td class='num'>4648</td><td class='num'>201</td><td class='num'>146</td><td class='num'>58</td><td class='num'>43</td><td class='num'>448</td><td class='num'>56.35</td><td class='num'>40.61</td><td class='num'>48.48</td></tr>
+<tr><td class='num'>s20_u_q5-iv8b</td><td class='num'>4681</td><td class='num'>171</td><td class='num'>139</td><td class='num'>58</td><td class='num'>47</td><td class='num'>415</td><td class='num'>56.73</td><td class='num'>41.98</td><td class='num'>49.36</td></tr>
+<tr><td class='num'>s21_u_q5-iv2b8b</td><td class='num'>4624</td><td class='num'>212</td><td class='num'>146</td><td class='num'>61</td><td class='num'>53</td><td class='num'>472</td><td class='num'>55.95</td><td class='num'>39.59</td><td class='num'>47.77</td></tr>
+<tr><td class='num'>s22_u_consensus8</td><td class='num'>4764</td><td class='num'>129</td><td class='num'>121</td><td class='num'>48</td><td class='num'>34</td><td class='num'>332</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s23_u_q5-gemma26b</td><td class='num'>4598</td><td class='num'>237</td><td class='num'>152</td><td class='num'>65</td><td class='num'>44</td><td class='num'>498</td><td class='num'>57.67</td><td class='num'>41.98</td><td class='num'>49.83</td></tr>
+<tr><td class='num'>s24_m_iv2b</td><td class='num'>4855</td><td class='num'>134</td><td class='num'>71</td><td class='num'>18</td><td class='num'>18</td><td class='num'>241</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s25_m_iv8b</td><td class='num'>4886</td><td class='num'>74</td><td class='num'>79</td><td class='num'>31</td><td class='num'>26</td><td class='num'>210</td><td class='num'>45.27</td><td class='num'>34.81</td><td class='num'>40.04</td></tr>
+<tr><td class='num'>s26_m_gemma26b</td><td class='num'>4726</td><td class='num'>191</td><td class='num'>105</td><td class='num'>46</td><td class='num'>28</td><td class='num'>370</td><td class='num'>51.84</td><td class='num'>37.54</td><td class='num'>44.69</td></tr>
+<tr><td class='num'>s27_m_gemma31b</td><td class='num'>5009</td><td class='num'>23</td><td class='num'>45</td><td class='num'>13</td><td class='num'>6</td><td class='num'>87</td><td class='num'>33.98</td><td class='num'>24.57</td><td class='num'>29.28</td></tr>
+<tr><td class='num'>s28_u_q5-gemma31b</td><td class='num'>4699</td><td class='num'>161</td><td class='num'>145</td><td class='num'>54</td><td class='num'>37</td><td class='num'>397</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s29_u_q5-gemma26b31b</td><td class='num'>4589</td><td class='num'>243</td><td class='num'>153</td><td class='num'>66</td><td class='num'>45</td><td class='num'>507</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s30_u_cleanunion</td><td class='num'>4827</td><td class='num'>111</td><td class='num'>108</td><td class='num'>28</td><td class='num'>22</td><td class='num'>269</td><td class='num'>48.61</td><td class='num'>39.08</td><td class='num'>43.85</td></tr>
+<tr><td class='num'>s31_m_clean-softmin</td><td class='num'>4932</td><td class='num'>85</td><td class='num'>57</td><td class='num'>9</td><td class='num'>13</td><td class='num'>164</td><td class='num'>39.57</td><td class='num'>28.84</td><td class='num'>34.21</td></tr>
+<tr><td class='num'>s32_m_clean-plainCE</td><td class='num'>4930</td><td class='num'>56</td><td class='num'>78</td><td class='num'>19</td><td class='num'>13</td><td class='num'>166</td><td class='num'>43.57</td><td class='num'>33.79</td><td class='num'>38.68</td></tr>
+<tr><td class='num'>s33_m_grid-plainCE</td><td class='num'>4851</td><td class='num'>108</td><td class='num'>92</td><td class='num'>21</td><td class='num'>24</td><td class='num'>245</td><td class='num'>48.72</td><td class='num'>37.03</td><td class='num'>42.87</td></tr>
+<tr><td class='num'>s34_m_os4-plainCE</td><td class='num'>4877</td><td class='num'>89</td><td class='num'>88</td><td class='num'>23</td><td class='num'>19</td><td class='num'>219</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s35_m_perclass-plainCE</td><td class='num'>4813</td><td class='num'>116</td><td class='num'>115</td><td class='num'>32</td><td class='num'>20</td><td class='num'>283</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s36_m_gemma26b-plainCE</td><td class='num'>5050</td><td class='num'>21</td><td class='num'>15</td><td class='num'>7</td><td class='num'>3</td><td class='num'>46</td><td class='num'>24.88</td><td class='num'>17.92</td><td class='num'>21.40</td></tr>
+<tr><td class='num'>s37_u_q5-plainCE</td><td class='num'>4706</td><td class='num'>169</td><td class='num'>132</td><td class='num'>50</td><td class='num'>39</td><td class='num'>390</td><td class='num'>55.62</td><td class='num'>41.47</td><td class='num'>48.54</td></tr>
+<tr><td class='num'>s38_u_q5-plainCE-gemma</td><td class='num'>4691</td><td class='num'>176</td><td class='num'>135</td><td class='num'>53</td><td class='num'>41</td><td class='num'>405</td><td class='num'>55.69</td><td class='num'>41.47</td><td class='num'>48.58</td></tr>
+<tr><td class='num'>s39_m_cotE1</td><td class='num'>4798</td><td class='num'>127</td><td class='num'>122</td><td class='num'>11</td><td class='num'>38</td><td class='num'>298</td><td class='num'>43.28</td><td class='num'>33.79</td><td class='num'>38.54</td></tr>
+<tr><td class='num'>s40_m_cotE0</td><td class='num'>4863</td><td class='num'>77</td><td class='num'>102</td><td class='num'>41</td><td class='num'>13</td><td class='num'>233</td><td class='num'>49.31</td><td class='num'>38.40</td><td class='num'>43.85</td></tr>
+<tr><td class='num'>s41_m_a1sc-s01</td><td class='num'>4778</td><td class='num'>137</td><td class='num'>119</td><td class='num'>37</td><td class='num'>25</td><td class='num'>318</td><td class='num'>—</td><td class='num'>—</td><td class='num'>47.76</td></tr>
+<tr><td class='num'>s49_m_ablate-plainCE-trainp</td><td class='num'>4930</td><td class='num'>57</td><td class='num'>79</td><td class='num'>17</td><td class='num'>13</td><td class='num'>166</td><td class='num'>—</td><td class='num'>—</td><td class='num'>38.68</td></tr>
+<tr><td class='num'>s50_m_ablate-softmin-trainp</td><td class='num'>4930</td><td class='num'>84</td><td class='num'>59</td><td class='num'>10</td><td class='num'>13</td><td class='num'>166</td><td class='num'>—</td><td class='num'>—</td><td class='num'>34.60</td></tr>
+<tr><td class='num'>s51_m_ablate-softmin-full</td><td class='num'>4854</td><td class='num'>122</td><td class='num'>82</td><td class='num'>20</td><td class='num'>18</td><td class='num'>242</td><td class='num'>—</td><td class='num'>—</td><td class='num'>39.14</td></tr>
+<tr><td class='num'>s52_m_cfgA-plainCE</td><td class='num'>4824</td><td class='num'>137</td><td class='num'>92</td><td class='num'>23</td><td class='num'>20</td><td class='num'>272</td><td class='num'>—</td><td class='num'>—</td><td class='num'>41.56</td></tr>
+<tr><td class='num'>s53_m_cfgA-plainCE-tsft</td><td class='num'>4836</td><td class='num'>104</td><td class='num'>110</td><td class='num'>30</td><td class='num'>16</td><td class='num'>260</td><td class='num'>—</td><td class='num'>—</td><td class='num'>44.08</td></tr>
+<tr><td class='num'>s54_m_cfgA-softmin-tsft</td><td class='num'>4852</td><td class='num'>82</td><td class='num'>114</td><td class='num'>33</td><td class='num'>15</td><td class='num'>244</td><td class='num'>—</td><td class='num'>—</td><td class='num'>44.75</td></tr>
+<tr><td class='num'>s55_m_recover-s01-ds050</td><td class='num'>4855</td><td class='num'>79</td><td class='num'>106</td><td class='num'>26</td><td class='num'>30</td><td class='num'>241</td><td class='num'>—</td><td class='num'>—</td><td class='num'>45.48</td></tr>
+<tr><td class='num'>s56_m_multitarget-ds050</td><td class='num'>4752</td><td class='num'>130</td><td class='num'>108</td><td class='num'>78</td><td class='num'>28</td><td class='num'>344</td><td class='num'>—</td><td class='num'>—</td><td class='num'>46.12</td></tr>
+<tr><td class='num'>s60_u_ds050fleet-mv1</td><td class='num'>4610</td><td class='num'>229</td><td class='num'>127</td><td class='num'>78</td><td class='num'>52</td><td class='num'>486</td><td class='num'>—</td><td class='num'>—</td><td class='num'>46.25</td></tr>
+<tr><td class='num'>s61_u_ds050fleet-mv2</td><td class='num'>4746</td><td class='num'>148</td><td class='num'>116</td><td class='num'>53</td><td class='num'>33</td><td class='num'>350</td><td class='num'>—</td><td class='num'>—</td><td class='num'>48.73</td></tr>
+<tr><td class='num'>s62_u_ds050fleet-contraGate</td><td class='num'>4628</td><td class='num'>230</td><td class='num'>127</td><td class='num'>78</td><td class='num'>33</td><td class='num'>468</td><td class='num'>—</td><td class='num'>—</td><td class='num'>46.95</td></tr>
+<tr><td class='num'>s63_u_ds050fleet-soContraGate</td><td class='num'>4653</td><td class='num'>230</td><td class='num'>127</td><td class='num'>53</td><td class='num'>33</td><td class='num'>443</td><td class='num'>—</td><td class='num'>—</td><td class='num'>46.97</td></tr>
+<tr><td class='num'>s64_u_aug10-mv2</td><td class='num'>4719</td><td class='num'>158</td><td class='num'>124</td><td class='num'>61</td><td class='num'>34</td><td class='num'>377</td><td class='num'>—</td><td class='num'>—</td><td class='num'>49.34</td></tr>
+<tr><td class='num'>s65_u_aug10-mv3</td><td class='num'>4780</td><td class='num'>123</td><td class='num'>116</td><td class='num'>47</td><td class='num'>30</td><td class='num'>316</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s66_u_aug10-ucmLib</td><td class='num'>4700</td><td class='num'>158</td><td class='num'>143</td><td class='num'>61</td><td class='num'>34</td><td class='num'>396</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s67_u_s15base-K2</td><td class='num'>4675</td><td class='num'>177</td><td class='num'>142</td><td class='num'>63</td><td class='num'>39</td><td class='num'>421</td><td class='num'>—</td><td class='num'>—</td><td class='num'>49.48</td></tr>
+<tr><td class='num'>s68_u_s15base-K3</td><td class='num'>4704</td><td class='num'>160</td><td class='num'>141</td><td class='num'>55</td><td class='num'>36</td><td class='num'>392</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s69_u_s15base-K2ueTight</td><td class='num'>4692</td><td class='num'>160</td><td class='num'>142</td><td class='num'>63</td><td class='num'>39</td><td class='num'>404</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s70_m_density-softmin</td><td class='num'>4735</td><td class='num'>190</td><td class='num'>116</td><td class='num'>24</td><td class='num'>31</td><td class='num'>361</td><td class='num'>—</td><td class='num'>—</td><td class='num'>44.67</td></tr>
+<tr><td class='num'>s72_u_density-aug6</td><td class='num'>4643</td><td class='num'>213</td><td class='num'>143</td><td class='num'>51</td><td class='num'>46</td><td class='num'>453</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s73_u_s15base-s70dens</td><td class='num'>4643</td><td class='num'>211</td><td class='num'>144</td><td class='num'>53</td><td class='num'>45</td><td class='num'>453</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s74_u_s15base-s70ucmContra</td><td class='num'>4700</td><td class='num'>155</td><td class='num'>144</td><td class='num'>52</td><td class='num'>45</td><td class='num'>396</td><td class='num'>—</td><td class='num'>—</td><td class='num'>50.45</td></tr>
+<tr class="hi"><td class='num'>s75_u_s15base-s70s56ucmContra</td><td class='num'>4697</td><td class='num'>155</td><td class='num'>146</td><td class='num'>52</td><td class='num'>46</td><td class='num'>399</td><td class='num'>57.54</td><td class='num'>43.69</td><td class='num'>50.61</td></tr>
+<tr><td class='num'>s77_u_s15base-6src-ucmContra</td><td class='num'>4676</td><td class='num'>155</td><td class='num'>150</td><td class='num'>52</td><td class='num'>63</td><td class='num'>420</td><td class='num'>—</td><td class='num'>—</td><td class='num'>49.59</td></tr>
+<tr><td class='num'>s78_u_s15base-s70s56-ucmContraSO</td><td class='num'>4671</td><td class='num'>155</td><td class='num'>146</td><td class='num'>78</td><td class='num'>46</td><td class='num'>425</td><td class='num'>—</td><td class='num'>—</td><td class='num'>49.90</td></tr>
+<tr><td class='num'>s79_u_s15-ucmContra-UEconf02</td><td class='num'>4667</td><td class='num'>185</td><td class='num'>146</td><td class='num'>52</td><td class='num'>46</td><td class='num'>429</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s80_u_s15-ucmContra-UEconf005</td><td class='num'>4686</td><td class='num'>166</td><td class='num'>146</td><td class='num'>52</td><td class='num'>46</td><td class='num'>410</td><td class='num'>—</td><td class='num'>—</td><td class='num'>50.22</td></tr>
+<tr><td class='num'>s82_u_s15base-s01ocr-ucmContra</td><td class='num'>4713</td><td class='num'>155</td><td class='num'>139</td><td class='num'>52</td><td class='num'>37</td><td class='num'>383</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s83_u_s15drop13-dens</td><td class='num'>4716</td><td class='num'>149</td><td class='num'>140</td><td class='num'>49</td><td class='num'>42</td><td class='num'>380</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s84_u_s15drop1213-dens</td><td class='num'>4736</td><td class='num'>142</td><td class='num'>136</td><td class='num'>43</td><td class='num'>39</td><td class='num'>360</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s85_u_s15drop12-dens</td><td class='num'>4713</td><td class='num'>148</td><td class='num'>144</td><td class='num'>48</td><td class='num'>43</td><td class='num'>383</td><td class='num'>—</td><td class='num'>—</td><td class='num'>50.24</td></tr>
+<tr><td class='num'>s86_u_s15-3dens-ucmContra</td><td class='num'>4695</td><td class='num'>155</td><td class='num'>146</td><td class='num'>52</td><td class='num'>48</td><td class='num'>401</td><td class='num'>—</td><td class='num'>—</td><td class='num'>50.46</td></tr>
+<tr><td class='num'>s87_pp_ue1trim</td><td class='num'>4717</td><td class='num'>135</td><td class='num'>146</td><td class='num'>52</td><td class='num'>46</td><td class='num'>379</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s88_pp_ue2trim</td><td class='num'>4746</td><td class='num'>106</td><td class='num'>146</td><td class='num'>52</td><td class='num'>46</td><td class='num'>350</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr><td class='num'>s89_pp_ue1contra1trim</td><td class='num'>4734</td><td class='num'>135</td><td class='num'>146</td><td class='num'>52</td><td class='num'>29</td><td class='num'>362</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr>
+</tbody></table></div></details></section>
 
-<footer>
-<h4>数据来源</h4>
-<ul>
+<footer><h4>数据来源</h4><ul>
 <li><span class="mascot"></span>排行榜 · nlp2ct.github.io/NLPCC-2026-Task10-Science/leaderboard.html（Phase-1 preliminary，2026-06-16）</li>
-<li><span class="mascot"></span>标签分布 · 本地 submissions/*.jsonl 实算（79 个 testp1 提交）</li>
-<li><span class="mascot"></span>成员支持度 · s01/s08/s09/s12/s13/s70/s56 七成员逐句投票</li>
-<li><span class="mascot"></span>复现 · scripts/precision_trim.py · notes/submissions_log.md</li>
-</ul>
-</footer>
-
-</article>
-</body>
-</html>
+<li><span class="mascot"></span>标签分布 · 本地 submissions/*.jsonl 实算（79 个 testp1 提交）；MF1/PEM 来自 notes/submissions_log.md + 排行榜</li>
+<li><span class="mascot"></span>方法 · scripts/ensemble_union.py · asym_union.py · train_softmin.py · configs/qwen3vl_lora_sft.yaml · notes/softmin_loss_design.md</li>
+<li><span class="mascot"></span>减法 · scripts/precision_trim.py（探针 s87/s88/s89）</li>
+</ul></footer>
+</article></body></html>
