@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Track1 错误样本 & 多模判断冲突 — 根因分析</title>
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+        --brain: #6f9bb8; --brain-bg: #eef4f8;
+        --hands: #b88a4a; --hands-bg: #f5ecdc;
+        --session: #6b7560; --session-bg: #ecede5;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; scroll-behavior: smooth; }
+      body {
+        font-family: ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper); color: var(--ink); line-height: 1.6;
+        -webkit-font-smoothing: antialiased; padding: 64px 24px 96px;
+      }
+      .doc { max-width: 860px; margin: 0 auto; }
+      .doc-header { border-bottom: 1px solid var(--rule); padding-bottom: 28px; margin-bottom: 40px; }
+      .doc-eyebrow {
+        font-family: ui-monospace, "SF Mono", Menlo, "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family: ui-serif, Charter, Georgia, "Songti SC", "Source Han Serif SC", serif;
+        font-size: 33px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.22;
+      }
+      .doc-subtitle { font-size: 16px; color: var(--ink-soft); margin-top: 10px; font-style: italic; }
+      .doc-meta {
+        font-family: ui-monospace, Menlo, "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px; color: var(--ink-faint); margin-top: 18px; display: flex; gap: 24px; flex-wrap: wrap;
+      }
+      .tldr { background: var(--accent-faint); border-left: 2px solid var(--accent); padding: 20px 24px; margin-bottom: 40px; font-size: 15px; }
+      .tldr-label {
+        font-family: ui-monospace, Menlo, "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; font-weight: 600;
+      }
+      .tldr p { margin-bottom: 8px; }
+      .tldr p:last-child { margin-bottom: 0; }
+
+      /* TOC */
+      .toc { border: 1px solid var(--rule); background:#fff; padding: 16px 20px; margin-bottom: 48px; }
+      .toc-label { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:10px; font-weight:600;}
+      .toc ol { margin: 0 0 0 4px; list-style: none; columns: 2; column-gap: 32px; }
+      .toc li { margin-bottom: 5px; font-size: 13.5px; }
+      .toc .tn { font-family: ui-monospace, Menlo, monospace; font-size:11px; color: var(--ink-faint); margin-right: 8px; }
+
+      section { margin-bottom: 52px; scroll-margin-top: 20px; }
+      h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.005em; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+      h2 .num { font-family: ui-monospace, Menlo, "PingFang SC", monospace; font-size: 12px; color: var(--ink-faint); font-weight: 500; margin-right: 14px; letter-spacing: 0.05em; }
+      h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; }
+      p { margin-bottom: 14px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code { font-family: ui-monospace, "SF Mono", Menlo, "PingFang SC", monospace; font-size: 12.5px; background: var(--code-bg); padding: 1px 5px; border-radius: 2px; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 7px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+
+      table { width: 100%; border-collapse: collapse; margin: 14px 0 18px; font-size: 13.5px; }
+      th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+      th { font-weight: 600; font-family: ui-sans-serif, system-ui, "PingFang SC", sans-serif; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); border-bottom: 1px solid var(--rule); }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num, th.num { font-family: ui-monospace, Menlo, "PingFang SC", monospace; font-size: 13px; text-align: right; }
+      td.accent { color: var(--accent); font-weight: 600; }
+      td.danger { color: var(--danger); font-weight: 600; }
+      td.good { color: #4a7a52; font-weight: 600; }
+
+      .callout { border: 1px solid var(--rule); background: #fff; padding: 16px 18px; margin: 16px 0 20px; }
+      .callout.warn { border-color: #e6d4a8; background: var(--warn-soft); }
+      .callout.key { border-left: 2px solid var(--accent); border-top:none;border-right:none;border-bottom:none; background: var(--accent-faint); padding-left: 22px; }
+      .callout.danger { border-left: 2px solid var(--danger); border-top:none;border-right:none;border-bottom:none; background:#f3e9e9; padding-left:22px; }
+      .callout-label { font-family: ui-monospace, Menlo, "PingFang SC", monospace; font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 8px; font-weight: 600; }
+      .callout.warn .callout-label { color: var(--warn); }
+      .callout.key .callout-label { color: var(--accent); }
+      .callout.danger .callout-label { color: var(--danger); }
+      .callout p:last-child { margin-bottom: 0; }
+
+      figure { margin: 28px 0 32px; border: 1px solid var(--rule); background: #fff; }
+      figure svg { display: block; width: 100%; height: auto; }
+      figcaption { font-family: ui-monospace, Menlo, "PingFang SC", monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); padding: 10px 16px; border-top: 1px solid var(--rule-soft); background: var(--paper-edge); }
+      figcaption .fig-num { color: var(--accent); margin-right: 10px; font-weight: 600; }
+
+      .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin: 20px 0 18px; }
+      .card { border: 1px solid var(--rule); background: #fff; padding: 16px 16px 14px; }
+      .card-icon { font-family: ui-monospace, Menlo, "PingFang SC", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; font-weight: 600; color: var(--accent); }
+      .card-name { font-family: ui-serif, Charter, Georgia, "Songti SC", serif; font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+      .card.tone-b .card-icon { color: var(--hands); }
+
+      .case { border: 1px solid var(--rule); border-left: 2px solid var(--accent); background:#fff; padding: 14px 16px; margin: 12px 0; }
+      .case-id { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--accent); font-weight: 600; }
+      .case-tag { font-family: ui-monospace, Menlo, monospace; font-size: 10px; letter-spacing:0.08em; text-transform:uppercase; color:#fff; background:var(--ink-soft); padding: 1px 6px; border-radius: 2px; margin-left: 8px; }
+      .case p { font-size: 13.5px; margin: 8px 0 0; }
+
+      footer { margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--rule); font-size: 12px; color: var(--ink-faint); }
+      footer h4 { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-family: ui-monospace, Menlo, monospace; margin-bottom: 10px; color: var(--ink-soft); }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; font-family: ui-monospace, Menlo, monospace; }
+      .mascot { display: inline-block; width: 8px; height: 8px; background: var(--accent); margin-right: 8px; vertical-align: middle; }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 25px; }
+        .cards { grid-template-columns: 1fr; }
+        .toc ol { columns: 1; }
+        .doc-meta { gap: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <article class="doc">
+
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>NLPCC 2026 · TASK 10 · TRACK 1 · ERROR FORENSICS</div>
+        <h1 class="doc-title">预测错误样本 &amp; 多模判断冲突 — 根因分析</h1>
+        <p class="doc-subtitle">实际逐张读证据图诊断 77 例，把"召回崩塌"拆成可修惰性 vs 视觉天花板</p>
+        <div class="doc-meta">
+          <span>STATUS · FINAL</span>
+          <span>DATE · 2026-06-16</span>
+          <span>METHOD · 112 agents / 2.87M tok / 读图诊断</span>
+          <span>SCOPE · 52 dev-gold 错例 + 25 testp1 十模冲突</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        <p><strong>错误的本质是召回崩塌，不是判错类</strong>：干净模型逐类召回 CON .22 / SO .66，65% 错例是"gold 是少数类、模型判了 Supported"。</p>
+        <p><strong>这是泛化鸿沟而非能力上限</strong>：记忆数据的 leaky 模型 CON 召回 .86、SO .84——模型有能力表示这些类，只是没学会泛化。把 43 个真模型错逐例读图拆桶，<strong>42 个可修</strong>（实体缺席核对 / 量词拆解 / 子句分解 / 去惰性），<strong>只有 1/77 真卡在 8B 读不清图（OCR）</strong>。</p>
+        <p><strong>结论</strong>：下一步主攻应是把"实体缺席检测 + 复合句逐子句判 + 量词分解"做进训练目标（纯加法召回，命中 53/77 例），而不是堆视觉 / OCR。</p>
+      </div>
+
+      <nav class="toc">
+        <div class="toc-label">目录</div>
+        <ol>
+          <li><span class="tn">01</span><a href="#m">方法与数据</a></li>
+          <li><span class="tn">02</span><a href="#q">量化地基</a></li>
+          <li><span class="tn">03</span><a href="#t">失败模式分类学</a></li>
+          <li><span class="tn">04</span><a href="#r">召回崩塌的真因</a></li>
+          <li><span class="tn">05</span><a href="#c">多模判断冲突的本质</a></li>
+          <li><span class="tn">06</span><a href="#e">代表性实例（已读图核实）</a></li>
+          <li><span class="tn">07</span><a href="#g">Gold 噪声 / 模型其实对了</a></li>
+          <li><span class="tn">08</span><a href="#l">可操作杠杆</a></li>
+        </ol>
+      </nav>
+
+      <!-- 01 -->
+      <section id="m">
+        <h2><span class="num">01</span>方法与数据</h2>
+        <p>本次分析全程在<strong>本地</strong>完成（不动远程 GPU）：从 H200 服务器拉下 10 个差异化模型的 testp1 逐句预测、clean phaseC 模型与 leaky s01 的 devbench 预测、以及 1128 张相关证据图（62MB）。先做量化对账（官方 <code>evaluate.py</code> 口径，any-of 匹配），再用 multi-agent 流水线对 <strong>77 个精选案例逐例实际读证据图</strong>诊断根因，争议案例（gold 存疑 / 模型其实对了）由 opus 对抗式二次读图复核。</p>
+        <div class="cards">
+          <div class="card">
+            <div class="card-icon">DEV · 有 GOLD</div>
+            <div class="card-name">52 个 dev 错例</div>
+            <div class="card-desc">CLEAN phaseC（densematch，<strong>无泄漏</strong>，最诚实）的 40 个错 + 12 个 leaky 仍判错的"最硬"例。可与 gold 直接对账。</div>
+          </div>
+          <div class="card tone-b">
+            <div class="card-icon">TESTP1 · 无 GOLD</div>
+            <div class="card-name">25 个十模冲突例</div>
+            <div class="card-desc">10 个差异化模型（Qwen 4B/8B/32B、InternVL 2B/8B、Gemma 26B；softmin/plainCE；逐句/联合）投票分歧的句子，是真实赛题分布。</div>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--ink-faint)">关键区分：<strong>CLEAN</strong> = 在 image-disjoint 的 devbench-train 上训练、densematch 上评测，无记忆泄漏，代表真实泛化；<strong>LEAKY s01</strong> = 训练数据含 dev 记录，已记住答案，仅用于"容量上界"对照。</p>
+      </section>
+
+      <!-- 02 -->
+      <section id="q">
+        <h2><span class="num">02</span>量化地基</h2>
+        <p>CLEAN phaseC 模型在 densematch 上 <strong>macro-F1 = 0.792</strong>、acc = 0.968。逐类指标暴露问题集中在 <strong>Contradiction 与 Scope Overgeneralization 的召回</strong>：</p>
+        <table>
+          <thead><tr><th>类别</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th><th>注</th></tr></thead>
+          <tbody>
+            <tr><td>Supported</td><td class="num">.976</td><td class="num">.994</td><td class="num">.985</td><td>—</td></tr>
+            <tr><td>Unsupported Causal Mech.</td><td class="num">.951</td><td class="num">1.00</td><td class="num">.975</td><td>已解决</td></tr>
+            <tr><td>Unsupported Entity</td><td class="num">.882</td><td class="num">.852</td><td class="num">.867</td><td>尚可</td></tr>
+            <tr><td>Scope Overgeneralization</td><td class="num">.931</td><td class="num danger">.658</td><td class="num">.771</td><td>召回受限</td></tr>
+            <tr><td>Contradiction</td><td class="num">1.00</td><td class="num danger">.222</td><td class="num danger">.364</td><td>召回崩塌</td></tr>
+          </tbody>
+        </table>
+
+        <p>40 个错例（errors-only，已剔除 any-of 命中的合法多标签）压倒性是<strong>漏召回</strong>：</p>
+        <table>
+          <thead><tr><th>错误类型</th><th class="num">数量</th><th>方向</th></tr></thead>
+          <tbody>
+            <tr><td class="danger">MISSED_MINORITY（gold 少数类 → 判 SUP）</td><td class="num">26 (65%)</td><td>UE→SUP ×12 · SO→SUP ×9 · CON→SUP ×5</td></tr>
+            <tr><td>WRONG_MINORITY（少数类 A→B）</td><td class="num">8</td><td>主要 SO→UE ×5</td></tr>
+            <tr><td>FALSE_ALARM（gold SUP → 少数类）</td><td class="num">6</td><td>SUP→UE ×3 · SUP→SO ×2 · SUP→UCM ×1</td></tr>
+          </tbody>
+        </table>
+
+        <figure>
+          <svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Menlo, monospace" font-size="11">
+            <rect width="760" height="300" fill="#fff"/>
+            <!-- axes -->
+            <line x1="180" y1="250" x2="710" y2="250" stroke="#7a7a7a"/>
+            <line x1="180" y1="40" x2="180" y2="250" stroke="#7a7a7a"/>
+            <g fill="#7a7a7a" font-size="10" text-anchor="end">
+              <text x="170" y="254">0.0</text>
+              <text x="170" y="200">0.25</text>
+              <text x="170" y="150">0.50</text>
+              <text x="170" y="100">0.75</text>
+              <text x="170" y="50">1.0</text>
+            </g>
+            <g stroke="#e8e8e2" stroke-width="1" stroke-dasharray="2 4">
+              <line x1="180" y1="200" x2="710" y2="200"/>
+              <line x1="180" y1="150" x2="710" y2="150"/>
+              <line x1="180" y1="100" x2="710" y2="100"/>
+              <line x1="180" y1="50" x2="710" y2="50"/>
+            </g>
+            <!-- groups: CON / SO / UE ; clean(accent) vs leaky(warn) ; scale 200px = 1.0 -->
+            <!-- CON center 290 -->
+            <rect x="250" y="205.6" width="38" height="44.4" fill="#a5c0d8" stroke="#6f9bb8"/>
+            <text x="269" y="199" text-anchor="middle" fill="#6f9bb8" font-weight="600">.22</text>
+            <rect x="292" y="78.6" width="38" height="171.4" fill="#ecdfb8" stroke="#b88a4a"/>
+            <text x="311" y="72" text-anchor="middle" fill="#7a6420" font-weight="600">.86</text>
+            <text x="290" y="270" text-anchor="middle" fill="#4a4a4a">Contradiction</text>
+            <!-- SO center 450 -->
+            <rect x="410" y="118.4" width="38" height="131.6" fill="#a5c0d8" stroke="#6f9bb8"/>
+            <text x="429" y="112" text-anchor="middle" fill="#6f9bb8" font-weight="600">.66</text>
+            <rect x="452" y="81.2" width="38" height="168.8" fill="#ecdfb8" stroke="#b88a4a"/>
+            <text x="471" y="75" text-anchor="middle" fill="#7a6420" font-weight="600">.84</text>
+            <text x="450" y="270" text-anchor="middle" fill="#4a4a4a">Scope Overgen.</text>
+            <!-- UE center 610 -->
+            <rect x="570" y="79.6" width="38" height="170.4" fill="#a5c0d8" stroke="#6f9bb8"/>
+            <text x="589" y="73" text-anchor="middle" fill="#6f9bb8" font-weight="600">.85</text>
+            <rect x="612" y="59.6" width="38" height="190.4" fill="#ecdfb8" stroke="#b88a4a"/>
+            <text x="631" y="53" text-anchor="middle" fill="#7a6420" font-weight="600">.95</text>
+            <text x="610" y="270" text-anchor="middle" fill="#4a4a4a">Unsupp. Entity</text>
+            <!-- legend -->
+            <g transform="translate(196, 48)" font-size="10" fill="#7a7a7a">
+              <rect x="0" y="0" width="14" height="10" fill="#a5c0d8" stroke="#6f9bb8"/>
+              <text x="20" y="9">CLEAN（泛化，无泄漏）</text>
+              <rect x="0" y="18" width="14" height="10" fill="#ecdfb8" stroke="#b88a4a"/>
+              <text x="20" y="27">LEAKY（记忆，容量上界）</text>
+            </g>
+          </svg>
+          <figcaption><span class="fig-num">FIG 1</span>少数类召回：泛化 vs 记忆 —— CON 从 .86 跌到 .22，鸿沟在"学会判别"不在"模型容量"</figcaption>
+        </figure>
+
+        <p>其它关键统计：</p>
+        <ul>
+          <li><strong>置信度救不了</strong>：52% 干净错例 <code>min_logprob &gt; −0.05</code>（p&gt;0.95），是"自信地错"——置信度阈值 / 弃权无效。</li>
+          <li><strong>SO↔UE 混淆大半是合法多标签</strong>：gold 里 SO+UE 共现 348 次（最大多标签对；全体多标签仅占 3.0%），所以 SO→UE 不全是错。</li>
+          <li><strong>union 召回收割</strong>：单模 flag 少数类占 4.8% → 10 模并集 11.5%（<strong>+139%</strong>），但 precision 无 gold 不可验。</li>
+        </ul>
+      </section>
+
+      <!-- 03 -->
+      <section id="t">
+        <h2><span class="num">03</span>失败模式分类学</h2>
+        <p>77 例读图诊断的 root_cause 分布——<strong>dev 与 testp1 形状截然不同，这是最重要的结构事实</strong>：</p>
+        <table>
+          <thead><tr><th>root_cause</th><th class="num">dev (52)</th><th class="num">testp1 (25)</th><th class="num">合计</th><th>性质</th></tr></thead>
+          <tbody>
+            <tr><td>ENTITY_PRESENCE</td><td class="num">15</td><td class="num">8</td><td class="num accent">23</td><td>文本/结构接地，可修</td></tr>
+            <tr><td>SCOPE_QUANTIFIER</td><td class="num">12</td><td class="num">4</td><td class="num accent">16</td><td>量词推理，可修</td></tr>
+            <tr><td>CAUSAL_CLAIM</td><td class="num">4</td><td class="num">10</td><td class="num accent">14</td><td>子句分解，可修</td></tr>
+            <tr><td>GOLD_ERROR</td><td class="num">12</td><td class="num">0</td><td class="num danger">12</td><td>标签噪声，模型不背锅</td></tr>
+            <tr><td>DEFAULT_TO_SUPPORTED</td><td class="num">4</td><td class="num">1</td><td class="num">5</td><td>惰性偏置，可修</td></tr>
+            <tr><td>其它（MULTI_LABEL / NUMERIC_OCR / AMBIGUOUS / …）</td><td class="num">5</td><td class="num">2</td><td class="num">7</td><td>混合</td></tr>
+          </tbody>
+        </table>
+        <div class="callout key">
+          <div class="callout-label">结构事实</div>
+          <p><strong>dev 错例</strong>被 ENTITY(15) + GOLD_ERROR(12) + SCOPE(12) 三分天下——其中 GOLD_ERROR 占 23%，是"我们其实对了"。<strong>testp1 冲突</strong>被 CAUSAL(10) + ENTITY(8) 主导，且 <strong>GOLD_ERROR = 0</strong>：十模分歧不是标注噪声，而是真·难判句。</p>
+        </div>
+      </section>
+
+      <!-- 04 -->
+      <section id="r">
+        <h2><span class="num">04</span>召回崩塌的真因</h2>
+        <p>核心：CON .22 / SO .66 的崩塌是"泛化鸿沟 + DEFAULT_TO_SUPPORTED 惰性"，不是"8B 看不清图"的能力上限。memorized 模型拿 CON .86 / SO .84 证明这些句在容量内可判——干净模型不是不能判，是没学会判。把 43 个"真模型错"（已剔除 gold 噪声与 UNCLEAR）按"是否真需 8B 力不能及的视觉"拆桶：</p>
+        <table>
+          <thead><tr><th>需求类型</th><th class="num">真错例</th><th>可修性</th></tr></thead>
+          <tbody>
+            <tr><td>文本/结构接地（核对句中图号·指标名 vs caption/表头）</td><td class="num good">17</td><td>完全可修，<strong>不需更强视觉</strong></td></tr>
+            <tr><td>量词/范围推理（SO，把 "all" 拆逐条核验）</td><td class="num good">11</td><td>可修（训练目标 + 分解）</td></tr>
+            <tr><td>子句分解（CAUSAL，独立评每个子句）</td><td class="num good">7</td><td>可修（复合句独立判 + 标记词）</td></tr>
+            <tr><td>DEFAULT_TO_SUPPORTED 纯惰性</td><td class="num good">5</td><td>可修（去 SUP 先验）</td></tr>
+            <tr><td>真·像素读图（NUMERIC_OCR：两行数字方向比较）</td><td class="num danger">1</td><td>8B-VL 受限，需 OCR 通道</td></tr>
+          </tbody>
+        </table>
+
+        <figure>
+          <svg viewBox="0 0 760 150" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Menlo, monospace" font-size="11">
+            <rect width="760" height="150" fill="#fff"/>
+            <!-- single proportional bar: 42 fixable vs 1 visual ; total width 660 from x=50 -->
+            <!-- 42/43 * 660 = 644.7 ; 1/43*660 = 15.3 -->
+            <rect x="50" y="50" width="644.7" height="44" fill="#dcebe0" stroke="#4a7a52" stroke-width="1.4"/>
+            <rect x="694.7" y="50" width="15.3" height="44" fill="#f0dede" stroke="#a05050" stroke-width="1.4"/>
+            <text x="372" y="77" text-anchor="middle" fill="#3a5a40" font-weight="600" font-size="13">可修 · 42 例（文本接地 17 / 量词 11 / 子句 7 / 惰性 5 + 跨图 2）</text>
+            <text x="702" y="120" text-anchor="middle" fill="#a05050" font-weight="600">1 例</text>
+            <text x="702" y="134" text-anchor="middle" fill="#a05050" font-size="9">OCR 视觉天花板</text>
+            <text x="50" y="38" fill="#7a7a7a" font-size="10">43 个"真模型错"的可修性拆分（≈95% 可修）</text>
+          </svg>
+          <figcaption><span class="fig-num">FIG 2</span>召回崩塌 ≈95% 是"该判却懒判"，真·读图瓶颈（OCR）只占 1/77</figcaption>
+        </figure>
+
+        <div class="callout warn">
+          <div class="callout-label">modality 标签有误导</div>
+          <p><code>image_numeric</code> 在 77 例里占 32 个，看似"必须强读图"。但逐例核查后，那些 <code>image_numeric</code> 的 ENTITY 错其实只需对照表头字符串（句子说 Top-5、表里只有 Top-1）——属<strong>文本接地</strong>，不是 OCR。为何 memorized .86 而干净 .22：训练数据"每段 ≤1 个少数类"的伪先验形成强 SUP 默认；s01 是记住 dev 答案而非学会判别。<strong>所以杠杆是"教会判别 + 拆掉 SUP 先验"，不是"换更大模型"</strong>——这也解释 31B 单模 s27=29.28 还不如 26B：堆容量对惰性偏置无效。</p>
+        </div>
+      </section>
+
+      <!-- 05 -->
+      <section id="c">
+        <h2><span class="num">05</span>多模判断冲突的本质</h2>
+        <p>结论：testp1 十模分歧 <strong>≠ 图不清</strong>，≈80% 是真实的「标签定义边界」之争，由模型激进度差异放大。</p>
+        <ul>
+          <li><strong>不是图不清</strong>：冲突例 figure_readability = numbers_legible 18/25（72%），no_relevant_content 仅 4 例（且多靠 caption 即可定 CON）。</li>
+          <li><strong>冲突 label-pair 暴露定义边界</strong>：前两大对（SUP-vs-某少数类）= 召回战场（一个模型敢开、其余惧 SUP）；SO↔UE = 纯定义边界（同一短语既可读成"越界"也可读成"缺失实体"）。</li>
+          <li><strong>17/25 冲突例裁为 model_defensible</strong>：少数票模型其实抓对了，保守的多数票漏了。</li>
+        </ul>
+
+        <figure>
+          <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Menlo, monospace" font-size="11">
+            <rect width="760" height="250" fill="#fff"/>
+            <!-- horizontal bars, scale: 312 -> 470px from x=210 -->
+            <g fill="#4a4a4a" text-anchor="end">
+              <text x="200" y="46">SUP ↔ UE</text>
+              <text x="200" y="86">SUP ↔ UCM</text>
+              <text x="200" y="126">SO ↔ SUP</text>
+              <text x="200" y="166">CON ↔ SUP</text>
+              <text x="200" y="206">SO ↔ UE</text>
+            </g>
+            <!-- 470/312 = 1.506 px per count -->
+            <rect x="210" y="34" width="470" height="18" fill="#a5c0d8" stroke="#6f9bb8"/>
+            <text x="688" y="48" fill="#6f9bb8" font-weight="600">312</text>
+            <rect x="210" y="74" width="191" height="18" fill="#a5c0d8" stroke="#6f9bb8"/>
+            <text x="409" y="88" fill="#6f9bb8" font-weight="600">127</text>
+            <rect x="210" y="114" width="117" height="18" fill="#c3b58a" stroke="#b88a4a"/>
+            <text x="335" y="128" fill="#7a6420" font-weight="600">78</text>
+            <rect x="210" y="154" width="113" height="18" fill="#c3b58a" stroke="#b88a4a"/>
+            <text x="331" y="168" fill="#7a6420" font-weight="600">75</text>
+            <rect x="210" y="194" width="60" height="18" fill="#cdab9a" stroke="#a05050"/>
+            <text x="278" y="208" fill="#a05050" font-weight="600">40</text>
+            <text x="210" y="234" fill="#7a7a7a" font-size="10">蓝 = SUP-vs-少数类（召回战场，439 句）   棕 = SUP-vs-越界类   红 = 纯定义边界 SO↔UE</text>
+          </svg>
+          <figcaption><span class="fig-num">FIG 3</span>5096 句中最常见的跨模型分歧 label-pair —— 冲突主体是"是否算少数类"</figcaption>
+        </figure>
+
+        <p><strong>激进 vs 保守是放大器而非根因</strong>：单模少数类调用率从 Qwen32B-joint <strong>3.6%</strong> 到 Gemma-26B <strong>7.5%</strong>（2 倍差）。激进模型在 caption-driven 的 CON 例上偶尔 SUP 误火，但在 ENTITY/UCM 例上往往是它们抓对、Qwen32B-joint 孤票漏。<strong>这正是 union ensemble 历史有效、而保守后处理单调掉分的微观原因</strong>：分歧主要落在"敢不敢开少数类"，并集恰好收割了激进模型的正确召回。</p>
+      </section>
+
+      <!-- 06 -->
+      <section id="e">
+        <h2><span class="num">06</span>代表性实例（已读图核实）</h2>
+        <div class="case">
+          <span class="case-id">clean:track1-001080:s1</span><span class="case-tag">ENTITY · 应 UE，判 SUP</span>
+          <p>句称 "no effect on <strong>Top-5</strong> accuracy"，但表 8a 只有 <code>Top-1</code> 列（三行 69.9 表面对）→ 模型被 Top-1 数字带跑判 SUP，没发现指标名被偷换。只需核对表头字符串即可，无关视觉强弱。</p>
+        </div>
+        <div class="case">
+          <span class="case-id">t1:…-000334:s8</span><span class="case-tag">ENTITY · 9/10 投 UE 正确</span>
+          <p>caption 明写子图 "(a) n_max=1 和 (b) n_max=2"，句子却引 "Fig. 5<strong>(c)</strong>"——子图 (c) 在 caption 枚举里根本不存在 → UE。</p>
+        </div>
+        <div class="case">
+          <span class="case-id">clean:track1-001096:s5</span><span class="case-tag">SCOPE · 应 SO</span>
+          <p>句称 "12 层是 current graph transformer 的上限"，但图里作者自己的 DeepGraph 撑到 45+ 层，<strong>只有 baseline 退化</strong> → 把"基线失败"外推成"所有架构失败" = SO。</p>
+        </div>
+        <div class="case">
+          <span class="case-id">t1:…-000027:s0</span><span class="case-tag">CAUSAL · 10 模全判 UCM</span>
+          <p>柱状图确显两剂量都赢 placebo（前半事实对），但尾句 "dose-independent <strong>therapeutic mechanism</strong> targeting mucosal healing" 是机制推断，柱状图给不出 → UCM。</p>
+        </div>
+        <div class="case">
+          <span class="case-id">clean:track1-000064:s4</span><span class="case-tag">GOLD 噪声 · 复核 confirm</span>
+          <p>三个 transformation（MaskNF/DropNode/PerturbEdge）全在表 10 里（UE 不成立），尾句 "may reflect a learned <strong>mechanism governing</strong>" 是机制语言 → 正解 UCM；gold 标 UE 是 UE/UCM 边界误标，对抗复核 confirm。</p>
+        </div>
+      </section>
+
+      <!-- 07 -->
+      <section id="g">
+        <h2><span class="num">07</span>Gold 噪声 / 模型其实判对了</h2>
+        <p>dev 错例里 <strong>约 29%（15/52）</strong>经对抗式读图核实为标注噪声或本质歧义（confirm_contested 12 + 正解实为 UNCLEAR 5，去重）。对抗复核总览：<strong>confirm_contested 27 vs reject_contested 6</strong>——争议案里 82% 站在"模型/争议方有理"一边。</p>
+        <table>
+          <thead><tr><th>确凿 gold 误标模式</th><th>实例</th><th>正解</th></tr></thead>
+          <tbody>
+            <tr><td>UCM 被误标 UE</td><td><code>clean:…-000064:s4</code></td><td>UCM</td></tr>
+            <tr><td>section-header 句被误标 UE（图里就有该列头）</td><td><code>clean:…-000797:s0</code> "Visualization of Edge and Attention Maps"</td><td>SUP</td></tr>
+            <tr><td>caption 逐字 paraphrase 被误标 UE</td><td><code>clean:…-000994:s1</code></td><td>SUP</td></tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          <div class="callout-label">对 Codabench 排名的含义</div>
+          <p>testp1 看到的"PEM 受限"里有一部分可能是 gold 噪声（testp1 gold 不可见，dev 的 29% 是个下界参照），这是不可压缩的得分上限。但 testp1 冲突例 GOLD_ERROR=0 且 17/25 是 model_defensible，说明 testp1 的可争议空间主要在"激进模型抓对、保守模型漏"——<strong>这部分通过更好的召回是可收割的</strong>。</p>
+        </div>
+      </section>
+
+      <!-- 08 -->
+      <section id="l">
+        <h2><span class="num">08</span>可操作杠杆（按期望收益排序）</h2>
+        <p>收益判据 = 命中"可修桶"的真错例数 × 可实现性。<strong>所有杠杆都瞄准召回（catch 长段里的真少数类），与 testp1 RECALL-critical 一致；不碰任何抑制类后处理。</strong></p>
+        <table>
+          <thead><tr><th class="num">#</th><th>杠杆</th><th>命中桶</th><th class="num">覆盖真错</th><th>收益</th></tr></thead>
+          <tbody>
+            <tr><td class="num accent">1</td><td><strong>实体缺席检测</strong>：训练注入 negative 对（句中 token vs caption/表头字符串核对）；推理加一步"句中每个命名实体是否在证据中？"</td><td>ENTITY_PRESENCE</td><td class="num">23</td><td class="good">高</td></tr>
+            <tr><td class="num accent">2</td><td><strong>复合句逐子句独立判 + UCM/因果标记词</strong>（mechanism / governs / suggesting that / exclusively → UCM 候选；任一子句无据则整句非 SUP）</td><td>CAUSAL_CLAIM</td><td class="num">14</td><td class="good">高</td></tr>
+            <tr><td class="num accent">3</td><td><strong>量词分解</strong>（all / significantly / full range 拆逐条核验；先做实体在场检查排除 UE → 强制走 SO）</td><td>SCOPE + SO↔UE 边界</td><td class="num">16</td><td>中-高</td></tr>
+            <tr><td class="num">4</td><td><strong>去 DEFAULT_TO_SUPPORTED 先验</strong>（清洗"每段≤1少数类"伪先验 + 密度匹配长段训练）</td><td>惰性偏置</td><td class="num">5 + 全局</td><td>中（PHASE C 密度匹配已过门 +2.68 densematch）</td></tr>
+            <tr><td class="num">5</td><td><strong>清洗 gold 训练噪声</strong>（UE↔UCM / header / caption-paraphrase 三类重标）</td><td>GOLD_ERROR</td><td class="num">12（训练侧）</td><td>中</td></tr>
+            <tr><td class="num">6</td><td>OCR 数字通道（表格两行数字方向比较）</td><td>NUMERIC_OCR</td><td class="num danger">仅 1</td><td class="danger">低</td></tr>
+          </tbody>
+        </table>
+        <div class="callout key">
+          <div class="callout-label">一句话</div>
+          <p>召回崩塌 ≈95% 是惰性而非失明；最高 ROI = 把"<strong>实体缺席检测 + 复合句逐子句判 + 量词分解</strong>"做进训练目标（杠杆 1-3，命中 <strong>53/77 例</strong>），全为纯加法召回、零抑制，与 testp1 RECALL-critical 和已过门的密度匹配方向一致。真·读图瓶颈（OCR）只占 1/77，不值得当主攻。</p>
+        </div>
+      </section>
+
+      <footer>
+        <h4>产物 / References</h4>
+        <ul>
+          <li>notes/error_conflict_analysis.md — 本报告 markdown 源</li>
+          <li>data/analysis/out/SYNTHESIS.md — opus 综合原文</li>
+          <li>data/analysis/out/diagnoses.json — 77 例逐例读图诊断</li>
+          <li>data/analysis/out/{metrics.json, dev_errors.jsonl, testp1_conflicts.jsonl, cases/*.json}</li>
+          <li>scripts/{error_conflict_analysis.py, curate_cases.py, wf_root_cause.js}</li>
+          <li>关联：notes/per_class_analysis.md · notes/breakthrough_plan.md · notes/submissions_log.md · src/nlpcc_t10/build_density_inject.py</li>
+        </ul>
+      </footer>
+
+    </article>
+  </body>
+</html>
